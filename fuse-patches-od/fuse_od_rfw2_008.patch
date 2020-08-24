@@ -1,0 +1,2198 @@
+From 33554cd67bfd9d1f64ed150e88dc671032ee4601 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 20 ago. 2020 4:46:20
+
+Patch #008 for OpenDingux and RetroFW
+Control mapping files. Saving and loading for tapes, snapshots, disks.
+Options for load .fcm files independently of activate of control mapping
+per game.
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 61eac79..d512bfa 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -1,55 +1,69 @@
+ Using the Fuse emulator
+ =======================
+ 
++This port of Fuse to OpenDingux and RetroFW is simply a compilation of Fuse 1.5.7 for this platforms with some additions to the SDL UI and some new options.
++
++Nothing is touched for the emulation engine or the miriad of Fuse options.
++
++So the thanks for this port are for Phillip Kendall and all the Fuse team.
++
+ At the end of this doc is the man page of Fuse 1.5.7 for reference.
+ 
+ ------------------------
+ ### Opening the Menu ###
+ ------------------------
++
+ You can open the menu with the `Power` or `Select` button.
+ 
+-If `Select` button is mapped to joystick or keyboard then you must use the `Power` button for accessing the menu.
++If `Select` button is mapped to joystick or keyboard then the only option to open menu will be `Power` button.
+ 
+ ---------------------
+ ### Save settings ###
+ ---------------------
+-By default the emulator don't save settings changes.
+ 
+-You can save settings at any time with `Menu -> Options -> Save`.
++By default the emulator don't save settings changes. You can save settings at any time from menu: `Menu -> Options -> Save`.
+ 
+-Also you can activate Auto-save setting to save settings when you exit the emulator with `Menu -> File -> Exit`. To activate it access to `Menu -> Options -> General` then navigate to the option **Auto-save settings**, check it with the `X` Button and finally accept the form with the `A` Button. Yo should exit from the emulator o use the Save option to save it.
++You can activate "Auto-save" to save settings when you exit the emulator. To activate it access to `Menu -> Options -> General` then navigate to the option **Auto-save settings**, check it with the `X` Button and finally accept the form with the `A` Button. Yo should exit from the emulator o use the Save option to save it.
+ 
+-The options are saved to **.fuserc** file at home directory. If some option change prevent to open the emulator yo can delete thid file and try again.
++The options are saved into 'fuse.cfg' file in the fuse config path. If some option changes prevent to open the emulator delete this file and try to start again.
++The config path is '$HOME/.fuse' directory. If it does not exist the emulator will create it at start.
++
++Note: $HOME is located in '/media/data/local/home' for OpenDingux and in '/home/retrofw' for RetroFW.
+ 
+ ------------------------
+ ### Virtual Keyboard ###
+ ------------------------
++
+ Press the `Start` button to open a Virtual Keyboard when you are at emulator.
+ 
+ The keys in the virtual keyboard correspond to ZX Spectrum keys and it send to emulator as if you are using a real ZX Spectrum keyboard.
+ 
+     `Cursor`
+-    Move to select keys
++    Move to select keys.
+ 
+     `A`
+-    Press key selected at keyboard
++    Press selected key.
+ 
+     `B`
+     Lock key. It's marked in blue.
+-    For use in combinatios of Caps Shift or Symbol Shift with other key.
+-    They are used when press the `A` button over a Key. |For example: Lock key over "SS" and then press `A` Button over letter "P" to obtain character "
++    They are used when press the `A` button over a Key and then unlocked.
++    For use in combinations of Caps Shift or Symbol Shift with other keys.
++    For example: In 48k mode you can Lock key "Ss" and then press 'Cs' key to change keyboard to "Extended" mode.
+ 
+     `X`
+-    Press continously a key. It's marked in Red.
++    Sticky key. It's marked in Red.
++    The key is continously pressed.
++    For example: In 48k mode you can press key 'J' then Sticky key 'Ss' and then press twice key 'P' to obtain 'LOAD ""'.
+ 
+     `Y`
+-    Clean locked and continous pressed keys.
++    Clean all Lock and Sticky keys.
+ 
+     `Start`
+     Close Virtual Keyboard
+ 
+     `L1`, `R1`
+-    Change the Virtual Keyboard position. There are 4 positions.
++    Change the Virtual Keyboard position. 
++    There are 4 positions, one for earch corner of screen.
+ 
+ -------------------------------------
+ ### Buttons at different contexts ###
+@@ -59,9 +73,12 @@
+ 
+ Buttons in emulator:
+ --------------------
++
++The buttons function detailed are when no mapping is assigned.
++
+     `Cursor`
+     Shifted cursor ZX Spectrum keys (5, 6, 7 and 8 keys)
+-    This is modified by the setting: "Use shift with arrow keys" by default On
++    This is modified by the setting "Use shift with arrow keys"
+ 
+     `A`, `B`
+     Symbol Shift
+@@ -79,42 +96,48 @@
+     Open the virtual keyboard
+ 
+     `L1`
+-    If not mapped in Joystick options start a hotkey combo
++    Start a hotkey combo
+ 
+     `R1`
+-    If not mapped in Joystick options start a hotkey combo
++    Start a hotkey combo
+ 
+     `Left Stick`
+-    Nothing or As `Cursor` if used the `Power`+`B` hotkey on some OpenDingux handhelds (RG350)
++    Nothing.
++    On some systems you can map it as cursor.
+ 
+     `Right Stick`
+-    On some OpenDingux models (RG350) you can activate Mouse with `Power`+`B` hotkey and use to emulate Kempston mouse
++    Nothing. 
++    On some systems you can enable an emulated mouse that uses the left stick to move the mouse. In Fuse you can use it as Kempston mouse.
++    |In RG350 you can enable it with `Power`+`B` hotkey.
+ 
+     `L2`
+-    Left click in mouse emulation
++    Nothing.
++    Left click with mouse emulation enabled.
+ 
+     `R2`
+-    Right click in mouse emulation
++    Nothing.
++    Right click with mouse emulation enabled.
+ 
+ 
+-Buttons in Menu and Forms:
+---------------------------
++Buttons in Menu:
++----------------
++
++These are no dependent of button mapping.
++
+     `Cursor`, `Left Stick`
+     Move
+ 
+-    `A`, `Start`
++    `A`
+     Select the option or accept the options at form
+ 
+-    `B`, `Select`
++    `B`
+     Cancel and go back to previous menu or to the emulator if there is no previous menu
+ 
+     `X`
+-    **Mark/Unmark** for check options: For example at General options -> Auto-save settings
+-    **Open list** for list options: For example at Sound options -> AY stereo separation
+-    **enter name** for file save dialogs.
+-
+-    `Y`
+-    Nothing
++    At different contexts:
++    - Mark/Unmark for check options: For example at General options -> Auto-save settings
++    - Open list of options for list options: For example at Sound options -> AY stereo separation
++    - It open 'enter name' dialog for file save dialogs.
+ 
+     `L1`
+     Go to the first menu option
+@@ -128,22 +151,19 @@
+     `R2`
+     In the file selector go to the last entry in the current directory
+ 
+-    `L2`, `R3`
+-    Nothing
+-
+-    `Right Stick`
+-    Nothing
+-
+     `Power`
+     Cancel and exit completely from any level of menu to the emulator
+ 
++    `Y`, `Select`, `Start`, `L2`, `R3`, `Right Stick`
++    Nothing
++
+ #### Forms ####
+ ---------------
+-Some menu options open a form with options to mark or choose some option from a list.
++Some menu options open a form with options to mark or choose option from a list.
+ 
+-=>¡¡The forms must be confirmed to persist the selected options!!
+-  To confirm them you must use the `A` or `Start` buttons.
+-  The `B`, `Select` or `Power` buttons cancel them and the changes are lost.
++The forms must be confirmed to persist the selected options
++  To confirm them you must use the `A` buttons.
++  The `B` or `Power` buttons cancel them and the changes are lost.
+ 
+ Some examples of forms are General, Media and Sound.
+ 
+@@ -151,79 +171,183 @@
+ ----------------------------------
+ Some other options from menu will open a virtual keyboard.
+ 
+-This keyboard is very limited, it is don't showed at all possible options and it is not adapted to each context.
++This keyboard it's not showed at all possible options and it is not adapted to each context.
+ 
+-Examples where the vistual keyboard it's appearing are: Enter name at Save Snapshot, Debugger, Change Emulation Speed or Frame rate.
++Examples where the virtual keyboard it's appearing are: 'Enter name' for save dialogs and Debugger.
+ 
+     `Cursor`
+-    Move to select keyboard keys
++    Move
+ 
+     `A`
+-    Press the actual selected key
++    Press the selected key
+ 
+     `X`
+-    Change the keyboard mode between upper and lower case and some other characters
++    Change the keyboard mode between upper and lower case and some additional characters
+ 
+     `Y`
+     Delete previous character
+ 
+     `B`
+-    Cancel the actual form or option and exit to previous option in menu
++    Cancel and exit to previous option in menu
+ 
+-    Confirm forms
+-    To confirm changed options at forms select **En** key at virtual Keyboard and then press the `A` button
++    Confirm input
++    To confirm press 'En' key at virtual Keyboard
+ 
+-For the **Enter the name** dialogs at save options the las loaded filename without the extension is proposed.
++|For the 'Enter the name' in save dialogs the last loaded filename without the extension is proposed.
+ 
+ ------------------------------------------------
+ ### Mapping buttons to Joysticks or Keyboard ###
+ ------------------------------------------------
+-You can map handheld buttons to Joysticks or Spectrum keys in `Menu -> Options -> Joysticks`
+ 
+-Yo can do it with the next options:
++You can map handheld buttons to Joysticks or Spectrum keys in `Menu -> Options -> Joysticks`
+ 
+ ---- GCW0 Joystick 1... ----
+ ----------------------------
+-This option allows you to emulate a ZX Spectrum joystick with the buttons handheld. It also allows you to assign buttons to keys on the ZX Spectrum keyboard.
+-
+-It have two options:
++This option allows to emulate a ZX Spectrum joystick with the handheld buttons.
++It also allows you to assign keyboard keys to buttons
+ 
+ - **Type**:
+-  ---------
+   Choose the Joystick to emulate or None. Default is None.
+ 
+-  Some type of Joysticks may require other emulator options active.
+-  For example Kempston joystick need to be activated at `Menu --> Options --> Peripherals --> General`.
++  Some type of Joysticks may require other emulator options enabled.
++  |For example for Kempston joystick emulation you need to enable 'Kempston joystick' in `Menu --> Options --> Peripherals --> General`.
+ 
+ - **Button mapping**:
+-  -------------------
+   Map the handheld buttons to Joystick fire, ZX Spectrum keys or to Nothing. By default all buttons are mapped to Joystick fire.
+ 
+ ---- GCW0 Keyboard... ----
+ --------------------------
+-This option allows you to map handheld buttons to the keys on the ZX Spectrum keyboard, including cursors.
+-
+-It have two options:
++This option allows to map handheld buttons to ZX Spectrum keys. The cursors also can be mapped.
+ 
+ - **Type**:
+-  ---------
+-  Choose Activate option or None. Default is None.
++  Choose Activated or None. Default is None.
+ 
+ - **Button mapping**:
+-  -------------------
+   Map buttons to ZX Spectrum keys or Nothing. By default all buttons are mapped to Nothing.
+ 
+-When you choose any type other than **None** in previous options, some buttons may lose their original functionality if they have a mapping assigned. For example, the `Select`, `Start`, `L1` and `R1` buttons.
++When both mappings, "GCW0 Joystick 1" or "GCW0 Keyboard", are enabled at the same time only "GCW0 Joystick 1" will work.
++
++When you choose any 'Type' other than "None" in "GCW0 Joystick 1" or "GCW0 Keyboard", some buttons may lose their original functionality if they are mapped to joystick fire or to keyboard keys.
++`Select`, `Start`, `L1` and `R1` buttons have functionanility that may be lost.
++
+ If you have mapped the `Select` button, you can still access the menu with the` Power` button.
+ 
+-When both mappings are activated at the same time, only "GCW0 Joystick 1" will work.
++----------------------------------------------
++### Control mapping per game configuration ###
++----------------------------------------------
++
++To have control gaming configuration per game you must activate it in the menu 'Options -> Joysticks -> Control mapping'.
++
++  - Control mapping per game:
++    -------------------------
++    Default disabled.
++    It enable the save and load of control mappings per game for supported media: : tapes, snapshots, disks (not IDE), rom cartridges, Timex cartridges.
++
++    The configuration files per game are saved in 'mappings' directory in fuse config path ($HOME/.fuse/mappings).
++    The name of the files will be the same of the file loaded replacing its extenstion by '.fcm' (fcm is for Fuse Control Mapping).
++    The options saved are the 'Types' and buttons mappings for GCW0 Joystick 1, Joystick 2, Keyboard and GCW0 Keyboard.
++
++    The format of the file is the same used for the general settings: XML for OpenDingux or plain text for RetroFW.
++
++    If you disable it:
++      - If defaults are detached they are saved and restored as current defaults.
++      - If changes were made to controls those changes are saved to correponding control mapping file.
++
++    If you enable it:
++      - If defaults are detached they are loaded.
++      - If you do after you have load any supported media the emulator try to initialize control mapping for that media.
++
++  - Auto-load:
++    ----------
++    Default enabled. Only take effect if 'Control mapping per game' is enabled.
++
++    It enable the autoload of control mapping files associated to the file loaded.
++    This apply for supported media when are loaded from 'File -> Open' or inserted from the 'Media' menu.
++
++  - Auto-save:
++    ----------
++    Default enabled. Only take effect if 'Control mapping per game' is enabled.
++
++    If controls mapping has changed then the autosave will be at this events:
++       - Load another media
++       - Clear or eject the media in the file at 'Media' menu
++       - Disabling 'Control mapping per game'
++       - Exit the emulator
++
++  - Not detached defaults:
++    ----------------------
++    Default disabled. Only take effect if 'Control mapping per game' is enabled.
++
++    This allow to maintain default control mapping different of particular of each game.
++
++    If this option it's not enabled then you can maintain separated default controls.
++
++    The default controls are used:
++      - At start of Fuse, if no media is autoload or no control mapping autoload is enable
++      - When you insert a media with not yet control mapping configuration
++      - When you clear or eject a media
++
++    If this option is enabled the changes to controls are the defaults. 
++      - Loading any control mapping file, automatically or manually change it
++      - If you load any media with no control mapping yet then this defaults will be used.
++
++When you exit from Fuse and have General Auto-save setting enabled then default control mapping will be saved at general file.
++
++Other options in Joystick menu for Control mapping:
++
++  - Load control mapping:
++    ---------------------
++    Enabled if 'Control mapping per game' is enabled.
++
++    When a control mapping file exists for the last media loaded then it's name will be printed here, only the first 20 characters of name.
++    This option allows to restore controls mapping from configuration file if changes have been made to them.
++
++  - Save control mapping:
++    ---------------------
++    Enabled if 'Control mapping per game' is enabled.
++
++    If supported media is inserted then the name of control mapping file will be printed here, only the first 20 characters of name.
++    This allow you to save the current control mapping if changes have been made to them or if the file does not exist yet.
++
++    If Auto-save of control mapping is active the save will be at designed evets, see 'Auto-save' options. You can force the save with this option.
++
++  - Load control mapping from file:
++    -------------------------------
++    Allways enabled.
++
++    This option allow you to load a control mapping file to change the current control mappings.
++
++  - Save control mapping from file:
++    -------------------------------
++    Allways enabled.
++
++    This option allows you to save a control mapping file with the current control mappings.
++
++  - Default control mapping:
++    ------------------------
++    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++
++    Submenu to maintain default control mapping.
++
++  - Reset to default controls:
++    --------------------------
++    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++
++    Reset the current controls to default control mapping.
++
++  - Set current as default:
++    -----------------------
++    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++
++    Set the current controls as the default control mapping.
+ 
+ -------------------------
+ ### External joystick ###
+ -------------------------
+-On some handhelds is possible to connect an external Joystick using USB OTG. Then mapping of Joystick 2 is applied if it is assigned to some type of Joystick. On my RG350 I've tested with an 8Bitdo FC30 Pro controller.
+ 
+-I don't have tested a Keyboard on USB OTG (I don't have one near), but it should work. But take into account that some keys will not work or work different to desktop version becouse the buttons on hanheld correspond to keyboard keys, and the implementation has been adapted with handheld on mind.
++On some handhelds it is possible to connect an external Joystick using USB OTG. The mapping of 'Joystick 2' will be applied to it.
++
++On my RG350 I've tested this with an 8Bitdo FC30 Pro controller.
+ 
+ For controllers the number of each button in mapping depends on the controller layout.
+ For example on my 8Bitdo FC30 these are the mapping layout: A=1, B=2, X=4, Y=5, L1=7, R1=8, L2=9, R2=10, Select=11, Start=12, L3=14, R3=15.
+@@ -247,33 +371,50 @@
+ 	y:b4,
+ 	hint:SDL_GAMECONTROLLER_USE_BUTTON_LABELS:=1,"
+ 
+-=>Take into account that Fuse count buttons from 1 not from 0, so add 1 to translate your layout into Fuse's config.
++=>Fuse count buttons from 1 not from 0, so add 1 to translate your layout into Fuse's config.
++
++-------------------------
++### External joystick ###
++-------------------------
++
++I don't have tested a Keyboard on USB OTG but in theory it should "work".
++
++But keep in mind that current adaptations made for handhelds buttons have probably made it unusable.
++
++The handheld buttons are keystrokes that have conflict with some keys used for SDL menus.
+ 
+ ----------------------
+ ### Kempston mouse ###
+ ----------------------
+-At RG350 models with right stick you can emulate Kempston mouse with the right stick and `L2`, `R2` buttons.
+-This feature is not part of the port this is a standard feature of Fuse in combination with RG350 firmware capability of emulating mouse.
+ 
+-You must activate it in the peripherals (`Menu -> Options -> Peripherals -> General`) and use the RG350 combo `Power` + `B` to activate mouse.
++In some handhelds you can emulate mouse with the Right stick and `L2`, `R2` buttons.
++
++This make possible emulating the Kempston mouse.
++
++You must enable 'Kempston mouse' in the peripherals: `Menu -> Options -> Peripherals -> General`, and enable the mouse emulation in the handheld.
++
++|For example, in the RG350 you can activate the mouse with hotkey `Power` + `B`.
+ 
+ ---------------------
+ ### Triple Buffer ###
+ ---------------------
+-There is an experimental implementation for triple buffer. It affect to the speed. It can be activated at General options.
+-In general I believe that is not needed, but I've seen diference activating it on some demos on Pentagon's models as "mescaline synesthesia by deMarche".
+-It affect to the speed.
++
++There is an implementation to use the triple buffer. It can be enabled at General options or whith combo hotkeys 'L1' + 'R1'.
+ 
+ If tripple buffer is activated then an [B] will be at status line.
+ 
+-Disabling triple buffer sometimes causes the screen to freeze or go black, but the emulator is still running ... probably motivated by some mistake I have made in the code.
++It affect to the speed of emulator that can be observed in the speed for fastloading.
+ 
+-You can activate/deactivate it at General options or with the hotkey combo: L1 + R1.
++In general I believe that is not needed, but I've seen diference activating it on some demos for Pentagon's models as "mescaline synesthesia by deMarche".
+ 
+----------------------
+-### Hotkey combos ###
+----------------------
+-If `L1` or `R1` are not mapped to Joystick or Keyboard at press them it's activated hotkeys combos:
++BUG: At disabling triple buffer sometimes the screen will be frozen but the emulator still will be running .
++     This is surely motivated by some mistake on my code or for missunderestanding triple buffer by my side.
++
++---------------------------
++### Hotkey combinations ###
++---------------------------
++
++If `L1` and `R1` buttons are not mapped to Joystick or Keyboard it will be used to start hotkey combinations.
+ 
+ The implemented ones correspond to Fx key functions in Fuse's SDL implementation:
+ 
+@@ -286,21 +427,25 @@
+    L1 + Select + Y  Machine select (F9)
+    L1 + Start + X   Tape open (F7)
+    L1 + Start + Y   Tape play (F8)
++   R1 + Select + X  Joysticks
++
++(And yes, I know, some combinations on some devices are impracticable)
+ 
+ ---------------------
+ ### Media options ###
+ ---------------------
+ 
+-If you have problems loading some programs take into account compatibility. There are programs that don't load or work in all moddels.
++If you have problems loading some programs keep in mind the compatibility issues of software with the model emulated.
+ 
+-Also take into account that some options in Media options can affect, as "Accelerate loaders".
++Also some options in Media options can influence to some loaders as "Accelerate loaders". Try enabling/disabling this options.
+ 
+ ------------
+ ### ROMs ###
+ ------------
+-Fuse provide some roms for the systems and peripherals emulated but not for all models or peripherals that it support.
+ 
+-You can assign aditional roms from the emulator:
++Fuse provides roms for some systems and peripherals it emulate but not for all models or peripherals that it support.
++
++You can assign not distributed roms or change the default roms from the emulator itself:
+ 
+ - Open menu with `Select` or `Power` button. Then navigate from Menu --> Options --> Select Roms --> Machine ROMs or Peripheral ROMs
+ - With `cursor` select the rom to change and press `X` button
+@@ -308,16 +453,20 @@
+ - Repeat until all the needed ROMs are assigned.
+ - Finally do accept all pressing the `A` button.
+ 
+-You can also put Fuse's default rom with the `Y` button.
++You can reset a rom to Fuse's default rom with the `Y` button.
+ 
+-The emulator detect your rom as custom if they not have the name expected, including path. This affect to auto-load, cutoms roms don't autoload. For this reason it's introduced the option "Auto-load media with custom rom".
++NOTE:
++  The emulator detect your rom as custom if they not have the name expected, including the path.
++  This affect to auto-load media (tapes, disks). In standard Fuse compilation cutoms roms don't autoload.
++  The option "Auto-load media with custom rom" in General options (default False) auto-load also with custom roms.
+ 
+-Also you can put the roms at routes:
++Also roms con be added to the 'rom' directory at Fuse config path ("$HOME/.fuse/roms").
++Fuse search in this path for rom files with the default names.
+ 
+-    For OpenDingux   "/usr/local/home/.fuse/roms"
++    For OpenDingux   "/media/data/local/home/.fuse/roms"
+     For RetroFW      "/home/retrofw/.fuse/roms"
+ 
+-The emulator will create this directories the first time is started if they don't exist.
++|Fuse will create the config paths at starting if they don't exist.
+ 
+ ROMs included with fuse:
+ 
+diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
+index 36791ad..5a0fe9a 100644
+--- a/controlmapping/controlmapping.c
++++ b/controlmapping/controlmapping.c
+@@ -30,48 +30,25 @@
+ #include "compat.h"
+ #include "utils.h"
+ #include "settings.h"
++#include "ui/ui.h"
+ #include "controlmapping/controlmapping.h"
+ #include "controlmapping/controlmappingsettings.h"
+ 
+ #ifdef GCWZERO
+ char *mapfile = NULL;              /* Path of a .fcm file to load */
++settings_info settings_old;
++static control_mapping_info control_mapping_tmp;
+ 
+-/* Automatic search after the load of snapshots or tapes */
+-static char* get_mapping_filename( const char* filename );
+-
+-static char*
+-get_mapping_filename( const char* filename )
+-{
+-  const char* cfgdir;
+-  char buffer[ PATH_MAX ];
+-  char* filaneme_test;
+-
+-  if ( !filename ) return NULL;
+-
+-  /* Don't exist config path, no error but do nothing */
+-  cfgdir = compat_get_config_path(); if( !cfgdir ) return NULL;
+-
+-  filaneme_test = utils_last_filename( filename, 1 );
+-
+-  snprintf( buffer, PATH_MAX, "%s"FUSE_DIR_SEP_STR"%s"FUSE_DIR_SEP_STR"%s%s",
+-            cfgdir, "mappings", filaneme_test, ".fcm" );
+-
+-  return utils_safe_strdup( buffer );
++/* Stablish current settings and control mapping defaults */
++void
++controlmapping_set_defaults( settings_info *settings ) {
++  control_mapping_copy_from_settings( &control_mapping_default, settings );
+ }
+ 
+-/* Called on emulator startup */
+-int
+-controlmapping_init( void )
+-{
+-  int error;
+-
+-  control_mapping_defaults( &control_mapping_default );
+-  control_mapping_defaults( &control_mapping_current );
+-
+-  error = control_mapping_read_config_file( &control_mapping_current );
+-  if( error ) return error;
+-
+-  return 0;
++/* Stablish defaults as control mapping settings */
++void
++controlmapping_reset_to_defaults( settings_info *settings ) {
++  control_mapping_copy_to_settings( settings, &control_mapping_default );
+ }
+ 
+ void
+@@ -81,33 +58,185 @@
+ }
+ 
+ int
+-controlmapping_load_mapfile( const char *filename )
++controlmapping_load_default_mapfile( )
+ {
++  if ( !control_mapping_read_config_file( &control_mapping_default, defaultmapfile ) ) {
++    control_mapping_copy( &control_mapping_default_old, &control_mapping_default );
++    return 0;
++  } else
++    return 1;
++}
++
++int
++controlmapping_save_default_mapfile( )
++{
++  if ( !control_mapping_write_config( &control_mapping_default, defaultmapfile ) ) {
++    control_mapping_copy( &control_mapping_default_old, &control_mapping_default );
++    return 0;
++  } else
++    return 1;
++}
++
++int
++controlmapping_load_mapfile( const char *filename, int is_autoload )
++{
++  char *old_mapfile;
++
++  /* Mapping per game don't active o unset mapfile */
++  if ( !settings_current.control_mapping_per_game ) {
++    if ( mapfile && !filename ) libspectrum_free( mapfile );
++    mapfile = NULL;
++    return 0;
++  }
++
++  /* We are changing mapfile? Save previous */
++  old_mapfile = mapfile;
+   mapfile = get_mapping_filename( filename );
++  if ( old_mapfile ) {
++    /* Auto-save, changed mapping and Something changed or don't yet created file? */;
++    if ( settings_current.control_mapping_autosave )
++      /* Media eject/cleared or load new */
++      if ( ( !mapfile || strcmp( old_mapfile, mapfile ) ) &&
++           ( control_mapping_something_changed( &control_mapping_current, &settings_current ) || !compat_file_exists( old_mapfile ) ) )
++        controlmapping_save_to_file( old_mapfile );
++    libspectrum_free( old_mapfile );
++  }
++
++  /* We are auto-loading */
++  if ( is_autoload && !settings_current.control_mapping_autoload ) return 0;
++
++  /* initialization with defaults if not checked last loaded as default */
++  if ( !settings_current.control_mapping_not_detached_defaults )
++    control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
++
++  return controlmapping_load_from_file( mapfile, 1 );
++}
++
++int
++controlmapping_load_mapfile_with_class( const char *filename, libspectrum_class_t class, int is_autoload )
++{
++  switch ( class ) {
++  case LIBSPECTRUM_CLASS_TAPE:
++  case LIBSPECTRUM_CLASS_SNAPSHOT:
++  case LIBSPECTRUM_CLASS_DISK_PLUS3:
++  case LIBSPECTRUM_CLASS_DISK_DIDAKTIK:
++  case LIBSPECTRUM_CLASS_DISK_PLUSD:
++  case LIBSPECTRUM_CLASS_DISK_OPUS:
++  case LIBSPECTRUM_CLASS_DISK_TRDOS:
++  case LIBSPECTRUM_CLASS_DISK_GENERIC:
++  case LIBSPECTRUM_CLASS_CARTRIDGE_IF2:
++  case LIBSPECTRUM_CLASS_MICRODRIVE:
++  case LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX:
++    return controlmapping_load_mapfile( filename, 1 );
++
++  default:
++    return controlmapping_load_mapfile( NULL, 1 );
++  }
++}
++
++int
++controlmapping_load_from_file( const char *filename, int current )
++{
++  if ( !filename ) return 1;
++
++  if ( control_mapping_read_config_file( &control_mapping_tmp, filename ) ) return 1;
++  if ( current )
++    control_mapping_copy( &control_mapping_current, &control_mapping_tmp );
++
++  control_mapping_copy_to_settings( &settings_current, &control_mapping_tmp );
++  if ( settings_current.control_mapping_not_detached_defaults )
++    control_mapping_copy( &control_mapping_default, &control_mapping_tmp );
++  return 0;
++}
++
++int
++controlmapping_save_current_mapfile( void )
++{
+   if ( !mapfile ) return 1;
+ 
+-  if ( control_mapping_read_config_file( &control_mapping_current ) ) return 1;
++  /* control mapping file exist but nothing changed */
++  if( compat_file_exists( mapfile ) &&
++      !control_mapping_something_changed( &control_mapping_current, &settings_current ) )
++    return 1;
+ 
+-  control_mapping_copy_to_settings( &settings_current, &control_mapping_current );
+-  return 0;
++  return controlmapping_save_to_file( mapfile );
+ }
+ 
+ int
+ controlmapping_save_mapfile( const char *filename )
+ {
+   mapfile = get_mapping_filename( filename );
+-  if ( !mapfile ) return 1;
++  return controlmapping_save_current_mapfile();
++}
++
++int
++controlmapping_save_to_file( const char *filename )
++{
++  if ( !filename ) return 1;
+ 
+   control_mapping_copy_from_settings( &control_mapping_current, &settings_current );
+-  return control_mapping_write_config( &control_mapping_current );
++  return control_mapping_write_config( &control_mapping_current, filename );
+ }
+ 
++
+ const char*
+ controlmapping_get_filename( void )
+ {
+-  if ( last_filename )
+-    return last_filename;
+-  else
+-    return NULL;
++  return get_mapping_filename( mapfile );
++}
++
++int
++controlmapping_something_changed( settings_info *settings )
++{
++  return control_mapping_something_changed( &control_mapping_current, settings );
++}
++
++int
++controlmapping_something_changed_defaults( settings_info *settings )
++{
++  return control_mapping_something_changed( &control_mapping_default_old, settings );
++}
++
++int
++controlmapping_different_from_defaults( settings_info *settings )
++{
++  return control_mapping_something_changed( &control_mapping_default, settings );
++}
++
++void
++controlmapping_check_settings_changed( settings_info *settings ) {
++  /* Control mapping per game: Enabling */
++  if ( settings->control_mapping_per_game && !settings_old.control_mapping_per_game  ) {
++    /* Initilize */
++    control_mapping_init( NULL );
++    /* Autoload control mapping files if some file is loaded */
++    controlmapping_load_mapfile_with_class( last_filename, last_class, 1 );
++
++  /* Enabled and not change */
++  } else if ( settings->control_mapping_per_game && settings_old.control_mapping_per_game  ) {
++    /* Not detached defaults: Disabling. Load current defaults, only if not yet loaded */
++    if ( !settings->control_mapping_not_detached_defaults && settings_old.control_mapping_not_detached_defaults )
++      controlmapping_load_default_mapfile();
++
++    /* Not detached defaults: Enabling. Save previously current defaults */
++    else if ( settings->control_mapping_not_detached_defaults && !settings_old.control_mapping_not_detached_defaults )
++      controlmapping_save_default_mapfile();
++
++  /* Control mapping per game: Disabling */
++  } else if ( !settings->control_mapping_per_game && settings_old.control_mapping_per_game ) {
++    /* Save current mapfile */
++    controlmapping_save_current_mapfile();
++
++    /* Not detached defaults: diabled. Save defaults and set current settings as new defaults */
++    if ( !settings_old.control_mapping_not_detached_defaults )
++      controlmapping_save_default_mapfile();
++      controlmapping_reset_to_defaults( settings );
++
++    /* Unassign mapfile */
++    controlmapping_load_mapfile_with_class( NULL, LIBSPECTRUM_CLASS_UNKNOWN, 1 );
++  }
++
++  /* Save actual configuration for detect changes */
++  settings_copy( &settings_old, settings );
+ }
+ #endif /* GCWZERO */
+diff --git a/controlmapping/controlmapping.h b/controlmapping/controlmapping.h
+index 4f67cd5..89e6cc6 100644
+--- a/controlmapping/controlmapping.h
++++ b/controlmapping/controlmapping.h
+@@ -25,12 +25,28 @@
+ #ifndef FUSE_CONTROLMAPPING_H
+ #define FUSE_CONTROLMAPPING_H
+ 
+-extern char *mapfile;
++#include <libspectrum.h>
++#include "settings.h"
+ 
+-int controlmapping_load_mapfile( const char *filename );
++extern char *mapfile;
++extern char *defaultmapfile;
++extern settings_info  settings_old;
++
++int controlmapping_load_default_mapfile( );
++int controlmapping_save_default_mapfile( );
++int controlmapping_load_mapfile( const char *filename, int is_autoload );
++int controlmapping_load_mapfile_with_class( const char *filename, libspectrum_class_t class, int is_autoload );
++int controlmapping_save_current_mapfile( void );
+ int controlmapping_save_mapfile( const char *filename );
+-int controlmapping_init( void );
++int controlmapping_load_from_file( const char *filename, int current );
++int controlmapping_save_to_file( const char *filename );
+ void controlmapping_register_startup( void );
+ const char* controlmapping_get_filename( void );
++void controlmapping_set_defaults( settings_info *settings );
++void controlmapping_reset_to_defaults( settings_info *settings );
++int controlmapping_something_changed( settings_info *settings );
++int controlmapping_something_changed_defaults( settings_info *settings );
++int controlmapping_different_from_defaults( settings_info *settings );
++void controlmapping_check_settings_changed( settings_info *settings );
+ 
+ #endif /* FUSE_CONTROLMAPPING_H */
+diff --git a/controlmapping/settings-header.pl b/controlmapping/settings-header.pl
+index 9ebc57f..1ef6bdf 100644
+--- a/controlmapping/settings-header.pl
++++ b/controlmapping/settings-header.pl
+@@ -50,9 +50,7 @@
+     }
+ 
+ 
+-    next if !($name =~ /^joystick/) && !($name =~ /kempston/)
+-         && !($name =~ /fuller/) && !($name =~ /^issue2/)
+-         && !($name =~ /^keyboard/);
++    next if !($name =~ /^joystick/);
+ 
+     $options{$name} = { type => $type, default => $default, short => $short,
+ 			commandline => $commandline,
+@@ -100,7 +98,16 @@
+ 
+ extern control_mapping_info control_mapping_current;
+ extern control_mapping_info control_mapping_default;
++extern control_mapping_info control_mapping_default_old;
++
++extern settings_info settings_old;
++
++#define DEFAULT_MAPPING_FILE "default.fcm"
++
+ extern char *mapfile;
++extern char *defaultmapfile;
++
++char* get_mapping_filename( const char* filename );
+ 
+ void control_mapping_defaults( control_mapping_info *control_mapping );
+ void control_mapping_copy( control_mapping_info *dest, control_mapping_info *src );
+@@ -109,13 +116,16 @@
+ 
+ void control_mapping_set_string( char **string_setting, const char *value );
+ 
++int control_mapping_something_changed( control_mapping_info *dest, settings_info *src );
++
+ int control_mapping_free( control_mapping_info *control_mapping );
+ int control_mapping_settings_free( settings_info *control_mapping );
+ 
+-int control_mapping_read_config_file( control_mapping_info *control_mapping );
+-int control_mapping_write_config( control_mapping_info *control_mapping );
++int control_mapping_read_config_file( control_mapping_info *control_mapping, const char *filename );
++int control_mapping_write_config( control_mapping_info *control_mapping, const char *filename );
+ 
+ void control_mapping_register_startup( void );
++int  control_mapping_init( void *context );
+ 
+ #endif				/* #ifndef FUSE_CONTROL_MAPPING_SETTINGS_H */
+ CODE
+diff --git a/controlmapping/settings.pl b/controlmapping/settings.pl
+index 222cf51..c1897cb 100644
+--- a/controlmapping/settings.pl
++++ b/controlmapping/settings.pl
+@@ -50,9 +50,7 @@
+     }
+ 
+ 
+-    next if !($name =~ /^joystick/) && !($name =~ /kempston/)
+-         && !($name =~ /fuller/) && !($name =~ /^issue2/)
+-         && !($name =~ /^keyboard/);
++    next if !($name =~ /^joystick/);
+ 
+     $options{$name} = { type => $type, default => $default, short => $short,
+ 			commandline => $commandline,
+@@ -103,6 +101,9 @@
+ /* The current control mappings */
+ control_mapping_info control_mapping_current;
+ control_mapping_info control_mapping_default;
++control_mapping_info control_mapping_default_old;
++
++char *defaultmapfile = NULL;
+ 
+ #ifdef HAVE_LIB_XML2
+ static int control_mapping_parse_xml( xmlDocPtr doc, control_mapping_info *control_mapping );
+@@ -118,7 +119,7 @@
+ /* Fill the control mapping structure with sensible defaults */
+ void control_mapping_defaults( control_mapping_info *control_mapping )
+ {
+-  control_mapping_copy_from_settings_internal( control_mapping, &settings_default );
++  control_mapping_copy_internal( control_mapping, &control_mapping_default );
+ }
+ 
+ #ifdef HAVE_LIB_XML2
+@@ -126,19 +127,17 @@
+ /* Read control mappings from the mapping file (if libxml2 is available) */
+ 
+ int
+-control_mapping_read_config_file( control_mapping_info *control_mapping )
++control_mapping_read_config_file( control_mapping_info *control_mapping, const char *filename )
+ {
+   xmlDocPtr doc;
+ 
+   /* If don't have file to load there is no error */
+-  if ( !mapfile ) return 0;
++  if ( !filename ) return 1;
+ 
+   /* See if the file exists, if don't there is no error */
+-  if( !compat_file_exists( mapfile ) ) {
+-      return 0;
+-  }
++  if( !compat_file_exists( filename ) ) return 1;
+ 
+-  doc = xmlReadFile( mapfile, NULL, 0 );
++  doc = xmlReadFile( filename, NULL, 0 );
+   if( !doc ) {
+     ui_error( UI_ERROR_ERROR, "error reading mapping controls file" );
+     return 1;
+@@ -228,14 +227,14 @@
+ }
+ 
+ int
+-control_mapping_write_config( control_mapping_info *control_mapping )
++control_mapping_write_config( control_mapping_info *control_mapping, const char *filename )
+ {
+   char buffer[80];
+ 
+   xmlDocPtr doc; xmlNodePtr root;
+ 
+-  /* No file loaded do nothing */
+-  if ( !mapfile ) return 0;
++  /* If don't have file to save do nothing */
++  if ( !filename ) return 0;
+ 
+   /* Create the XML document */
+   doc = xmlNewDoc( (const xmlChar*)"1.0" );
+@@ -271,7 +270,7 @@
+ 
+   print hashline( __LINE__ ), << 'CODE';
+ 
+-  xmlSaveFormatFile( mapfile, doc, 1 );
++  xmlSaveFormatFile( filename, doc, 1 );
+ 
+   xmlFreeDoc( doc );
+ 
+@@ -282,29 +281,20 @@
+ 
+ /* Read control mapping from the config file as ini file (if libxml2 is not available) */
+ 
+-static int
+-control_mapping_read_config_file( control_mapping_info *control_mapping )
++int
++control_mapping_read_config_file( control_mapping_info *control_mapping, const char *filename )
+ {
+-  struct stat stat_info;
+   int error;
+ 
+   utils_file file;
+ 
+   /* If don't have file to load there is no error */
+-  if ( !mapfile ) return 0;
++  if ( !filename ) return 1;
+ 
+   /* See if the file exists; if doesn't, it's not a problem */
+-  if( stat( mapfile, &stat_info ) ) {
+-    if( errno == ENOENT ) {
+-      return 0;
+-    } else {
+-      ui_error( UI_ERROR_ERROR, "couldn't stat '%s': %s", mapfile,
+-		strerror( errno ) );
+-      return 1;
+-    }
+-  }
++  if( !compat_file_exists( filename ) ) return 1;
+ 
+-  error = utils_read_file( mapfile, &file );
++  error = utils_read_file( filename, &file );
+   if( error ) {
+     ui_error( UI_ERROR_ERROR, "error reading control mapping file" );
+     return 1;
+@@ -437,12 +427,6 @@
+ }
+ 
+ static int
+-control_mapping_boolean_write( compat_fd doc, const char* name, int config )
+-{
+-  return control_mapping_string_write( doc, name, config ? "1" : "0" );
+-}
+-
+-static int
+ control_mapping_numeric_write( compat_fd doc, const char* name, int config )
+ {
+   char buffer[80]; 
+@@ -451,18 +435,17 @@
+ }
+ 
+ int
+-control_mapping_write_config( control_mapping_info *control_mapping )
++control_mapping_write_config( control_mapping_info *control_mapping, const char *filename )
+ {
+-  const char *cfgdir; char path[ PATH_MAX ];
+-
+   compat_fd doc;
+ 
+-  if ( !mapfile ) return 1;
++  /* If don't have file to save do nothing */
++  if ( !filename ) return 0;
+ 
+-  doc = compat_file_open( mapfile, 1 );
++  doc = compat_file_open( filename, 1 );
+   if( doc == COMPAT_FILE_OPEN_FAILED ) {
+     ui_error( UI_ERROR_ERROR, "couldn't open `%s' for writing: %s\n",
+-	      path, strerror( errno ) );
++	      filename, strerror( errno ) );
+     return 1;
+   }
+ 
+@@ -515,6 +498,32 @@
+ 
+ #endif				/* #ifdef HAVE_LIB_XML2 */
+ 
++/* Compare two control mapping options */
++int
++control_mapping_something_changed( control_mapping_info *dest, settings_info *src )
++{
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++	print "  if ( dest->$name != src->$name ) return 1;\n";
++    } elsif( $type eq 'string' ) {
++        print << "CODE";
++  if ( ( src->$name && !dest->$name ) ||
++       ( !src->$name && dest->$name ) ||
++       ( src->$name && dest->$name && strcmp( src->$name, dest->$name ) ) )
++    return 1;
++CODE
++    }
++}
++
++print << "CODE";
++  return 0;
++}
++
+ /* Copy one custom mapping object to another */
+ static void
+ control_mapping_copy_internal( control_mapping_info *dest, control_mapping_info *src )
+@@ -658,15 +667,66 @@
+   return 0;
+ }
+ 
++int
++control_mapping_init( void *context )
++{
++  /* Current settings as defaults for control mapping */
++  control_mapping_copy_from_settings( &control_mapping_default, &settings_current );
++
++ defaultmapfile = get_mapping_filename( DEFAULT_MAPPING_FILE );
++ if ( settings_current.control_mapping_per_game && !settings_current.control_mapping_not_detached_defaults ) {
++   if ( defaultmapfile ) {
++      /* Read default config file. If it doesn't exist create it */
++      if ( compat_file_exists( defaultmapfile ) ) {
++        control_mapping_read_config_file( &control_mapping_default, defaultmapfile );
++        control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
++      } else
++        control_mapping_write_config( &control_mapping_default, defaultmapfile ) ;
++   }
++ }
++
++  /* Stablish defaults as current control mapping */
++  control_mapping_defaults( &control_mapping_current );
++  control_mapping_copy( &control_mapping_default_old, &control_mapping_default );
++
++  /* Save actual settings for detect changes for control mapping */
++  settings_copy( &settings_old, &settings_current );
++
++  ui_menu_activate( UI_MENU_ITEM_JOYSTICKS_CONTROL_MAPPING, settings_current.control_mapping_per_game ? 1 : 0 );
++
++  return 0;
++}
++
+ static void
+ control_mapping_end( void )
+ {
+-  if( settings_current.autosave_settings ) {
+-    control_mapping_copy_from_settings( &control_mapping_current, &settings_current );
+-    control_mapping_write_config( &control_mapping_current );
++  /* Control mapping per game and auto-save actives? */
++  if( settings_current.control_mapping_per_game && settings_current.control_mapping_autosave ) {
++    /* Save only if something changed or if don't exist mapfile yet */
++    if( mapfile &&
++        ( !compat_file_exists( mapfile ) ||
++           control_mapping_something_changed( &control_mapping_current, &settings_current ) ) ) {
++      control_mapping_copy_from_settings( &control_mapping_current, &settings_current );
++      control_mapping_write_config( &control_mapping_current, mapfile );
++    }
++    /* Save to defaults if detached defaults */
++    if ( !settings_current.control_mapping_not_detached_defaults )
++      control_mapping_write_config( &control_mapping_default, defaultmapfile );
+   }
+ 
++  /* 
++     Restore default settings if not checked last mapping as default.
++     If autosave is activated then settings_end will not save the last 
++     control mapping loaded
++  */
++  if ( settings_current.control_mapping_per_game && !settings_current.control_mapping_not_detached_defaults )
++    control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
++
++  /* Free stuff */
+   control_mapping_free( &control_mapping_current );
++  control_mapping_free( &control_mapping_default );
++  control_mapping_free( &control_mapping_default_old );
++  if ( mapfile ) libspectrum_free( mapfile );
+ 
+ #ifdef HAVE_LIB_XML2
+   xmlCleanupParser();
+@@ -686,8 +746,30 @@
+     STARTUP_MANAGER_MODULE_SETUID
+   };
+   startup_manager_register( STARTUP_MANAGER_MODULE_CONTROL_MAPPING_END, dependencies,
+-                            ARRAY_SIZE( dependencies ), NULL, NULL,
++                            ARRAY_SIZE( dependencies ), control_mapping_init, NULL,
+                             control_mapping_end );
+ }
+ 
++char*
++get_mapping_filename( const char* filename )
++{
++  const char* cfgdir;
++  char buffer[ PATH_MAX ];
++  char* filaneme_test;
++
++  if ( !filename ) return NULL;
++
++  /* Don't exist config path, no error but do nothing */
++  cfgdir = compat_get_config_path(); if( !cfgdir ) return NULL;
++
++  filaneme_test = utils_last_filename( filename, 1 );
++
++  snprintf( buffer, PATH_MAX, "%s"FUSE_DIR_SEP_STR"%s"FUSE_DIR_SEP_STR"%s%s",
++            cfgdir, "mappings", filaneme_test, ".fcm" );
++
++  libspectrum_free( filaneme_test );
++
++  return utils_safe_strdup( buffer );
++}
++
+ CODE
+diff --git a/fuse.c b/fuse.c
+index ab911aa..7853e9a 100644
+--- a/fuse.c
++++ b/fuse.c
+@@ -390,7 +390,6 @@
+   if( settings_init( &first_arg, argc, argv ) ) return 1;
+ 
+ #ifdef GCWZERO
+-  if( controlmapping_init() ) return 1;
+   settings_current.full_screen = 1;
+ #endif
+ 
+@@ -781,7 +780,7 @@
+ 
+ #ifdef GCWZERO
+     if (class != LIBSPECTRUM_CLASS_UNKNOWN)
+-      utils_set_last_loaded_file( filename );
++      utils_set_last_loaded_file( filename, class, 1 );
+ #endif
+   }
+ 
+diff --git a/menu.c b/menu.c
+index 2224bbe..5775816 100644
+--- a/menu.c
++++ b/menu.c
+@@ -382,6 +382,10 @@
+ 
+   tape_open( filename, 0 );
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( filename, LIBSPECTRUM_CLASS_TAPE , 0 );
++#endif
++
+   libspectrum_free( filename );
+ 
+   fuse_emulation_unpause();
+@@ -403,6 +407,11 @@
+ {
+   ui_widget_finish();
+   tape_close();
++
++#ifdef GCWZERO
++  utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_TAPE , 0 );
++#endif
++
+ }
+ 
+ MENU_CALLBACK( menu_media_tape_write )
+@@ -503,6 +512,10 @@
+     break;
+   }
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( filename, ( type == 3 ) ? LIBSPECTRUM_CLASS_MICRODRIVE : LIBSPECTRUM_CLASS_DISK_GENERIC , 0 );
++#endif
++
+   libspectrum_free( filename );
+ 
+   fuse_emulation_unpause();
+@@ -526,6 +539,10 @@
+     ui_media_drive_eject( type, which );
+     break;
+   }
++
++#ifdef GCWZERO
++  utils_set_last_loaded_file( NULL, ( type == 3 ) ? LIBSPECTRUM_CLASS_MICRODRIVE : LIBSPECTRUM_CLASS_DISK_GENERIC , 0 );
++#endif
+ }
+ 
+ MENU_CALLBACK_WITH_ACTION( menu_media_save )
+@@ -601,6 +618,10 @@
+ 
+   dck_insert( filename );
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( filename, LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX, 0 );
++#endif
++
+   libspectrum_free( filename );
+ 
+   fuse_emulation_unpause();
+@@ -610,6 +631,10 @@
+ {
+   ui_widget_finish();
+   dck_eject();
++
++#ifdef GCWZERO
++  utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX, 0 );
++#endif
+ }
+ 
+ MENU_CALLBACK( menu_media_cartridge_interface2_insert )
+@@ -623,6 +648,10 @@
+ 
+   if2_insert( filename );
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( filename, LIBSPECTRUM_CLASS_CARTRIDGE_IF2, 0 );
++#endif
++
+   libspectrum_free( filename );
+ 
+   fuse_emulation_unpause();
+@@ -632,6 +661,10 @@
+ {
+   ui_widget_finish();
+   if2_eject();
++
++#ifdef GCWZERO
++  utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_CARTRIDGE_IF2, 0 );
++#endif
+ }
+ 
+ MENU_CALLBACK_WITH_ACTION( menu_media_ide_insert )
+@@ -1114,7 +1147,134 @@
+ const char*
+ menu_control_mapping_detail( void )
+ {
+-  return controlmapping_get_filename();
++  if ( settings_current.control_mapping_per_game )
++    return "Active";
++  else
++    return "Inactive";
++}
++
++const char*
++menu_control_mapping_load_detail( void )
++{
++  const char* path = "/Options/Joysticks/Load control mapping";
++  const char* filename;
++  char* buffer;
++
++  if ( !settings_current.control_mapping_per_game )
++    return NULL;
++
++  /* If don't exist file for control mapping don't show */
++  filename = controlmapping_get_filename();
++  if ( !compat_file_exists( filename ) ) {
++    ui_menu_item_set_active( path , 0);
++    return NULL;
++  }
++  ui_menu_item_set_active( path,
++                           controlmapping_something_changed( &settings_current ) ? 1 : 0 );
++
++  filename = utils_last_filename( controlmapping_get_filename(), 0 );
++  buffer   = strndup( filename, 20 );
++  if ( strlen(filename) > 20 )
++    memcpy( &(buffer[19]), ">", 1 );
++
++  return buffer;
++}
++
++const char*
++menu_control_mapping_save_detail( void )
++{
++  const char* path = "/Options/Joysticks/Save control mapping";
++
++  const char* filename;
++  const char* mapfile;
++  char* buffer;
++  int changed;
++
++  if ( !settings_current.control_mapping_per_game )
++    return NULL;
++
++  mapfile = controlmapping_get_filename();
++  filename = utils_last_filename( mapfile,0 );
++  if (filename) {
++    buffer = strndup( filename, 20 );
++    if ( strlen(filename) > 20 )
++      memcpy( &(buffer[19]), ">", 1 );
++  } else
++    buffer = NULL;
++
++  if ( buffer && !compat_file_exists( mapfile ) )
++    changed = 1;
++  else
++    changed = controlmapping_something_changed( &settings_current );
++
++  ui_menu_item_set_active( path, buffer ? ( changed ? 1 : 0 ) : 0 );
++
++  return buffer;
++}
++
++const char*
++menu_control_mapping_load_default_detail( void )
++{
++  const char* path = "/Options/Joysticks/Default control mapping/Reload";
++  int changed;
++
++  changed = controlmapping_something_changed_defaults( &settings_current );
++  ui_menu_item_set_active( path, changed ? 1 : 0 );
++
++  return NULL;
++}
++
++const char*
++menu_control_mapping_save_default_detail( void )
++{
++  const char* path = "/Options/Joysticks/Default control mapping/Save";
++  int changed;
++
++  changed = controlmapping_something_changed_defaults( &settings_current );
++  ui_menu_item_set_active( path, changed ? 1 : 0 );
++
++  return NULL;
++}
++
++const char*
++menu_control_mapping_default_detail( void )
++{
++  const char* path = "/Options/Joysticks/Default control mapping";
++
++  if ( settings_current.control_mapping_per_game && settings_current.control_mapping_not_detached_defaults )
++    ui_menu_item_set_active( path, 0 );
++
++  return NULL;
++}
++
++const char*
++menu_control_mapping_reset_default_detail( void )
++{
++  const char* path = "/Options/Joysticks/Reset to default controls";
++
++  if ( settings_current.control_mapping_per_game ) {
++    if ( settings_current.control_mapping_not_detached_defaults )
++      ui_menu_item_set_active( path, 0 );
++    else
++      ui_menu_item_set_active( path, controlmapping_different_from_defaults( &settings_current ) ? 1 : 0 );
++  }
++
++  return NULL;
++}
++
++const char*
++menu_control_mapping_set_default_detail( void )
++{
++  const char* path = "/Options/Joysticks/Set current as default";
++
++  if ( settings_current.control_mapping_per_game ) {
++    if ( settings_current.control_mapping_not_detached_defaults )
++      ui_menu_item_set_active( path, 0 );
++    else
++      ui_menu_item_set_active( path, controlmapping_different_from_defaults( &settings_current ) ? 1 : 0 );
++  }
++
++  return NULL;
+ }
+ #endif
+ 
+diff --git a/menu.h b/menu.h
+index 2eae0b6..7b8f441 100644
+--- a/menu.h
++++ b/menu.h
+@@ -166,8 +166,22 @@
+ #ifdef GCWZERO
+ MENU_DETAIL( menu_gcw0_keyboard_detail );
+ MENU_DETAIL( menu_control_mapping_detail );
++MENU_DETAIL( menu_control_mapping_load_detail );
++MENU_DETAIL( menu_control_mapping_save_detail );
++MENU_DETAIL( menu_control_mapping_default_detail );
++MENU_DETAIL( menu_control_mapping_reset_default_detail );
++MENU_DETAIL( menu_control_mapping_set_default_detail );
+ MENU_CALLBACK_WITH_ACTION( menu_options_load_control_mapping );
+ MENU_CALLBACK_WITH_ACTION( menu_options_save_control_mapping );
++MENU_CALLBACK_WITH_ACTION( menu_options_load_file_control_mapping );
++MENU_CALLBACK_WITH_ACTION( menu_options_save_file_control_mapping );
++MENU_CALLBACK_WITH_ACTION( menu_options_set_control_mapping_default );
++MENU_CALLBACK_WITH_ACTION( menu_options_reset_control_mapping_default );
++MENU_CALLBACK( menu_options_joysticks_controlmappingpergame );
++MENU_DETAIL( menu_control_mapping_load_default_detail );
++MENU_DETAIL( menu_control_mapping_save_default_detail );
++MENU_CALLBACK_WITH_ACTION( menu_options_load_default_control_mapping );
++MENU_CALLBACK_WITH_ACTION( menu_options_save_default_control_mapping );
+ #endif
+ 
+ MENU_CALLBACK( menu_machine_pause );
+diff --git a/menu_data.dat b/menu_data.dat
+index 3c23366..c55855b 100644
+--- a/menu_data.dat
++++ b/menu_data.dat
+@@ -98,8 +98,22 @@
+ Options/Joysticks/_Keyboard..., Item,, menu_options_joysticks_select, menu_keyboard_joystick_detail, 3
+ #ifdef GCWZERO
+ Options/Joysticks/_GCW0 Keyboard..., Item,, menu_options_joysticks_select, menu_gcw0_keyboard_detail, 4
+-Options/Joysticks/_Load control mapping, Item,, menu_options_load_control_mapping, menu_control_mapping_detail, 5
+-Options/Joysticks/_Save control mapping, Item,, menu_options_save_control_mapping, menu_control_mapping_detail, 5
++Options/separator, Separator
++Options/Joysticks/_Control mapping per game..., Item,,, menu_control_mapping_detail
++Options/Joysticks/_Load control mapping, Item,, menu_options_load_control_mapping, menu_control_mapping_load_detail, 5
++Options/Joysticks/_Save control mapping, Item,, menu_options_save_control_mapping, menu_control_mapping_save_detail, 6
++Options/Joysticks/L_oad control mapping from file, Item,, menu_options_load_file_control_mapping,, 7
++Options/Joysticks/S_ave control mapping to file, Item,, menu_options_save_file_control_mapping,, 8
++Options/Joysticks/Defa_ult control mapping, Branch,,, menu_control_mapping_default_detail
++Options/Joysticks/Reset to _default controls, Item,, menu_options_reset_control_mapping_default, menu_control_mapping_reset_default_detail, 9
++Options/Joysticks/Se_t current as default, Item,, menu_options_set_control_mapping_default, menu_control_mapping_set_default_detail, 10
++
++Options/Joysticks/Default control mapping/GCW0 Joystick _1..., Item,, menu_options_joysticks_select, menu_joystick_1_detail, 1
++Options/Joysticks/Default control mapping/Joystick _2..., Item,, menu_options_joysticks_select, menu_joystick_2_detail, 2
++Options/Joysticks/Default control mapping/_Keyboard..., Item,, menu_options_joysticks_select, menu_keyboard_joystick_detail, 3
++Options/Joysticks/Default control mapping/_GCW0 Keyboard..., Item,, menu_options_joysticks_select, menu_gcw0_keyboard_detail, 4
++Options/Joysticks/Default control mapping/_Reload, Item,, menu_options_load_default_control_mapping, menu_control_mapping_load_default_detail, 5
++Options/Joysticks/Default control mapping/_Save, Item,, menu_options_save_default_control_mapping, menu_control_mapping_save_default_detail, 6
+ #endif
+ 
+ Options/S_elect ROMs, Branch
+diff --git a/settings.dat b/settings.dat
+index 02365ea..26472e2 100644
+--- a/settings.dat
++++ b/settings.dat
+@@ -166,6 +166,11 @@
+ 
+ keyboard_arrows_shifted, boolean, 1
+ 
++control_mapping_per_game, boolean, 0
++control_mapping_autoload, boolean, 1
++control_mapping_autosave, boolean, 1
++control_mapping_not_detached_defaults, boolean, 0
++
+ rzx_compression, boolean, 1,, compress-rzx
+ competition_mode, boolean, 0
+ competition_code, numeric, 0
+diff --git a/ui.c b/ui.c
+index 39b6347..c1b949d 100644
+--- a/ui.c
++++ b/ui.c
+@@ -670,8 +670,19 @@
+     "/Media/Tape/Rewind", 1,
+     "/Media/Tape/Clear", 1,
+     "/Media/Tape/Write...", 1 },
+-  
++
++#ifdef GCWZERO
++  { UI_MENU_ITEM_JOYSTICKS_CONTROL_MAPPING,
++    "/Options/Joysticks/Save control mapping",
++    "/Options/Joysticks/Load control mapping", 0,
++    "/Options/Joysticks/Reset to default controls", 0,
++    "/Options/Joysticks/Set current as default", 0,
++    "/Options/Joysticks/Default control mapping", 0 },
++
++  { UI_MENU_ITEM_JOYSTICKS_CONTROL_MAPPING, NULL },
++#else
+   { UI_MENU_ITEM_TAPE_RECORDING, NULL },	/* End marker */
++#endif
+ 
+ };
+ 
+diff --git a/ui/options.dat b/ui/options.dat
+index 57d4331..f7d7b7e 100644
+--- a/ui/options.dat
++++ b/ui/options.dat
+@@ -144,3 +144,12 @@
+ Combo, Movie (c)ompression, movie_compr, INPUT_KEY_c, *None
+ #endif
+ Checkbox, (S)top recording after RZX ends, movie_stop_after_rzx, INPUT_KEY_S
++
++#ifdef GCWZERO
++control_mapping
++Control Mapping Options
++Checkbox, (C)ontrol mapping per game, control_mapping_per_game, INPUT_KEY_A
++Checkbox, Auto-(l)oad, control_mapping_autoload, INPUT_KEY_L
++Checkbox, Auto-(s)ave, control_mapping_autosave, INPUT_KEY_S
++Checkbox, No(t) detached defaults, control_mapping_not_detached_defaults, INPUT_KEY_T
++#endif
+\ No newline at end of file
+diff --git a/ui/sdl/sdlhotkeys.c b/ui/sdl/sdlhotkeys.c
+index 5ab578d..8e4a06a 100644
+--- a/ui/sdl/sdlhotkeys.c
++++ b/ui/sdl/sdlhotkeys.c
+@@ -26,9 +26,6 @@
+ #include <SDL.h>
+ #include "settings.h"
+ #include "ui/ui.h"
+-#if VKEYBOARD
+-#include "ui/vkeyboard.h"
+-#endif
+ #include "ui/hotkeys.h"
+ 
+ #ifdef GCWZERO
+@@ -91,16 +88,17 @@
+ int
+ push_combo_event( Uint8* flags )
+ {
+-  SDLKey        combo_key = 0;
+-  SDL_Event    *combo_event;
+-  int       toggle_triple_buffer = 0;
++  SDLKey combo_key = 0;
++  SDL_Event *combo_event;
++  int toggle_triple_buffer = 0;
+ 
+   /* Search valid combos */
+   switch (*flags) {
+   case 0xA1: combo_key = SDLK_F4; break;/* L1 + Select + X General opetions */
+   case 0xA2: combo_key = SDLK_F9; break;/* L1 + Select + Y Machine Select */
+-  case 0xC1: combo_key = SDLK_F7; break;/* L1 + Start + X Tape Open */
+-  case 0xC2: combo_key = SDLK_F8; break;/* L1 + Start + Y Tape play */
++  case 0x61: combo_key = SDLK_F7; break;/* L1 + Start + X Tape Open */
++  case 0x62: combo_key = SDLK_F8; break;/* L1 + Start + Y Tape play */
++  case 0x91: combo_key = SDLK_F12; break;/*R1 + Select + X Joystick */
+   case 0x30: toggle_triple_buffer = 1; break;/* L1 + R1 Toggle triple buffer */
+   case 0x21: combo_key = SDLK_F3; break;/* L1 + X Open files */
+   case 0x22: combo_key = SDLK_F2; break;/* L1 + Y  Save files*/
+@@ -120,7 +118,7 @@
+     *flags = 0x00;
+     combo_done = 1;
+     return 1;
+-  } else if (toggle_triple_buffer) {
++  } else if ( toggle_triple_buffer ) {
+     settings_current.triple_buffer = !settings_current.triple_buffer;
+     combo_done = 1;
+     *flags = 0x00;
+@@ -151,6 +149,7 @@
+    L1 + Y           Save file (F2)
+    R1 + X           Exit fuse (F10)
+    R1 + Y           Reset machine (F5)
++   R1 + Select + X  Joystick
+    L1 + Select + X  General options (F4)
+    L1 + Select + Y  Machine select (F9)
+    L1 + Start + X   Tape open (F7)
+diff --git a/ui/ui.h b/ui/ui.h
+index b728f26..7b2547c 100644
+--- a/ui/ui.h
++++ b/ui/ui.h
+@@ -242,6 +242,9 @@
+   UI_MENU_ITEM_RECORDING_ROLLBACK,
+   UI_MENU_ITEM_AY_LOGGING,
+   UI_MENU_ITEM_TAPE_RECORDING,
++#ifdef GCWZERO
++  UI_MENU_ITEM_JOYSTICKS_CONTROL_MAPPING,
++#endif
+ 
+ } ui_menu_item;
+ 
+diff --git a/ui/widget/Makefile.am b/ui/widget/Makefile.am
+index aa5f023..b835c09 100644
+--- a/ui/widget/Makefile.am
++++ b/ui/widget/Makefile.am
+@@ -57,7 +57,8 @@
+ 
+ if BUILD_GCWZERO
+ ui_widget_files +=  \
+-                    ui/widget/vkeyboard.c
++                    ui/widget/vkeyboard.c \
++                    ui/widget/controlmapping.c
+ endif
+ 
+ ui_widget_built = \
+diff --git a/ui/widget/controlmapping.c b/ui/widget/controlmapping.c
+new file mode 100644
+index 0000000..43c31e6
+--- /dev/null
++++ b/ui/widget/controlmapping.c
+@@ -0,0 +1,44 @@
++/* controlmapping.c: Control Mapping for OpenDingux. Widget functions.
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++#include <config.h>
++
++#include "widget_internals.h"
++#include "controlmapping/controlmapping.h"
++
++#ifdef GCWZERO
++int widget_control_mapping_finish( widget_finish_state finished )
++{
++  widget_options_finish( finished );
++
++  /* If we exited normally, actually set the options */
++  if( finished == WIDGET_FINISHED_OK ) {
++    controlmapping_check_settings_changed( &settings_current );
++
++    /* Activate/Deactivate menu options */
++    ui_menu_activate(UI_MENU_ITEM_JOYSTICKS_CONTROL_MAPPING, settings_current.control_mapping_per_game ? 1 : 0);
++  } /* WIDGET_FINISHED_OK */
++
++  return 0;
++}
++#endif
+diff --git a/ui/widget/filesel.c b/ui/widget/filesel.c
+index 7d5bd32..5a58eed 100644
+--- a/ui/widget/filesel.c
++++ b/ui/widget/filesel.c
+@@ -142,10 +142,7 @@
+   }
+   if( widget_filesel_name )
+     filename = utils_safe_strdup( widget_filesel_name );
+-#ifdef GCWZERO
+-  if ( filename )
+-    last_filename = utils_last_filename( filename, 1 );
+-#endif
++
+   return filename;
+   
+ }
+@@ -1003,7 +1000,7 @@
+       text_data.max_length = 30;
+ #ifdef GCWZERO
+       if (last_filename)
+-        snprintf( text_data.text, 30, "%s", last_filename );
++        snprintf( text_data.text, 30, "%s", utils_last_filename( last_filename, 1 ) );
+       else
+ #endif
+       text_data.text[0] = 0;
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index 6ab6603..ae03213 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -56,6 +56,9 @@
+ static size_t highlight_line = 0;
+ static size_t count;
+ #ifdef GCWZERO
++settings_info settings_previous;
++int in_control_mapping_defaults = 0;
++static size_t last_mapping_button_line = 0;
+ static int *current_settings[ 17 ];
+ #else
+ static int *current_settings[ 16 ];
+@@ -68,6 +71,8 @@
+ set_key_for_button_ ## which ( int action ) \
+ { \
+   *current_settings[ which ] = action; \
++  if ( settings_current.control_mapping_per_game && settings_current.control_mapping_not_detached_defaults ) \
++    controlmapping_set_defaults( &settings_current ); \
+   int number_widgets = widgets_to_end; \
+   widgets_to_end = 0; \
+   widget_end_n_widgets( number_widgets, WIDGET_FINISHED_OK ); \
+@@ -324,6 +329,31 @@
+ SUBMENU_DEVICE_SELECTIONS_GCW0( gcw0_keys )
+ #endif
+ 
++#ifdef GCWZERO
++#define BUTTON_MAPPING_MENU \
++  ( strcmp( menu->text, "Select joystick button" ) == 0 || \
++    strcmp( menu->text, "Map GCW0 to keyboard key" ) == 0 || \
++    strcmp( menu->text, "Select keyboard key" ) == 0 )
++#define DEFAULT_CONTROL_MAPPING_MENU( text ) \
++ ( strcmp( text, "Default control mapping" ) == 0 )
++
++static void
++controlmapping_menu_enter_to_defaults( void )
++{
++  in_control_mapping_defaults = 1;
++  settings_copy( &settings_previous, &settings_current );
++  controlmapping_reset_to_defaults( &settings_current );
++}
++
++static void
++controlmapping_menu_exit_from_defaults( void )
++{
++  controlmapping_set_defaults( &settings_current );
++  settings_copy( &settings_current, &settings_previous );
++  in_control_mapping_defaults = 0;
++}
++#endif
++
+ static void
+ print_items( void )
+ {
+@@ -379,6 +409,11 @@
+ 
+   menu = (widget_menu_entry*)data;
+ 
++#ifdef GCWZERO
++  if ( last_mapping_button_line && BUTTON_MAPPING_MENU )
++    highlight_line = last_mapping_button_line;
++#endif
++
+   /* How many menu items do we have? */
+   for( ptr = &menu[1]; ptr->text; ptr++ )
+     height += ptr->text[0] ? 2 : 1;
+@@ -415,6 +450,11 @@
+   case INPUT_KEY_End:  /* RetroFW */
+ #ifdef GCWZERO
+     widgets_to_end = 0;
++    last_mapping_button_line = 0;
++    if ( in_control_mapping_defaults ) {
++      controlmapping_menu_exit_from_defaults();
++    }
++    in_control_mapping_defaults = 0;
+ #endif
+     widget_end_all( WIDGET_FINISHED_CANCEL );
+     return;
+@@ -422,10 +462,16 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Alt_L: /* B */
+-#endif
++#else
+   case INPUT_KEY_Escape:
++#endif
+   case INPUT_JOYSTICK_FIRE_2:
+ #ifdef GCWZERO
++    if ( BUTTON_MAPPING_MENU  )
++      last_mapping_button_line = 0;
++    if ( in_control_mapping_defaults && DEFAULT_CONTROL_MAPPING_MENU( menu->text ) ) {
++      controlmapping_menu_exit_from_defaults();
++    }
+     if (widgets_to_end) widgets_to_end--;
+ #endif
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+@@ -433,21 +479,21 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Control_L: /* A */
+-#endif
++#else
+   case INPUT_KEY_Return:
+   case INPUT_KEY_KP_Enter:
++#endif
+   case INPUT_JOYSTICK_FIRE_1:
+     ptr=&menu[1 + highlight_line];
+     if(!ptr->inactive) {
+       if( ptr->submenu ) {
+ #ifdef GCWZERO
+-        /* TODO: Any better form to do this? */
++        /* TODO: Any better way to do this? */
+         /* We count the widgets to end from this options */
+-        if (widgets_to_end ||
+-            strcmp(menu->text,"Select joystick button") == 0 ||
+-            strcmp(menu->text,"Map GCW0 to keyboard key") == 0 ||
+-            strcmp(menu->text,"Select keyboard key") == 0 )
++        if ( widgets_to_end || BUTTON_MAPPING_MENU )
+           widgets_to_end++;
++        if ( DEFAULT_CONTROL_MAPPING_MENU( ptr->submenu->text ) )
++          controlmapping_menu_enter_to_defaults();
+ #endif
+         widget_do_menu( ptr->submenu );
+       } else {
+@@ -509,6 +555,10 @@
+ 
+   if( cursor_pressed ) {
+     highlight_line = new_highlight_line;
++#ifdef GCWZERO
++    if ( BUTTON_MAPPING_MENU )
++      last_mapping_button_line = highlight_line;
++#endif
+     print_items();
+     return;
+   }
+@@ -777,31 +827,107 @@
+ 
+ #ifdef GCWZERO
+ void
++menu_options_joysticks_controlmappingpergame( int action )
++{
++  widget_do_joysticks_controlmapping();
++}
++
++void
+ menu_options_load_control_mapping( int action )
+ {
+-  const char *message = "Load control mapping?";
++  const char *message = "Reload control mapping?";
++  const char *filename;
++
++  filename = controlmapping_get_filename();
++  if (!filename) return;
+ 
+   if( widget_do_query( message ) ||
+       !widget_query.confirm )
+     return;
+ 
+-  widget_end_all( WIDGET_FINISHED_OK );
+-
+-  controlmapping_load_mapfile( controlmapping_get_filename() );
++  controlmapping_load_mapfile( filename, 0 );
++  print_items();
+ }
+ 
+ void
+ menu_options_save_control_mapping( int action )
+ {
+   const char *message = "Save control mapping?";
++  const char *filename;
++
++  filename = controlmapping_get_filename();
++  if (!filename) return;
+ 
+   if( widget_do_query( message ) ||
+       !widget_query.confirm )
+     return;
+ 
+-  widget_end_all( WIDGET_FINISHED_OK );
++  controlmapping_save_mapfile( filename );
++  print_items();
++}
+ 
+-  controlmapping_save_mapfile( controlmapping_get_filename() );
++void
++menu_options_load_file_control_mapping( int action )
++{
++  char *filename;
++
++  filename = ui_get_open_filename( "Fuse - Load Control Mapping" );
++  if( !filename ) return;
++
++  controlmapping_load_from_file( filename, 0 );
++  print_items();
++}
++
++void
++menu_options_save_file_control_mapping( int action )
++{
++  char *filename;
++
++  filename = ui_get_save_filename( "Fuse - Save Control Mapping" );
++  if( !filename ) return;
++
++  controlmapping_save_to_file( filename );
++}
++
++void
++menu_options_load_default_control_mapping( int action )
++{
++  controlmapping_load_default_mapfile();
++  controlmapping_reset_to_defaults( &settings_current );
++  print_items();
++}
++void
++menu_options_save_default_control_mapping( int action )
++{
++  controlmapping_set_defaults( &settings_current );
++  controlmapping_save_default_mapfile();
++  print_items();
++}
++
++void
++menu_options_set_control_mapping_default( int action )
++{
++  const char *message = "Set current control mapping as default?";
++
++  if( widget_do_query( message ) ||
++      !widget_query.confirm )
++    return;
++
++  controlmapping_set_defaults( &settings_current );
++  print_items();
++}
++
++void
++menu_options_reset_control_mapping_default( int action )
++{
++  const char *message = "Reset current control mapping to defaults?";
++
++  if( widget_do_query( message ) ||
++      !widget_query.confirm )
++    return;
++
++  controlmapping_reset_to_defaults( &settings_current );
++  print_items();
+ }
+ #endif
+ 
+diff --git a/ui/widget/query.c b/ui/widget/query.c
+index 4d35b5b..260b167 100644
+--- a/ui/widget/query.c
++++ b/ui/widget/query.c
+@@ -276,7 +276,11 @@
+   case INPUT_KEY_KP_Enter:
+   case INPUT_JOYSTICK_FIRE_1:
+     query[highlight_line].click();
++#ifdef GCWZERO
++    widget_end_widget( WIDGET_FINISHED_OK );
++#else
+     widget_end_all( WIDGET_FINISHED_OK );
++#endif
+ #ifdef GCWZERO
+     if (!dont_refresh_display)
+ #endif
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index a8af411..521f5ac 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -99,6 +99,40 @@
+ /* The settings used whilst playing with an options dialog box */
+ settings_info widget_options_settings;
+ 
++#ifdef GCWZERO
++static int widget_do_for_path( widget_menu_entry *data, const char* path )
++{
++  int found = 0;
++  widget_menu_entry *submenu, *menu;
++  char *search_path;
++  char *entry;
++
++  search_path = utils_safe_strdup( path );
++  entry = strtok( search_path, "/" );
++  if ( entry ) {
++    menu = &(widget_menu[0]);
++    while (menu) {
++      submenu = menu->submenu;
++      if (submenu) {
++        if ( strcmp( submenu->text, entry ) == 0 ) {
++          menu = submenu;
++          entry = strtok(NULL,"/");
++          if (!entry) {
++            found = 1;
++            break;
++          }
++        } else menu++;
++      } else
++        menu++;
++    } /* while (menu) */
++  }
++  libspectrum_free( search_path );
++
++  if (found) return widget_do_menu(menu);
++  return 0;
++}
++#endif
++
+ static int widget_read_font( const char *filename )
+ {
+   utils_file file;
+@@ -777,6 +811,9 @@
+ #ifdef VKEYBOARD
+   { widget_vkeyboard_draw, widget_vkeyboard_finish, widget_vkeyboard_keyhandler  },
+ #endif
++#ifdef GCWZERO
++  { widget_control_mapping_draw, widget_control_mapping_finish, widget_control_mapping_keyhandler  },
++#endif
+ };
+ 
+ #ifndef UI_SDL
+@@ -921,15 +958,21 @@
+ #ifdef VKEYBOARD
+ #ifdef GCWZERO
+   case INPUT_KEY_Return: /*Start*/
+-#endif
++#endif /* GCWZERO */
+   case INPUT_KEY_F11:
+     vkeyboard_enabled = !vkeyboard_enabled;
+-/*
+-    menu_vkeyboard( 0 );
+-*/
++    /* menu_vkeyboard( 0 ); */
+     break;
+ #endif /* VKEYBOARD */
+ 
++#ifdef GCWZERO
++  case INPUT_KEY_F12:
++    fuse_emulation_pause();
++    widget_do_for_path( widget_menu, "/Options/Joysticks" );
++    fuse_emulation_unpause();
++    break;
++#endif /* GCWZERO */
++
+   default: break;		/* Remove gcc warning */
+ 
+   }
+diff --git a/ui/widget/widget.h b/ui/widget/widget.h
+index 909d2ff..5a1364e 100644
+--- a/ui/widget/widget.h
++++ b/ui/widget/widget.h
+@@ -79,6 +79,9 @@
+ #ifdef VKEYBOARD
+   WIDGET_TYPE_VKEYBOARD,	/* Virtual Keyboard */
+ #endif
++#ifdef GCWZERO
++  WIDGET_TYPE_JOYSTICKS_CONTROLMAPPING, /* Control mapping */
++#endif
+ } widget_type;
+ 
+ /* Activate a widget */
+@@ -180,6 +183,14 @@
+ }
+ #endif
+ 
++#ifdef GCWZERO
++/* Control Mapping */
++static inline int widget_do_joysticks_controlmapping( void )
++{
++  return widget_do( WIDGET_TYPE_JOYSTICKS_CONTROLMAPPING, NULL );
++}
++#endif
++
+ /* General menu */
+ static inline int widget_do_menu( widget_menu_entry *data )
+ {
+diff --git a/ui/widget/widget_internals.h b/ui/widget/widget_internals.h
+index 84ac2c8..bfbc37f 100644
+--- a/ui/widget/widget_internals.h
++++ b/ui/widget/widget_internals.h
+@@ -300,6 +300,7 @@
+ 
+ #ifdef GCWZERO
+ void widget_print_filetitle( int y, struct widget_dirent *current, int is_saving );
++int widget_control_mapping_finish( widget_finish_state finished );
+ #endif
+ 
+ #endif				/* #ifndef FUSE_WIDGET_INTERNALS_H */
+diff --git a/utils.c b/utils.c
+index 854b52c..e2cacb6 100644
+--- a/utils.c
++++ b/utils.c
+@@ -62,6 +62,7 @@
+ #include "controlmapping/controlmapping.h"
+ 
+ char* last_filename = NULL;
++libspectrum_class_t last_class = LIBSPECTRUM_CLASS_UNKNOWN;
+ #endif
+ 
+ static void init_path_context( path_context *ctx, utils_aux_type type );
+@@ -109,18 +110,12 @@
+   case LIBSPECTRUM_CLASS_SNAPSHOT:
+     error = snapshot_read_buffer( file.buffer, file.length, type );
+     pokemem_find_pokfile( filename );
+-#ifdef GCWZERO
+-    controlmapping_load_mapfile( filename );
+-#endif
+     break;
+ 
+   case LIBSPECTRUM_CLASS_TAPE:
+     error = tape_read_buffer( file.buffer, file.length, type, filename,
+ 			      autoload );
+     pokemem_find_pokfile( filename );
+-#ifdef GCWZERO
+-    controlmapping_load_mapfile( filename );
+-#endif
+     break;
+ 
+   case LIBSPECTRUM_CLASS_DISK_PLUS3:
+@@ -250,6 +245,10 @@
+ 
+   if( type_ptr ) *type_ptr = type;
+ 
++#if GCWZERO
++  utils_set_last_loaded_file( filename, class, 0 );
++#endif
++
+   return 0;
+ }
+ 
+@@ -507,20 +506,33 @@
+ }
+ 
+ #ifdef GCWZERO
+-void utils_set_last_loaded_file( const char *filename )
++void utils_set_last_loaded_file( const char *filename, libspectrum_class_t class, int change_to_path )
+ {
+   char *path = 0;
+   char buffer[PATH_MAX];
+ 
+-  if (!filename) return;
++  /* Autoload control mapping files */
++  controlmapping_load_mapfile_with_class( filename, class, 1 );
+ 
+-  last_filename = utils_last_filename( filename, 1 );
++  /* If not filename free last_filename and assign to NULL */
++  if (!filename) {
++    if ( last_filename )
++      libspectrum_free( last_filename );
++    last_filename = NULL;
++    last_class = LIBSPECTRUM_CLASS_UNKNOWN;
++    return;
++  }
++
++  /* Store las filename including path */
++  last_filename = utils_safe_strdup( filename );
++  last_class    = class;
+ 
+   /* Change current working directory to the path of last loaded file */
+-  strncpy( buffer, filename, PATH_MAX );
+-  path = dirname(buffer);
+-  if (path && path[0] != '\0') {
+-     chdir(path);
++  if ( change_to_path ) {
++    strncpy( buffer, filename, PATH_MAX );
++    path = dirname(buffer);
++    if (path && path[0] != '\0')
++      chdir(path);
+   }
+ }
+ 
+@@ -528,7 +540,7 @@
+ {
+   char *c, *test_file, *last_file;
+ 
+-  if( !strlen( filename ) ) return NULL; /* Nothing to search */
++  if( !filename ) return NULL; /* Nothing to search */
+ 
+   test_file = utils_safe_strdup( filename );
+   if( !test_file ) return NULL; /* Nothing to search */
+diff --git a/utils.h b/utils.h
+index 88ab120..e1a82bd 100644
+--- a/utils.h
++++ b/utils.h
+@@ -38,6 +38,7 @@
+ #ifdef GCWZERO
+ /* Last filename loaded */
+ extern char* last_filename;
++extern libspectrum_class_t last_class;
+ #endif
+ 
+ int utils_open_file( const char *filename, int autoload,
+@@ -68,7 +69,7 @@
+ void utils_networking_end( void );
+ 
+ #ifdef GCWZERO
+-void  utils_set_last_loaded_file( const char *filename);
++void  utils_set_last_loaded_file( const char *filename, libspectrum_class_t class, int change_to_path );
+ char* utils_last_filename( const char *filename, int without_extension );
+ #endif
+ 

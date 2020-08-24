@@ -1,0 +1,789 @@
+From d0c246b4897f4a5be50137f72f8dcd4018b245a2 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 22 ago. 2020 18:00:22
+
+Patch #009 for OpenDingux and RetroFW
+Hotkey combos revisited.
+Eject media unload control mapping file only if it is from same class of
+last loaded.
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index d512bfa..1bdc020 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -46,7 +46,7 @@
+ 
+     `B`
+     Lock key. It's marked in blue.
+-    They are used when press the `A` button over a Key and then unlocked.
++    The locked keys are used when press the `A` button over a Key and then are unlocked.
+     For use in combinations of Caps Shift or Symbol Shift with other keys.
+     For example: In 48k mode you can Lock key "Ss" and then press 'Cs' key to change keyboard to "Extended" mode.
+ 
+@@ -96,10 +96,12 @@
+     Open the virtual keyboard
+ 
+     `L1`
+-    Start a hotkey combo
++    If hotkey combos disabled: Nothing
++    If hotkey combos enabled: Start a hotkey combo
+ 
+     `R1`
+-    Start a hotkey combo
++    If hotkey combos disabled: Caps Shith + 0 (DELETE)
++    If hotkey combos enabled: Start a hotkey combo
+ 
+     `Left Stick`
+     Nothing.
+@@ -162,7 +164,7 @@
+ Some menu options open a form with options to mark or choose option from a list.
+ 
+ The forms must be confirmed to persist the selected options
+-  To confirm them you must use the `A` buttons.
++  To confirm them you must use the `A` button.
+   The `B` or `Power` buttons cancel them and the changes are lost.
+ 
+ Some examples of forms are General, Media and Sound.
+@@ -225,7 +227,7 @@
+ - **Button mapping**:
+   Map buttons to ZX Spectrum keys or Nothing. By default all buttons are mapped to Nothing.
+ 
+-When both mappings, "GCW0 Joystick 1" or "GCW0 Keyboard", are enabled at the same time only "GCW0 Joystick 1" will work.
++When both mappings, "GCW0 Joystick 1" and "GCW0 Keyboard", are enabled at the same time only "GCW0 Joystick 1" will work.
+ 
+ When you choose any 'Type' other than "None" in "GCW0 Joystick 1" or "GCW0 Keyboard", some buttons may lose their original functionality if they are mapped to joystick fire or to keyboard keys.
+ `Select`, `Start`, `L1` and `R1` buttons have functionanility that may be lost.
+@@ -238,6 +240,8 @@
+ 
+ To have control gaming configuration per game you must activate it in the menu 'Options -> Joysticks -> Control mapping'.
+ 
++See PITFALLs at end of this section.
++
+   - Control mapping per game:
+     -------------------------
+     Default disabled.
+@@ -341,13 +345,28 @@
+ 
+     Set the current controls as the default control mapping.
+ 
++PITFALLS:
++  Different sides. For now a control mapping filename is based on last filename loaded. For games with two or more files (tapes, disk sides) will be two or more control mapping files.
++
++  When insert various media the last inserted will be the selected control mapping.
++    - If you unload it then it will be cleared and you could start a game from other media inserted with no file control mapping.
++    - If you start from Loader the system can load from media different to the last assigned control mapping file.
++
++  Example:
++    1.- Select machine +3
++    2.- Open media menu and insert a disk
++    3.- Open media menu and insert a tape
++    4.- The control mapping file will be the last tape inserted
++    5.- Open media menu and clear tape
++    6.- Now there is not control mapping file assigned
++
+ -------------------------
+ ### External joystick ###
+ -------------------------
+ 
+ On some handhelds it is possible to connect an external Joystick using USB OTG. The mapping of 'Joystick 2' will be applied to it.
+ 
+-On my RG350 I've tested this with an 8Bitdo FC30 Pro controller.
++|On my RG350 I've tested this with an 8Bitdo FC30 Pro controller.
+ 
+ For controllers the number of each button in mapping depends on the controller layout.
+ For example on my 8Bitdo FC30 these are the mapping layout: A=1, B=2, X=4, Y=5, L1=7, R1=8, L2=9, R2=10, Select=11, Start=12, L3=14, R3=15.
+@@ -374,7 +393,7 @@
+ =>Fuse count buttons from 1 not from 0, so add 1 to translate your layout into Fuse's config.
+ 
+ -------------------------
+-### External joystick ###
++### External keyboard ###
+ -------------------------
+ 
+ I don't have tested a Keyboard on USB OTG but in theory it should "work".
+@@ -399,7 +418,7 @@
+ ### Triple Buffer ###
+ ---------------------
+ 
+-There is an implementation to use the triple buffer. It can be enabled at General options or whith combo hotkeys 'L1' + 'R1'.
++There is an implementation to use the triple buffer. It can be enabled at General options or whith combo hotkeys 'L1' + 'R1' + 'B'.
+ 
+ If tripple buffer is activated then an [B] will be at status line.
+ 
+@@ -414,22 +433,28 @@
+ ### Hotkey combinations ###
+ ---------------------------
+ 
+-If `L1` and `R1` buttons are not mapped to Joystick or Keyboard it will be used to start hotkey combinations.
++For use hotkey combos it they must be enabled in Menu -> Options -> General.
+ 
+-The implemented ones correspond to Fx key functions in Fuse's SDL implementation:
++If `L1` and `R1` buttons are not mapped to Joystick or Keyboard it will be used to start the hotkey combinations.
+ 
+-   L1 + R1          Toggle triple buffer
+-   L1 + X           Open file (F3)
+-   L1 + Y           Save file (F2)
+-   R1 + X           Exit fuse (F10)
+-   R1 + Y           Reset machine (F5)
+-   L1 + Select + X  General options (F4)
+-   L1 + Select + Y  Machine select (F9)
+-   L1 + Start + X   Tape open (F7)
+-   L1 + Start + Y   Tape play (F8)
+-   R1 + Select + X  Joysticks
++The implemented hotkeys correspond to Fx key functions in Fuse's SDL implementation:
+ 
+-(And yes, I know, some combinations on some devices are impracticable)
++    L1 + R1 + B      Toggle triple buffer
++    L1 + R1 + X      Joystick
++
++    L1 + Select + Y  Tape play (F8)
++
++    L1 + A           Tape open (F7)
++    L1 + B           Save file (F2)
++    L1 + X           Open file (F3)
++    L1 + Y           Media menu
++
++    R1 + A           General options (F4)
++    R1 + B           Reset machine (F5)
++    R1 + X           Exit fuse (F10)
++    R1 + Y           Machine select (F9)
++
++(Yes, I know, some combinations on some devices are impracticable)
+ 
+ ---------------------
+ ### Media options ###
+diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
+index 5a0fe9a..dfc7aec 100644
+--- a/controlmapping/controlmapping.c
++++ b/controlmapping/controlmapping.c
+@@ -36,6 +36,7 @@
+ 
+ #ifdef GCWZERO
+ char *mapfile = NULL;              /* Path of a .fcm file to load */
++libspectrum_class_t mapfile_class;
+ settings_info settings_old;
+ static control_mapping_info control_mapping_tmp;
+ 
+@@ -78,7 +79,17 @@
+ }
+ 
+ int
+-controlmapping_load_mapfile( const char *filename, int is_autoload )
++controlmapping_eject_mapfile( libspectrum_class_t class )
++{
++  /* Only unload if was the last mapfile class */
++  if ( class == mapfile_class )
++    return controlmapping_load_mapfile( NULL, LIBSPECTRUM_CLASS_UNKNOWN, 1 );
++  else
++    return 0;
++}
++
++int
++controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, int is_autoload )
+ {
+   char *old_mapfile;
+ 
+@@ -92,6 +103,7 @@
+   /* We are changing mapfile? Save previous */
+   old_mapfile = mapfile;
+   mapfile = get_mapping_filename( filename );
++  mapfile_class = class;
+   if ( old_mapfile ) {
+     /* Auto-save, changed mapping and Something changed or don't yet created file? */;
+     if ( settings_current.control_mapping_autosave )
+@@ -127,10 +139,13 @@
+   case LIBSPECTRUM_CLASS_CARTRIDGE_IF2:
+   case LIBSPECTRUM_CLASS_MICRODRIVE:
+   case LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX:
+-    return controlmapping_load_mapfile( filename, 1 );
++    if ( filename )
++      return controlmapping_load_mapfile( filename, class, 1 );
++    else
++      return controlmapping_eject_mapfile( class );
+ 
+   default:
+-    return controlmapping_load_mapfile( NULL, 1 );
++    return controlmapping_load_mapfile( NULL, class, 1 );
+   }
+ }
+ 
+diff --git a/controlmapping/controlmapping.h b/controlmapping/controlmapping.h
+index 89e6cc6..15d2b0b 100644
+--- a/controlmapping/controlmapping.h
++++ b/controlmapping/controlmapping.h
+@@ -29,12 +29,14 @@
+ #include "settings.h"
+ 
+ extern char *mapfile;
++extern libspectrum_class_t mapfile_class;
+ extern char *defaultmapfile;
+ extern settings_info  settings_old;
+ 
+ int controlmapping_load_default_mapfile( );
+ int controlmapping_save_default_mapfile( );
+-int controlmapping_load_mapfile( const char *filename, int is_autoload );
++int controlmapping_eject_mapfile( libspectrum_class_t class );
++int controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, int is_autoload );
+ int controlmapping_load_mapfile_with_class( const char *filename, libspectrum_class_t class, int is_autoload );
+ int controlmapping_save_current_mapfile( void );
+ int controlmapping_save_mapfile( const char *filename );
+diff --git a/controlmapping/settings.pl b/controlmapping/settings.pl
+index c1897cb..f0afb99 100644
+--- a/controlmapping/settings.pl
++++ b/controlmapping/settings.pl
+@@ -673,17 +673,17 @@
+   /* Current settings as defaults for control mapping */
+   control_mapping_copy_from_settings( &control_mapping_default, &settings_current );
+ 
+- defaultmapfile = get_mapping_filename( DEFAULT_MAPPING_FILE );
+- if ( settings_current.control_mapping_per_game && !settings_current.control_mapping_not_detached_defaults ) {
+-   if ( defaultmapfile ) {
++  defaultmapfile = get_mapping_filename( DEFAULT_MAPPING_FILE );
++  if ( settings_current.control_mapping_per_game && !settings_current.control_mapping_not_detached_defaults ) {
++    if ( defaultmapfile ) {
+       /* Read default config file. If it doesn't exist create it */
+       if ( compat_file_exists( defaultmapfile ) ) {
+         control_mapping_read_config_file( &control_mapping_default, defaultmapfile );
+         control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
+       } else
+         control_mapping_write_config( &control_mapping_default, defaultmapfile ) ;
+-   }
+- }
++    }
++  }
+ 
+   /* Stablish defaults as current control mapping */
+   control_mapping_defaults( &control_mapping_current );
+diff --git a/settings.dat b/settings.dat
+index 26472e2..cbad031 100644
+--- a/settings.dat
++++ b/settings.dat
+@@ -44,7 +44,6 @@
+ accelerate_loader, boolean, 1
+ slt_traps, boolean, 1,, slt, slttraps
+ double_screen, null, 0
+-hidden_files, boolean, 0
+ triple_buffer, boolean, 0
+ full_screen, boolean, 0
+ writable_roms, boolean, 0
+@@ -59,6 +58,8 @@
+ snet, string, NULL
+ confirm_actions, boolean, 1
+ confirm_overwrite_files, boolean, 0
++hidden_files, boolean, 0
++hotkey_combos, boolean, 0
+ printer, boolean, 0
+ statusbar, boolean, 1
+ interface1, boolean, 0
+diff --git a/ui/options.dat b/ui/options.dat
+index f7d7b7e..ee17064 100644
+--- a/ui/options.dat
++++ b/ui/options.dat
+@@ -19,7 +19,6 @@
+ Checkbox, Full (s)creen, full_screen, INPUT_KEY_s
+ #endif
+ #ifdef GCWZERO
+-Checkbox, Show hi(d)den files, hidden_files, INPUT_KEY_d
+ Checkbox, Triple Bu(f)fer, triple_buffer, INPUT_KEY_f
+ #endif
+ #endif
+@@ -28,6 +27,8 @@
+ Checkbox, (C)onfirm actions, confirm_actions, INPUT_KEY_c
+ #ifdef GCWZERO
+ Checkbox, Confir(m) overwrite files, confirm_overwrite_files, INPUT_KEY_m
++Checkbox, Show hi(d)den files, hidden_files, INPUT_KEY_d
++Checkbox, Hot(k)ey combos, hotkey_combos, INPUT_KEY_k
+ #endif
+ Checkbox, A(u)to-save settings, autosave_settings, INPUT_KEY_u
+ 
+diff --git a/ui/sdl/sdlhotkeys.c b/ui/sdl/sdlhotkeys.c
+index 8e4a06a..29c54dd 100644
+--- a/ui/sdl/sdlhotkeys.c
++++ b/ui/sdl/sdlhotkeys.c
+@@ -29,20 +29,70 @@
+ #include "ui/hotkeys.h"
+ 
+ #ifdef GCWZERO
++#define MAX_COMBO_KEYS_PENDING 10
+ static int combo_done;
+-static SDL_Event *combo_keys[10];
++static SDL_Event *combo_keys[MAX_COMBO_KEYS_PENDING];
+ static int last_combo_key = 0;
+ static int push_combo_event( Uint8* flags );
+ static int filter_combo_done( const SDL_Event *event );
+ static int is_combo_possible( const SDL_Event *event );
+ 
++/* I allways forget what is push and what is drop */
++#define DROP_EVENT 0
++#define PUSH_EVENT 1
++
++/*
++ Current keys used in combos: L1, R1, Select, Start, X, Y, A, B
++*/
++#define FLAG_SELECT 0x01
++#define FLAG_START  0x02
++#define FLAG_L1     0x04
++#define FLAG_R1     0x08
++#define FLAG_A      0x10
++#define FLAG_B      0x20
++#define FLAG_X      0x40
++#define FLAG_Y      0x80
++
++/*
++  Combos currently are mapped to Fx functions used in Fuse:
++    L1 + R1 + B      Toggle triple buffer
++    L1 + R1 + X      Joystick
++
++    L1 + Select + Y  Tape play (F8)
++
++    L1 + A           Tape open (F7)
++    L1 + B           Save file (F2)
++    L1 + X           Open file (F3)
++    L1 + Y           Media menu
++
++    R1 + A           General options (F4)
++    R1 + B           Reset machine (F5)
++    R1 + X           Exit fuse (F10)
++    R1 + Y           Machine select (F9)
++*/
++
++#define OPEN_JOYSTICK   (FLAG_L1|FLAG_R1|FLAG_X)
++#define TRIPLE_BUFFER   (FLAG_L1|FLAG_R1|FLAG_B)
++
++#define TAPE_PLAY       (FLAG_L1|FLAG_SELECT|FLAG_X)
++
++#define GENERAL_OPTIONS (FLAG_R1|FLAG_A)
++#define RESET           (FLAG_R1|FLAG_B)
++#define EXIT            (FLAG_R1|FLAG_X)
++#define MACHINE_SELECT  (FLAG_R1|FLAG_Y)
++
++#define TAPE_OPEN       (FLAG_L1|FLAG_A)
++#define SAVE_FILES      (FLAG_L1|FLAG_B)
++#define OPEN_FILES      (FLAG_L1|FLAG_X)
++#define OPEN_MEDIA      (FLAG_L1|FLAG_Y)
++
+ int is_combo_possible( const SDL_Event *event )
+ {
+   /* There are not combos in widgets or keyboard */
+ #ifdef VKEYBOARD
+-  if ( ui_widget_level >= 0 || vkeyboard_enabled ) return 0;
++  if ( !settings_current.hotkey_combos || ui_widget_level >= 0 || vkeyboard_enabled ) return 0;
+ #else
+-  if ( ui_widget_level >= 0 ) return 0;
++  if ( !settings_current.hotkey_combos || ui_widget_level >= 0 ) return 0;
+ #endif
+ 
+  /* Mot filter if R1 and R1 are mapped to joysticks */
+@@ -67,16 +117,16 @@
+     return filter_released_key;
+ 
+   /* Search for released key and check to filter*/
+-  for(i=0;i<last_combo_key;i++)
+-    if (combo_keys[i] && combo_keys[i]->key.keysym.sym == event->key.keysym.sym) {
++  for( i = 0; i < last_combo_key && i < MAX_COMBO_KEYS_PENDING; i++)
++    if ( combo_keys[i] && combo_keys[i]->key.keysym.sym == event->key.keysym.sym ) {
+       free(combo_keys[i]);
+       combo_keys[i] = NULL;
+       filter_released_key = 1;
+     }
+ 
+   /* Any combo pending */
+-  for(i=0;i<last_combo_key;i++)
+-    if (combo_keys[i] && filter_released_key)
++  for( i = 0; i < last_combo_key && i < MAX_COMBO_KEYS_PENDING; i++)
++    if ( combo_keys[i] && filter_released_key )
+       return filter_released_key;
+ 
+   /* All combo keys released */
+@@ -88,41 +138,80 @@
+ int
+ push_combo_event( Uint8* flags )
+ {
++  SDL_Event combo_event;
+   SDLKey combo_key = 0;
+-  SDL_Event *combo_event;
+   int toggle_triple_buffer = 0;
+ 
+-  /* Search valid combos */
++  /* Nothing to do */
++  if ( !flags ) return 0;
++
++  /* Search for valid combos */
++  /* First must be checked the combos with Select or Start or L1+R1*/
+   switch (*flags) {
+-  case 0xA1: combo_key = SDLK_F4; break;/* L1 + Select + X General opetions */
+-  case 0xA2: combo_key = SDLK_F9; break;/* L1 + Select + Y Machine Select */
+-  case 0x61: combo_key = SDLK_F7; break;/* L1 + Start + X Tape Open */
+-  case 0x62: combo_key = SDLK_F8; break;/* L1 + Start + Y Tape play */
+-  case 0x91: combo_key = SDLK_F12; break;/*R1 + Select + X Joystick */
+-  case 0x30: toggle_triple_buffer = 1; break;/* L1 + R1 Toggle triple buffer */
+-  case 0x21: combo_key = SDLK_F3; break;/* L1 + X Open files */
+-  case 0x22: combo_key = SDLK_F2; break;/* L1 + Y  Save files*/
+-  case 0x11: combo_key = SDLK_F10; break;/* R1 + X Exit*/
+-  case 0x12: combo_key = SDLK_F5; break;/* R1 + Y Reset */
+-  default: break;
++  case OPEN_JOYSTICK:
++    combo_key = SDLK_F12; break;
++
++  case TRIPLE_BUFFER:
++    toggle_triple_buffer = 1; break;
++
++  case TAPE_PLAY:
++    combo_key = SDLK_F8; break;
++
++  case GENERAL_OPTIONS:
++    combo_key = SDLK_F4; break;
++
++  case MACHINE_SELECT:
++    combo_key = SDLK_F9; break;
++
++  case OPEN_MEDIA:
++    combo_key = SDLK_F11; break;
++
++  case TAPE_OPEN:
++    combo_key = SDLK_F7; break;
++
++  case OPEN_FILES:
++    combo_key = SDLK_F3; break;
++
++  case SAVE_FILES:
++    combo_key = SDLK_F2; break;
++
++  case EXIT:
++    combo_key = SDLK_F10; break;
++
++  case RESET:
++    combo_key = SDLK_F5; break;
++
++  default:
++    break;
+   }
+ 
+   /* Push combo event */
+-  if (combo_key) {
+-    combo_event = malloc(sizeof(SDL_Event));
+-    combo_event->type = SDL_KEYDOWN;
+-    combo_event->key.type = SDL_KEYDOWN;
+-    combo_event->key.state = SDL_PRESSED;
+-    combo_event->key.keysym.sym = combo_key;
+-    SDL_PushEvent(combo_event);
++  if ( combo_key ) {
++    /* Prepare the SDL event */
++    SDL_memset( &combo_event, 0, sizeof( combo_event ) );
++    combo_event.type = SDL_KEYDOWN;
++    combo_event.key.type = SDL_KEYDOWN;
++    combo_event.key.state = SDL_PRESSED;
++    combo_event.key.keysym.sym = combo_key;
++
++    /* Push it */
++    SDL_PushEvent( &combo_event );
++
++    /* Clean flags and mark combo as done */
+     *flags = 0x00;
+     combo_done = 1;
+     return 1;
++
++  /* Switch triple buffer */
+   } else if ( toggle_triple_buffer ) {
+     settings_current.triple_buffer = !settings_current.triple_buffer;
+-    combo_done = 1;
++
++    /* Clean flags and mark combo as done */
+     *flags = 0x00;
++    combo_done = 1;
+     return 1;
++
++  /* Nothing to do */
+   } else
+     return 0;
+ }
+@@ -141,19 +230,6 @@
+  then the event is pushed.
+  Auto-repeat keys in combos are droped.
+  if a combo is done then the release of keys in combo are dropped at init
+- Current keys used in combos: L1, R1, Select, Start, X, Y.
+-
+- Combos currently are mapped to Fx functions used in Fuse:
+-   L1 + R1          Toggle triple buffer
+-   L1 + X           Open file (F3)
+-   L1 + Y           Save file (F2)
+-   R1 + X           Exit fuse (F10)
+-   R1 + Y           Reset machine (F5)
+-   R1 + Select + X  Joystick
+-   L1 + Select + X  General options (F4)
+-   L1 + Select + Y  Machine select (F9)
+-   L1 + Start + X   Tape open (F7)
+-   L1 + Start + Y   Tape play (F8)
+ */
+ int
+ filter_combo_events( const SDL_Event *event )
+@@ -162,65 +238,85 @@
+   int i, not_in_combo  = 0;
+ 
+   /* Filter release of combo keys */
+-  if ( filter_combo_done(event) ) return 0;
++  if ( filter_combo_done( event ) ) return (DROP_EVENT);
+ 
+-  if ( !is_combo_possible(event) ) return 1;
++  if ( !is_combo_possible( event ) ) return (PUSH_EVENT);
+ 
+-  switch (event->type) {
++  switch ( event->type ) {
+   case SDL_KEYDOWN:
+-    switch (event->key.keysym.sym) {
++    switch ( event->key.keysym.sym ) {
+     case SDLK_ESCAPE:    /* Select */
+-      if (flags) {
+-        if (flags & 0x80)
+-          return 0; /* Filter Repeat key */
++      if ( flags ) {
++        if ( flags & FLAG_SELECT )
++          return (DROP_EVENT); /* Filter Repeat key */
+         else
+-          flags |= 0x80;
++          flags |= FLAG_SELECT;
+       } else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     case SDLK_RETURN:    /* Start */
+-      if (flags) {
+-        if (flags & 0x40)
+-          return 0; /* Filter Repeat key */
++      if ( flags ) {
++        if ( flags & FLAG_START )
++          return (DROP_EVENT); /* Filter Repeat key */
+         else
+-          flags |= 0x40;
++          flags |= FLAG_START;
+       } else
+         return 1;
+       break;
+ 
+     case SDLK_TAB:        /* L1 */
+-      if (flags & 0x20)
+-        return 0; /* Filter Repeat key */
++      if ( flags & FLAG_L1 )
++        return (DROP_EVENT); /* Filter Repeat key */
+       else
+-        flags |= 0x20;
++        flags |= FLAG_L1;
+       break;
+ 
+     case SDLK_BACKSPACE:  /* R1 */
+-      if (flags & 0x10)
+-        return 0; /* Filter Repeat key */
++      if (flags & FLAG_R1)
++        return (DROP_EVENT); /* Filter Repeat key */
+       else
+-        flags |= 0x10;
++        flags |= FLAG_R1;
++      break;
++
++    case SDLK_LCTRL:     /* A  */
++      if ( flags ) {
++        if ( flags & FLAG_A )
++          return (DROP_EVENT); /* Filter Repeat key */
++        else
++          flags |= FLAG_A;
++      } else
++        return (PUSH_EVENT);
++      break;
++
++    case SDLK_LALT:      /* B  */
++      if ( flags ) {
++        if ( flags & FLAG_B)
++          return (DROP_EVENT); /* Filter Repeat key */
++        else
++          flags |= FLAG_B;
++      } else
++        return (PUSH_EVENT);
+       break;
+ 
+     case SDLK_SPACE:     /* X  */
+-      if (flags) {
+-        if (flags & 0x01)
+-          return 0; /* Filter Repeat key */
++      if ( flags ) {
++        if ( flags & FLAG_X )
++          return (DROP_EVENT); /* Filter Repeat key */
+         else
+-          flags |= 0x01;
++          flags |= FLAG_X;
+       } else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     case SDLK_LSHIFT:      /* Y  */
+-      if (flags) {
+-        if (flags & 0x02)
+-          return 0; /* Filter Repeat key */
++      if ( flags ) {
++        if ( flags & FLAG_Y)
++          return (DROP_EVENT); /* Filter Repeat key */
+         else
+-          flags |= 0x02;
++          flags |= FLAG_Y;
+       } else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     /* Key not in combo */
+@@ -233,41 +329,41 @@
+ 
+   /* Any release key break the combo */
+   case SDL_KEYUP:
+-    switch (event->key.keysym.sym) {
++    switch ( event->key.keysym.sym ) {
+     case SDLK_ESCAPE:     /* Select */
+-      if (flags & 0x80)
+-        flags &= ~0x80;
++      if ( flags & FLAG_SELECT )
++        flags &= ~FLAG_SELECT;
+       else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     case SDLK_RETURN:    /* Start */
+-      if (flags & 0x40)
+-        flags &= ~0x40;
++      if ( flags & FLAG_START )
++        flags &= ~FLAG_START;
+       else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     case SDLK_TAB:        /* L1 */
+-      flags &= ~0x20;
++      flags &= ~FLAG_L1;
+       break;
+ 
+     case SDLK_BACKSPACE:  /* R1 */
+-      flags &= ~0x10;
++      flags &= ~FLAG_R1;
+       break;
+ 
+-    case SDLK_SPACE:      /* X  */
+-      if (flags & 0x01)
+-        flags &= ~0x01;
++    case SDLK_LCTRL:      /* A  */
++      if ( flags & FLAG_A )
++        flags &= ~FLAG_A;
+       else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+-    case SDLK_LSHIFT:    /* Y  */
+-      if (flags & 0x02)
+-        flags &= ~0x02;
++    case SDLK_LALT:    /* B  */
++      if ( flags & FLAG_B )
++        flags &= ~FLAG_B;
+       else
+-        return 1;
++        return (PUSH_EVENT);
+       break;
+ 
+     /* Key not in combo */
+@@ -276,16 +372,6 @@
+       break;
+     }
+ 
+-    /* All Combo keys released, clean all saved events */
+-    if (!not_in_combo && !flags) {
+-      for(i=0;i<last_combo_key;i++)
+-        if (combo_keys[i]) {
+-          free(combo_keys[i]);
+-          combo_keys[i] = NULL;
+-        }
+-      last_combo_key = 0;
+-    }
+-
+     break;
+ 
+   default:
+@@ -293,22 +379,30 @@
+     break;
+   }
+ 
+-  if (!not_in_combo) {
++  if ( !not_in_combo ) {
++    /* All Combo keys released? clean all saved events */
++    if ( !flags ) {
++      for( i = 0; i < last_combo_key && i < MAX_COMBO_KEYS_PENDING; i++)
++        if ( combo_keys[i] ) {
++          free( combo_keys[i] );
++          combo_keys[i] = NULL;
++        }
++      last_combo_key = 0;
++    }
++
+     /* Save actual event, excluding releases */
+-    if (event->type == SDL_KEYDOWN) {
+-      combo_keys[last_combo_key] = malloc( sizeof(SDL_Event) );
+-      memcpy( combo_keys[last_combo_key], event, sizeof(SDL_Event) );
++    if ( event->type == SDL_KEYDOWN ) {
++      combo_keys[last_combo_key] = malloc( sizeof( SDL_Event ) );
++      memcpy( combo_keys[last_combo_key], event, sizeof( SDL_Event ) );
+       last_combo_key++;
+     }
+ 
+     /* Push combo event */
+     push_combo_event( &flags );
+ 
+-    /* Drop current Event */
+-    return 0;
++    return (DROP_EVENT);
++  }
+ 
+-  } else
+-    /* Push current Event */
+-    return 1;
++  return (PUSH_EVENT);
+ }
+ #endif /* GCWZERO */
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index ae03213..71daf9f 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -845,7 +845,7 @@
+       !widget_query.confirm )
+     return;
+ 
+-  controlmapping_load_mapfile( filename, 0 );
++  controlmapping_load_mapfile( filename, mapfile_class, 0 );
+   print_items();
+ }
+ 
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index 521f5ac..081ecf6 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -958,14 +958,19 @@
+ #ifdef VKEYBOARD
+ #ifdef GCWZERO
+   case INPUT_KEY_Return: /*Start*/
+-#endif /* GCWZERO */
+-  case INPUT_KEY_F11:
+     vkeyboard_enabled = !vkeyboard_enabled;
+     /* menu_vkeyboard( 0 ); */
+     break;
++#endif /* GCWZERO */
+ #endif /* VKEYBOARD */
+ 
+ #ifdef GCWZERO
++  case INPUT_KEY_F11:
++    fuse_emulation_pause();
++    widget_do_for_path( widget_menu, "/Media" );
++    fuse_emulation_unpause();
++    break;
++
+   case INPUT_KEY_F12:
+     fuse_emulation_pause();
+     widget_do_for_path( widget_menu, "/Options/Joysticks" );

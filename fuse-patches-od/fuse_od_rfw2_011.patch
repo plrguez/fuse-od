@@ -1,0 +1,378 @@
+From c5838357368c74eb09ae8f7ae47ef8b5261d8919 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 23 ago. 2020 17:06:16
+
+Patch #011 for OpenDingux and RetroFW
+Virtual keyboard for options menu, new signs for input.
+Add input keyboard to PokeFinder an Poke Memory.
+
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index c909cc1..5c84440 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -169,13 +169,12 @@
+ 
+ Some examples of forms are General, Media and Sound.
+ 
+-#### Virtual keyboard in menu ####
+-----------------------------------
+-Some other options from menu will open a virtual keyboard.
++#### Virtual keyboard in menu options ####
++------------------------------------------
+ 
+-This keyboard it's not showed at all possible options and it is not adapted to each context.
++In some menu options the virtual keyboard is presented to allow to use different options presented or enter values.
+ 
+-Examples where the virtual keyboard it's appearing are: 'Enter name' for save dialogs and Debugger.
++Examples where the virtual keyboard it's appearing are: 'Enter name' for save dialogs, Debugger, Poke Finder, Poke Memory.
+ 
+     `Cursor`
+     Move
+@@ -361,12 +360,12 @@
+     - If you start from Loader the system can load from media different to the last assigned control mapping file.
+ 
+   Example:
+-    1.- Select machine +3
++    1.- Select +3 machine
+     2.- Open media menu and insert a disk
+     3.- Open media menu and insert a tape
+     4.- The control mapping file will be the last tape inserted
+     5.- Open media menu and clear tape
+-    6.- Now there is not control mapping file assigned
++    6.- Now there is not control mapping file assigned but you can load a program from disk
+ 
+   Bugs aside, probably there are other scenarios not taken into account but I believe that the most relevant use cases are covered.
+ 
+diff --git a/ui/widget/debugger.c b/ui/widget/debugger.c
+index 019c7d1..bba817f 100644
+--- a/ui/widget/debugger.c
++++ b/ui/widget/debugger.c
+@@ -169,16 +169,17 @@
+   /* Display mode */
+   switch ( key ) {
+ #ifdef GCWZERO
+-  case INPUT_KEY_Home:
+-  case INPUT_KEY_End: /* RetroFW */
++  case INPUT_KEY_Home: /* Power */
++  case INPUT_KEY_End:  /* RetroFW */
+     widget_end_all( WIDGET_FINISHED_OK );
+     return;
+ #endif
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Alt_L: /* B */
+-#endif
++#else
+   case INPUT_KEY_Escape:	/* Close widget */
++#endif
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+     debugger_run();
+     break;
+@@ -187,8 +188,10 @@
+   case INPUT_KEY_Control_L: /* A */
+ #endif
+   case INPUT_KEY_c:
++#ifndef GCWZERO
+   case INPUT_KEY_Return:	/* Close widget */
+   case INPUT_KEY_KP_Enter:
++#endif
+     widget_end_all( WIDGET_FINISHED_OK );
+     debugger_run();
+     break;
+@@ -250,7 +253,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Tab:
++  case INPUT_KEY_Tab: /* L1 */
+ #else
+   case INPUT_KEY_Page_Up:	/* Back eight lines */
+ #endif
+@@ -258,7 +261,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_BackSpace:
++  case INPUT_KEY_BackSpace: /* R1 */
+ #else
+   case INPUT_KEY_Page_Down:	/* Forward eight lines */
+ #endif
+@@ -266,7 +269,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Page_Up:
++  case INPUT_KEY_Page_Up: /* L2 */
+ #else
+   case INPUT_KEY_Home:		/* To start of memory */
+ #endif
+@@ -275,7 +278,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Page_Down:
++  case INPUT_KEY_Page_Down: /* R2 */
+ #else
+   case INPUT_KEY_End:		/* To end of RAM */
+ #endif
+diff --git a/ui/widget/pokefinder.c b/ui/widget/pokefinder.c
+index 5154daa..bd7ada5 100644
+--- a/ui/widget/pokefinder.c
++++ b/ui/widget/pokefinder.c
+@@ -51,6 +51,9 @@
+ int
+ widget_pokefinder_draw( void *data )
+ {
++#if VKEYBOARD
++  vkeyboard_enabled = 1;
++#endif
+   widget_dialog_with_border( 1, 2, 30, 12 );
+   widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, title );
+   widget_printstring( 16, 24, WIDGET_COLOUR_FOREGROUND, "Possible: " );
+@@ -164,24 +167,30 @@
+ {
+   switch ( key ) {
+ #ifdef GCWZERO
+-  case INPUT_KEY_Home:
+-  case INPUT_KEY_End: /* RetroFW */
++  case INPUT_KEY_Home:  /* Power */
++  case INPUT_KEY_End:   /* RetroFW */
+     widget_end_all( WIDGET_FINISHED_CANCEL );
++#if VKEYBOARD
++    vkeyboard_enabled = 0;
++#endif
+     return;
+ #endif
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Alt_L:
++  case INPUT_KEY_Alt_L: /* B */
+ #endif
+   case INPUT_KEY_Escape:	/* Close widget */
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
++#if VKEYBOARD
++    vkeyboard_enabled = 0;
++#endif
+     break;
+ 
+-#ifdef GCWZERO
+-  case INPUT_KEY_Shift_L:
+-#endif
+   case INPUT_KEY_c:		/* Close widget */
+     widget_end_all( WIDGET_FINISHED_OK );
++#if VKEYBOARD
++    vkeyboard_enabled = 0;
++#endif
+     break;
+ 
+   case INPUT_KEY_i:		/* Search for incremented */
+@@ -196,9 +205,6 @@
+     display_possible();
+     break;
+ 
+-#ifdef GCWZERO
+-  case INPUT_KEY_Control_L:
+-#endif
+   case INPUT_KEY_Return:
+   case INPUT_KEY_KP_Enter:
+   case INPUT_KEY_s:		/* Search */
+@@ -235,14 +241,24 @@
+     break;
+ 
+   /* Address selection */
++#ifdef GCWZERO
++  case INPUT_KEY_U:
++  case INPUT_KEY_u:     scroll(  -1 ); break;
++  case INPUT_KEY_J:
++  case INPUT_KEY_j:	    scroll(   1 ); break;
++  case INPUT_KEY_H:
++  case INPUT_KEY_h:	    scroll(  -4 ); break;
++  case INPUT_KEY_K:
++  case INPUT_KEY_k:	    scroll(   4 ); break;
++  case INPUT_KEY_G:
++  case INPUT_KEY_g:	    scroll( -20 ); break;
++  case INPUT_KEY_L:
++  case INPUT_KEY_l:	    scroll(  20 ); break;
++#else
+   case INPUT_KEY_Up:	scroll(  -1 ); break;
+   case INPUT_KEY_Down:	scroll(   1 ); break;
+   case INPUT_KEY_Left:	scroll(  -4 ); break;
+   case INPUT_KEY_Right:	scroll(   4 ); break;
+-#ifdef GCWZERO
+-  case INPUT_KEY_Tab:	    scroll( -20 ); break;
+-  case INPUT_KEY_BackSpace: scroll(  20 ); break;
+-#else
+   case INPUT_KEY_Home:	scroll( -20 ); break;
+   case INPUT_KEY_End:	scroll(  20 ); break;
+ #endif
+@@ -262,11 +278,7 @@
+     display_value();
+     break;
+ 
+-#ifdef GCWZERO
+-  case INPUT_KEY_space:
+-#else
+   case INPUT_KEY_BackSpace:	/* Value alteration */
+-#endif
+     value /= 10;
+     display_value();
+     break;
+diff --git a/ui/widget/pokemem.c b/ui/widget/pokemem.c
+index e60e298..de55b0b 100644
+--- a/ui/widget/pokemem.c
++++ b/ui/widget/pokemem.c
+@@ -41,7 +41,11 @@
+ } entry_t;
+ 
+ const char *pokemem_title = "Poke memory";
++#ifdef GCWZERO
++const unsigned int page_size = 8;
++#else
+ const unsigned int page_size = 16;
++#endif
+ GArray *store = NULL;
+ int selected = -1;
+ int highlight_line = 0;
+@@ -109,8 +113,13 @@
+ 
+   widget_pokemem_print_list( menu_left_edge_x, menu_width );
+ 
++#ifdef GCWZERO
++  widget_printstring( menu_left_edge_x * 8 + 8, ( page_size + 4 ) * 8,
++                      WIDGET_COLOUR_FOREGROUND, "\x0A" "X\x01" " Add" );
++#else
+   widget_printstring( menu_left_edge_x * 8 + 8, ( page_size + 4 ) * 8,
+                       WIDGET_COLOUR_FOREGROUND, "\x0A" "A\x01" "dd" );
++#endif
+ 
+   widget_display_lines( 2, page_size + 4 );
+ 
+@@ -251,35 +260,40 @@
+ 
+   switch ( key ) {
+ #ifdef GCWZERO
+-  case INPUT_KEY_Home:
+-  case INPUT_KEY_End: /* RetroFW */
++  case INPUT_KEY_Home:  /* Power */
++  case INPUT_KEY_End:   /* RetroFW */
+     widget_end_all( WIDGET_FINISHED_CANCEL );
+     return;
+ #endif
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Control_L:
+-#endif
++  case INPUT_KEY_Control_L: /* A */
++#else
+   case INPUT_KEY_Return: /* Do pokes */
+   case INPUT_KEY_KP_Enter:
++#endif
+   case INPUT_JOYSTICK_FIRE_1:
+     widget_end_all( WIDGET_FINISHED_OK );
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Alt_L:
+-#endif
++  case INPUT_KEY_Alt_L:  /* B */
++#else
+   case INPUT_KEY_Escape: /* Close widget */
++#endif
+   case INPUT_JOYSTICK_FIRE_2:
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+     return;
+ 
++#ifdef GCWZERO
++  case INPUT_KEY_space:  /* X */
++#endif
+   case INPUT_KEY_a: /* Add poke */
+     if( !widget_pokemem_add_custom_poke() ) new_selected = pokemem_count - 1;
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Page_Up:
++  case INPUT_KEY_Page_Up: /* L2 */
+ #else
+   case INPUT_KEY_Home:
+ #endif
+@@ -287,7 +301,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Page_Down:
++  case INPUT_KEY_Page_Down: /* R2 */
+ #else
+   case INPUT_KEY_End:
+ #endif
+@@ -295,7 +309,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Tab:
++  case INPUT_KEY_Tab: /* L1 */
+ #else
+   case INPUT_KEY_Page_Up:
+ #endif
+@@ -303,7 +317,7 @@
+     break;
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_BackSpace:
++  case INPUT_KEY_BackSpace: /* R1 */
+ #else
+   case INPUT_KEY_Page_Down:
+ #endif
+@@ -323,7 +337,9 @@
+     if( selected + 1 < pokemem_count ) new_selected = selected + 1;
+     break;
+ 
++#ifndef GCWZERO
+   case INPUT_KEY_space:
++#endif
+   case INPUT_KEY_8:
+   case INPUT_JOYSTICK_RIGHT:
+     if( !widget_pokemem_trainer_click( selected ) )
+diff --git a/ui/widget/vkeyboard.c b/ui/widget/vkeyboard.c
+index 8592ce2..95987bc 100644
+--- a/ui/widget/vkeyboard.c
++++ b/ui/widget/vkeyboard.c
+@@ -76,14 +76,14 @@
+ };
+ 
+ static const keyboard_options_t vkeyboard_options_u[4][10] = {
+-  { { "1", INPUT_KEY_1 },     { "2", INPUT_KEY_2 }, { "3", INPUT_KEY_3 },      { "4", INPUT_KEY_4 },      { "5", INPUT_KEY_5 },
+-    { "6", INPUT_KEY_6 },     { "7", INPUT_KEY_7 }, { "8", INPUT_KEY_8 },      { "9", INPUT_KEY_9 },      { "0", INPUT_KEY_0 } },
+-  { { "Q", INPUT_KEY_Q },     { "W", INPUT_KEY_W }, { "E", INPUT_KEY_E },      { "R", INPUT_KEY_R },      { "T", INPUT_KEY_T },
+-    { "Y", INPUT_KEY_Y },     { "U", INPUT_KEY_U }, { "I", INPUT_KEY_I },      { "O", INPUT_KEY_O },      { "P", INPUT_KEY_P } },
+-  { { "A", INPUT_KEY_A },     { "S", INPUT_KEY_S }, { "D", INPUT_KEY_D },      { "F", INPUT_KEY_F },      { "G", INPUT_KEY_G },
+-    { "H", INPUT_KEY_H },     { "J", INPUT_KEY_J }, { "K", INPUT_KEY_K },      { "L", INPUT_KEY_L },      { "En", INPUT_KEY_Return } },
+-  { { "Z", INPUT_KEY_Z },     { "X", INPUT_KEY_X }, { "C", INPUT_KEY_C },      { "V", INPUT_KEY_V },      { "b", INPUT_KEY_B },
+-    { "N", INPUT_KEY_N },     { "M", INPUT_KEY_M }, { ",", INPUT_KEY_comma },  { "_", INPUT_KEY_underscore },  { "Sp", INPUT_KEY_space } },
++  { { ",", INPUT_KEY_comma }, { "[", INPUT_KEY_bracketleft }, { "&", INPUT_KEY_ampersand }, { "]", INPUT_KEY_bracketright }, { "+", INPUT_KEY_plus },
++    { "<", INPUT_KEY_less },  { ">", INPUT_KEY_greater },     { "(", INPUT_KEY_parenleft }, { ")", INPUT_KEY_parenright },   { "=", INPUT_KEY_equal } },
++  { { "Q", INPUT_KEY_Q },     { "W", INPUT_KEY_W },           { "E", INPUT_KEY_E },         { "R", INPUT_KEY_R },            { "T", INPUT_KEY_T },
++    { "Y", INPUT_KEY_Y },     { "U", INPUT_KEY_U },           { "I", INPUT_KEY_I },         { "O", INPUT_KEY_O },            { "P", INPUT_KEY_P } },
++  { { "A", INPUT_KEY_A },     { "S", INPUT_KEY_S },           { "D", INPUT_KEY_D },         { "F", INPUT_KEY_F },            { "G", INPUT_KEY_G },
++    { "H", INPUT_KEY_H },     { "J", INPUT_KEY_J },           { "K", INPUT_KEY_K },         { "L", INPUT_KEY_L },            { "En", INPUT_KEY_Return } },
++  { { "Z", INPUT_KEY_Z },     { "X", INPUT_KEY_X },           { "C", INPUT_KEY_C },         { "V", INPUT_KEY_V },            { "B", INPUT_KEY_B },
++    { "N", INPUT_KEY_N },     { "M", INPUT_KEY_M },           { ":", INPUT_KEY_colon },     { "_", INPUT_KEY_underscore },   { "/", INPUT_KEY_slash } },
+ };
+ 
+ static int fixed_keys_released[4][10] = {};
+@@ -174,6 +174,15 @@
+ #endif
+ 
+ #ifdef GCWZERO
++  case INPUT_KEY_Home:  /* Power */
++  case INPUT_KEY_End:   /* RetroFW */
++    widget_vkeyboard_finish( WIDGET_FINISHED_CANCEL );
++    if (ui_widget_level >= 0)
++      widget_end_all( WIDGET_FINISHED_CANCEL );
++    return;
++#endif
++
++#ifdef GCWZERO
+   case INPUT_KEY_Return: /* Start */
+ #else
+   case INPUT_KEY_Escape:

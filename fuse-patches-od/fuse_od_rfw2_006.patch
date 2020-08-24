@@ -1,0 +1,313 @@
+From 375908f62b4f1dc2d0270985bdc01392e8003858 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 16 ago. 2020 21:19:58
+
+Patch #006 for OpenDingux and RetroFW
+Configuration path changed from $HOME to $HOME/.fuse.
+Config file name changed from .fuserc to fuse.cfg.
+If configuration path and subdirectories do not exist then they will be 
+created.
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 0517084..61eac79 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -1,8 +1,6 @@
+ Using the Fuse emulator
+ =======================
+ 
+-This port port of Fuse it's in alpha stage.
+-
+ At the end of this doc is the man page of Fuse 1.5.7 for reference.
+ 
+ ------------------------
+@@ -192,7 +190,7 @@
+ 
+ - **Type**:
+   ---------
+-  This allow to choose the Joystick to emulate or None. Default is None.
++  Choose the Joystick to emulate or None. Default is None.
+ 
+   Some type of Joysticks may require other emulator options active.
+   For example Kempston joystick need to be activated at `Menu --> Options --> Peripherals --> General`.
+@@ -316,12 +314,10 @@
+ 
+ Also you can put the roms at routes:
+ 
+-    For RG350   "/usr/local/home/.fuse/roms"
+-    For RetroFW "/home/retrofw/.fuse/roms"
++    For OpenDingux   "/usr/local/home/.fuse/roms"
++    For RetroFW      "/home/retrofw/.fuse/roms"
+ 
+-=>The emulator will not create this directories so you must create them manually.
+-
+-The ipk version will be installed at folder "/home/retrofw/emus/fuse" so ou can put aditional roms at "/home/retrofw/emus/fuse/roms" folder.
++The emulator will create this directories the first time is started if they don't exist.
+ 
+ ROMs included with fuse:
+ 
+diff --git a/compat.h b/compat.h
+index 8373d51..4ac7b39 100644
+--- a/compat.h
++++ b/compat.h
+@@ -167,6 +167,10 @@
+ compat_dir_result_t compat_readdir( compat_dir directory, char *name,
+ 				    size_t length );
+ int compat_closedir( compat_dir directory );
++#ifdef GCWZERO
++int compat_createdir( const char *path );
++int compat_create_config_paths( const char *config_path );
++#endif
+ 
+ /* Timing routines */
+ 
+diff --git a/compat/Makefile.am b/compat/Makefile.am
+index 4647ef3..28040c6 100644
+--- a/compat/Makefile.am
++++ b/compat/Makefile.am
+@@ -44,10 +44,12 @@
+ if COMPAT_LINUX
+ fuse_SOURCES += \
+                 compat/unix/dir.c \
++                compat/linux/dir.c \
+                 compat/unix/file.c \
+                 compat/unix/osname.c \
+                 compat/linux/relative_paths.c \
+                 compat/unix/paths.c \
++                compat/linux/paths.c \
+                 compat/unix/timer.c
+ 
+ if HAVE_SOCKETS
+diff --git a/compat/linux/dir.c b/compat/linux/dir.c
+new file mode 100644
+index 0000000..6aa4ecd
+--- /dev/null
++++ b/compat/linux/dir.c
+@@ -0,0 +1,39 @@
++/* dir.c: Directory-related compatibility routines for OpenDingux (linux-uclibc)
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++#include <config.h>
++
++#include <sys/stat.h>
++#include <sys/types.h>
++
++#include "compat.h"
++
++#ifdef GCWZERO
++int compat_createdir( const char *path )
++{
++  if (path)
++    return mkdir( path, 0754 );
++  else
++    return ENOENT;
++}
++#endif
+\ No newline at end of file
+diff --git a/compat/linux/paths.c b/compat/linux/paths.c
+new file mode 100644
+index 0000000..f344fc4
+--- /dev/null
++++ b/compat/linux/paths.c
+@@ -0,0 +1,72 @@
++/* dir.c: Directory-related compatibility routines for OpenDingux (linux-uclibc)
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++#include <config.h>
++
++#include <sys/stat.h>
++#include <string.h>
++
++#include "compat.h"
++#include "ui/ui.h"
++
++#ifdef GCWZERO
++static int create_config_path( const char *config_path );
++
++int create_config_path( const char *config_path )
++{
++  struct stat stat_info;
++  
++  if( stat( config_path, &stat_info ) ) {
++    if ( errno == ENOENT ) {
++      if ( compat_createdir( config_path ) == -1 ) {
++        ui_error( UI_ERROR_ERROR, "error creating config directory '%s'", config_path );
++        return 0;
++      }
++    } else {
++      ui_error( UI_ERROR_ERROR, "couldn't stat '%s': %s", config_path, strerror( errno ) );
++      return 0;
++    }
++  }
++
++  return 1;
++}
++
++int
++compat_create_config_paths( const char *config_path ) {
++  char next_path[ PATH_MAX ];
++
++  if ( !create_config_path( config_path ) )
++    return 0;
++
++  snprintf( next_path, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", config_path, "roms" );
++  if ( !create_config_path( next_path ) )
++    return 0;
++
++  snprintf( next_path, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", config_path, "mappings" );
++  if ( !create_config_path( next_path ) )
++    return 0;
++
++  return 1;
++}
++#endif /* GCWZERO */
++
+diff --git a/compat/unix/paths.c b/compat/unix/paths.c
+index a3c89a1..54d27a3 100644
+--- a/compat/unix/paths.c
++++ b/compat/unix/paths.c
+@@ -49,7 +49,18 @@
+ compat_get_config_path( void )
+ {
+   const char *dir;
++#ifdef GCWZERO
++  dir = getenv( "HOME" );
++  if (dir) {
++    char *fdir = NULL;
++    int len = strlen(dir)+7; /* /.fuse'\0' */
++    fdir = libspectrum_new(char,len);
++    if (fdir && snprintf( fdir, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", dir, ".fuse" ) == (len-1))
++      return fdir;
++  }
++#else
+   dir = getenv( "HOME" ); if( dir ) return dir;
++#endif
+   return ".";
+ }
+ 
+@@ -97,9 +108,32 @@
+               path_segment );
+     return 1;
+ 
+-    /* Then where we may have installed the data files */
++#ifdef GCWZERO
++  /* Configuration directory */
+   case 2:
+ 
++    switch( ctx->type ) {
++    case UTILS_AUXILIARY_LIB: path_segment = "lib"; break;
++    case UTILS_AUXILIARY_ROM: path_segment = "roms"; break;
++    case UTILS_AUXILIARY_WIDGET: path_segment = "ui/widget"; break;
++    default:
++      ui_error( UI_ERROR_ERROR, "unknown auxiliary file type %d", ctx->type );
++      return 0;
++    }
++
++    const char *cfgdir = compat_get_config_path();
++    snprintf( ctx->path, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", cfgdir,
++              path_segment );
++    return 1;
++#endif
++
++    /* Then where we may have installed the data files */
++#ifdef GCWZERO
++  case 3:
++#else
++  case 2:
++#endif
++
+ #ifndef ROMSDIR
+     path2 = FUSEDATADIR;
+ #else				/* #ifndef ROMSDIR */
+@@ -108,7 +142,11 @@
+     strncpy( ctx->path, path2, PATH_MAX ); buffer[ PATH_MAX - 1 ] = '\0';
+     return 1;
+ 
++#ifdef GCWZERO
++  case 4: return 0;
++#else
+   case 3: return 0;
++#endif
+   }
+   ui_error( UI_ERROR_ERROR, "unknown path_context state %d", ctx->state );
+   fuse_abort();
+diff --git a/settings.pl b/settings.pl
+index 8714c7c..0770a2e 100644
+--- a/settings.pl
++++ b/settings.pl
+@@ -96,11 +96,15 @@
+ #include "utils.h"
+ 
+ /* The name of our configuration file */
++#ifdef GCWZERO
++#define CONFIG_FILE_NAME "fuse.cfg"
++#else
+ #ifdef WIN32
+ #define CONFIG_FILE_NAME "fuse.cfg"
+ #else				/* #ifdef WIN32 */
+ #define CONFIG_FILE_NAME ".fuserc"
+ #endif				/* #ifdef WIN32 */
++#endif                          /* #ifdef GCWZERO */
+ 
+ /* The current settings of options, etc */
+ settings_info settings_current;
+@@ -171,6 +175,9 @@
+   xmlDocPtr doc;
+ 
+   cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
++#ifdef GCWZERO
++  if ( !compat_create_config_paths( cfgdir ) ) return 1;
++#endif
+ 
+   snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
+ 
+@@ -334,6 +341,9 @@
+   utils_file file;
+ 
+   cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
++#ifdef GCWZERO
++  if ( !compat_create_config_paths( cfgdir ) ) return 1;
++#endif
+ 
+   snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
+ 

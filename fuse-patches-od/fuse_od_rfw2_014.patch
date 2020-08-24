@@ -1,0 +1,164 @@
+From 5a8ba294af200c59348d9664bb65081658da6bc8 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 24 ago. 2020 20:34:05
+
+Patch #014 for OpenDingux and RetroFW
+INSTALL.txt added with instructions to build
+Makefile fixed to dist additional files only for BUILD for OD/RFW.
+Fix build for non OpenDingux/RetroFW
+
+diff --git a/Makefile.am b/Makefile.am
+index 3d51f6b..53fdd69 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -146,8 +146,12 @@
+ 	     menu_data.pl \
+ 	     settings.dat \
+ 	     settings.pl \
+-	     settings-header.pl \
++	     settings-header.pl
++
++if BUILD_GCWZERO
++EXTRA_DIST += \
+ 	     Platform/readme.txt \
++	     Platform/INSTALL.txt \
+ 	     Platform/roms/read.me \
+ 	     Platform/GCW0/Makefile \
+ 	     Platform/GCW0/default.gcw0.desktop \
+@@ -160,6 +164,7 @@
+ 	     Platform/RETROFW1.0/control \
+ 	     Platform/RETROFW1.0/fuse.lnk \
+ 	     Platform/RETROFW1.0/postinst
++endif
+ 
+ CLEANFILES = options.h \
+ 	     settings.c \
+@@ -210,4 +215,6 @@
+ include ui/xlib/Makefile.am
+ include unittests/Makefile.am
+ include z80/Makefile.am
++if BUILD_GCWZERO
+ include controlmapping/Makefile.am
++endif
+diff --git a/Platform/INSTALL.txt b/Platform/INSTALL.txt
+new file mode 100644
+index 0000000..fe06eb1
+--- /dev/null
++++ b/Platform/INSTALL.txt
+@@ -0,0 +1,102 @@
++Build Fuse and libspectrum for OpenDingux and RetroFW
++=====================================================
++
++The steps provided here has been tested on a bash terminal session on an Ubuntu
++18.04.04 LTS with default GCC toolchain and development tools (automake,
++autoconf, make, git, squashfs-tools, flex, bison, perl, libtool, etc...).
++
++squashfs-tools package is needed for creating opk files.
++
++Toolchains tested:
++- For OpenDingux the GCW0 and RG350 toolchains
++- For RetroFW this was tested with RetroFW 2.
++
++In the steps source code for Fuse and libspectrum was extracted in:
++  - $HOME/src/libspectrum-1.4.4
++  - $HOME/src/fuse-1.5.7
++
++In the steps the toolchain is installed in:
++  - /opt/toolchain
++
++To build Fuse we need first build and install libspectrum:
++  - In the steps is used $HOME/src/libspectrum-install
++  - libspectrum will be builded without libaudio and libgcrypt,
++  - For RetroFW is configured to use internal replacement for GLib.
++
++You must adapt this for your OS, toolchains and paths.
++
++Steps:
++======
++1.- Put your OpenDingux/RetroFW toolchain in PATH. For example:
++
++$ export PATH=/opt/toolchain/usr/bin:$PATH
++
++2.- Configure, build and install libspectrum:
++
++$ cd $HOME/src/libspectrum-1.4.4
++
++Configure for OpenDingux:
++
++$ ./configure CC=mipsel-gcw0-linux-uclibc-gcc \
++CXX=mipsel-gcw0-linux-uclibc-g++ --host=mipsel-gcw0-linux-uclibc \
++--without-libaudiofile --without-libgcrypt \
++--prefix="$HOME/src/libspectrum-install" CFLAGS='-mips32r2 -O3'
++
++Configure for RetroFW:
++
++$ ./configure CC=mipsel-RetroFW-linux-uclibc-gcc \
++CXX=mipsel-RetroFW-linux-uclibc-g++ --host=mipsel-RetroFW-linux-uclibc \
++--without-libaudiofile --without-libgcrypt --with-fake-glib \
++--prefix="$HOME/src/libspectrum-install" CFLAGS='-mips32 -O3'
++
++$ make && make install
++
++In $HOME/src/libspectrum-install must be installed libspectrum
++
++3.- Configure Fuse:
++
++$ cd $HOME/src/fuse-1.5.7
++
++Configure for OpenDingux:
++
++$ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
++LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
++LIBSPECTRUM_LIBS="-L$HOME/src/libspectrum-install/lib -l:libspectrum.a -lbz2" \
++CC=mipsel-gcw0-linux-uclibc-gcc CXX=mipsel-gcw0-linux-uclibc-g++ \
++--host=mipsel-gcw0-linux-uclibc --with-gcw0 \
++--with-sdl-prefix=/opt/toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr \
++CFLAGS='-mips32r2 -O3'
++
++Configure for RetroFW:
++
++$ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
++LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
++LIBSPECTRUM_LIBS="-L$HOME/src/libspectrum-install/lib -l:libspectrum.a -lbz2" \
++CC=mipsel-RetroFW-linux-uclibc-gcc CXX=mipsel-RetroFW-linux-uclibc-g++ \
++--host=mipsel-RetroFW-linux-uclibc --with-retrofw \
++--with-sdl-prefix=/opt/toolchain/mipsel-RetroFW-linux-uclibc/sysroot/usr \
++CFLAGS='-mips32 -O3'
++
++4.- Build Fuse
++
++For Opendingux:
++
++$ cd $HOME/src/fuse-1.5.7/Platform/GCW0
++$ make
++
++fuse-gcw0.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
++
++For RetroFW 2:
++
++$ cd $HOME/src/fuse-1.5.7/Platform/RETROFW2.0
++$ make
++
++fuse-retrofw.opk should be created in
++$HOME/src/fuse-1.5.7/Platform/RETROFW2.0/build
++
++For RetroFW 1:
++
++$ cd $HOME/src/fuse-1.5.7/Platform/RETROFW1.0
++$ make
++
++fuse.ipk $HOME/src/fuse-1.5.7/Platform/RETROFW1.0/build
+diff --git a/menu_data.dat b/menu_data.dat
+index 0d24592..1a6195c 100644
+--- a/menu_data.dat
++++ b/menu_data.dat
+@@ -76,7 +76,9 @@
+ 
+ _Options, Branch
+ Options/_General..., Item, F4
++#ifdef GCWZERO
+ Options/General GC_W0..., Item
++#endif
+ Options/_Media..., Item
+ Options/_Sound..., Item
+ 

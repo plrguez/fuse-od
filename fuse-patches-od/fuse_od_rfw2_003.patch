@@ -1,0 +1,652 @@
+From bbbbda06d91355ae97eafeed1be43b01a768719a Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 14 ago. 2020 23:06:03
+
+Patch #003 for RG350/GCW ZERO and RetroFW 1 & 2
+Init refactor: Combos have now their own function. For now L1+R1+X. And
+L1, R1 lose their actual mapping for previous combo.
+New options Show hidden files, autoload with custom-roms and
+confirm overwrite.
+New parameter (without_extension) for las filename function.
+Reactivate Joystick 2. Tested with 8Bitdo FC30.
+Roms widget now is controlled via cursor keys/joystick.
+
+diff --git a/fuse.c b/fuse.c
+index 205b050..7364a17 100644
+--- a/fuse.c
++++ b/fuse.c
+@@ -776,7 +776,7 @@
+     if (class != LIBSPECTRUM_CLASS_UNKNOWN) {
+       char *path = 0;
+       char buffer[PATH_MAX];
+-      last_filename = utils_last_filename( filename );
++      last_filename = utils_last_filename( filename, 1 );
+       strncpy( buffer, filename, PATH_MAX );
+       path = dirname(buffer);
+       if (path && path[0] != '\0') {
+diff --git a/menu_data.dat b/menu_data.dat
+index 120e6c7..ae7bac2 100644
+--- a/menu_data.dat
++++ b/menu_data.dat
+@@ -92,8 +92,8 @@
+ Options/Joysticks/GCW0 Joystick _1..., Item,, menu_options_joysticks_select, menu_joystick_1_detail, 1
+ #else
+ Options/Joysticks/Joystick _1..., Item,, menu_options_joysticks_select, menu_joystick_1_detail, 1
+-Options/Joysticks/Joystick _2..., Item,, menu_options_joysticks_select, menu_joystick_2_detail, 2
+ #endif
++Options/Joysticks/Joystick _2..., Item,, menu_options_joysticks_select, menu_joystick_2_detail, 2
+ #endif
+ Options/Joysticks/_Keyboard..., Item,, menu_options_joysticks_select, menu_keyboard_joystick_detail, 3
+ #ifdef GCWZERO
+diff --git a/peripherals/joystick.h b/peripherals/joystick.h
+index 36d0ff3..2a882a0 100644
+--- a/peripherals/joystick.h
++++ b/peripherals/joystick.h
+@@ -36,6 +36,8 @@
+ /* A constant to identify the joystick emulated via the keyboard */
+ #define JOYSTICK_KEYBOARD 2
+ #ifdef GCWZERO
++/* A constant to identify the joystick 1 for GCW0 */
++#define GCW0_JOYSTICK 0
+ /* A constant to identify the keyboard emulated via the GCW0 Buttons */
+ #define GCW0_KEYBOARD 3
+ #endif
+diff --git a/settings.dat b/settings.dat
+index f9b05fc..02365ea 100644
+--- a/settings.dat
++++ b/settings.dat
+@@ -39,10 +39,12 @@
+ tape_traps, boolean, 1,, traps, tapetraps
+ fastload, boolean, 1
+ auto_load, boolean, 1
++auto_load_with_custom_roms, boolean, 0
+ detect_loader, boolean, 1
+ accelerate_loader, boolean, 1
+ slt_traps, boolean, 1,, slt, slttraps
+ double_screen, null, 0
++hidden_files, boolean, 0
+ triple_buffer, boolean, 0
+ full_screen, boolean, 0
+ writable_roms, boolean, 0
+@@ -56,6 +58,7 @@
+ raw_s_net, boolean, 0
+ snet, string, NULL
+ confirm_actions, boolean, 1
++confirm_overwrite_files, boolean, 0
+ printer, boolean, 0
+ statusbar, boolean, 1
+ interface1, boolean, 0
+diff --git a/tape.c b/tape.c
+index 25bcdd7..fb54382 100644
+--- a/tape.c
++++ b/tape.c
+@@ -372,7 +372,12 @@
+ 
+ int tape_can_autoload( void )
+ {
++#ifdef GCWZERO
++  /* Allow to autoload with custom roms */
++  return( settings_current.auto_load && ( settings_current.auto_load_with_custom_roms || !memory_custom_rom() ) );
++#else
+   return( settings_current.auto_load && !memory_custom_rom() );
++#endif
+ }
+ 
+ /* Load the next tape block into memory; returns 0 if a block was
+diff --git a/ui/options.dat b/ui/options.dat
+index 76b60b9..57d4331 100644
+--- a/ui/options.dat
++++ b/ui/options.dat
+@@ -19,17 +19,24 @@
+ Checkbox, Full (s)creen, full_screen, INPUT_KEY_s
+ #endif
+ #ifdef GCWZERO
++Checkbox, Show hi(d)den files, hidden_files, INPUT_KEY_d
+ Checkbox, Triple Bu(f)fer, triple_buffer, INPUT_KEY_f
+ #endif
+ #endif
+ Checkbox, Show status(b)ar, statusbar, INPUT_KEY_b
+ Checkbox, Snap (j)oystick prompt, joy_prompt, INPUT_KEY_j
+ Checkbox, (C)onfirm actions, confirm_actions, INPUT_KEY_c
++#ifdef GCWZERO
++Checkbox, Confir(m) overwrite files, confirm_overwrite_files, INPUT_KEY_m
++#endif
+ Checkbox, A(u)to-save settings, autosave_settings, INPUT_KEY_u
+ 
+ media
+ Media Options
+ Checkbox, (A)uto-load media, auto_load, INPUT_KEY_a
++#ifdef GCWZERO
++Checkbox, A(u)to-load media with custom roms, auto_load_with_custom_roms, INPUT_KEY_u
++#endif
+ Combo, (P)hantom typist mode, phantom_typist_mode, INPUT_KEY_p, *Auto|Keyword|Keystroke|Menu|Plus 2A|Plus 3
+ Checkbox, (D)etect loaders, detect_loader, INPUT_KEY_d
+ Checkbox, (F)astloading, fastload, INPUT_KEY_f
+diff --git a/ui/sdl/sdlui.c b/ui/sdl/sdlui.c
+index b905667..ed532fb 100644
+--- a/ui/sdl/sdlui.c
++++ b/ui/sdl/sdlui.c
+@@ -43,6 +43,8 @@
+ 
+ #ifdef GCWZERO
+ static Uint8 *keys_state;
++int
++process_combo_keys( void );
+ #endif
+ 
+ static void
+@@ -82,6 +84,30 @@
+   return 0;
+ }
+ 
++#ifdef GCWZERO
++int
++process_combo_keys( void )
++{
++  SDL_Event event;
++
++#ifdef VKEYBOARD
++  if ( ui_widget_level >= 0 || vkeyboard_enabled ) return 0;
++#else
++  if ( ui_widget_level >= 0 ) return 0;
++#endif
++
++  SDL_PumpEvents();
++
++  /* L1 + R1 + X: Toggle triple buffer */
++  if ( keys_state[SDLK_TAB] && keys_state[SDLK_BACKSPACE] && keys_state[SDLK_SPACE] ) {
++    settings_current.triple_buffer = !settings_current.triple_buffer;
++    return 1;
++  }
++  else
++    return 0;
++}
++#endif
++
+ int 
+ ui_event( void )
+ {
+@@ -90,12 +116,7 @@
+   int vkeyboard_enabled_old = vkeyboard_enabled;
+ #endif
+ #ifdef GCWZERO
+-  SDL_PumpEvents();
+-  /* L1 + R1 + X: Toggle triple buffer */
+-  if ( keys_state[SDLK_BACKSPACE] && keys_state[SDLK_TAB] && keys_state[SDLK_SPACE] ) {
+-    settings_current.triple_buffer = !settings_current.triple_buffer;
+-    return 0;
+-  }
++  if (process_combo_keys()) return 0;
+ #endif
+ 
+   while ( SDL_PollEvent( &event ) ) {
+diff --git a/ui/widget/filesel.c b/ui/widget/filesel.c
+index bb04b8a..7d5bd32 100644
+--- a/ui/widget/filesel.c
++++ b/ui/widget/filesel.c
+@@ -144,7 +144,7 @@
+     filename = utils_safe_strdup( widget_filesel_name );
+ #ifdef GCWZERO
+   if ( filename )
+-    last_filename = utils_last_filename( filename );
++    last_filename = utils_last_filename( filename, 1 );
+ #endif
+   return filename;
+   
+@@ -164,6 +164,31 @@
+ ui_get_save_filename( const char *title )
+ {
+ #if !defined AMIGA && !defined __MORPHOS__
++#ifdef GCWZERO
++  if ( settings_current.confirm_overwrite_files ) {
++    char* filename = widget_get_filename( title, 1 );
++    if (filename && compat_file_exists( filename ) ) {
++        const char *filename1 = strrchr( filename, FUSE_DIR_SEP_CHR );
++        filename1 = filename1 ? filename1 + 1 : filename;
++
++        dont_refresh_display = 1;
++        ui_confirm_save_t confirm = ui_confirm_save(
++          "%s already exists.\n"
++          "Do you want to overwrite it?",
++          filename1
++        );
++        dont_refresh_display = 0;
++
++        switch( confirm ) {
++
++        case UI_CONFIRM_SAVE_SAVE: return filename;
++        case UI_CONFIRM_SAVE_DONTSAVE: return NULL;
++        case UI_CONFIRM_SAVE_CANCEL: return NULL;
++        default: return NULL;
++        }
++    } else return filename;
++  } else
++#endif
+   return widget_get_filename( title, 1 );
+ #else
+   return amiga_asl( title, TRUE );
+@@ -451,6 +476,9 @@
+   if( !strcmp( name, "." ) ) return 0;
+ 
+ #ifndef WIN32
++#ifdef GCWZERO
++  if (!settings_current.hidden_files)
++#endif
+   /* Skip hidden files/directories */
+   if( strlen( name ) > 1 && name[0] == '.' && name[1] != '.' ) return 0;
+ #endif				/* #ifdef WIN32 */
+@@ -892,8 +920,9 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Alt_L: /* B */
+-#endif
++#else
+   case INPUT_KEY_Escape:
++#endif
+   case INPUT_JOYSTICK_FIRE_2:
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+     break;
+@@ -1010,9 +1039,10 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Control_L: /* A */
+-#endif
++#else
+   case INPUT_KEY_Return:
+   case INPUT_KEY_KP_Enter:
++#endif
+   case INPUT_JOYSTICK_FIRE_1:
+ #ifdef WIN32
+     if( is_drivesel ) {
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index 5687400..4b8ac5f 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -208,20 +208,6 @@
+ #ifdef USE_JOYSTICK
+ static widget_menu_entry submenu_joystick_buttons[] = {
+   { "Select joystick button" },
+-#ifdef GCWZERO
+-  { "Button \012A\011", INPUT_KEY_1, submenu_select_key_for_button_1, NULL, get_key_name_for_button_1, 0 },
+-  { "Button \012B\011", INPUT_KEY_2, submenu_select_key_for_button_2, NULL, get_key_name_for_button_2, 0 },
+-  { "Button \012X\011", INPUT_KEY_3, submenu_select_key_for_button_3, NULL, get_key_name_for_button_3, 0 },
+-  { "Button \012Y\011", INPUT_KEY_4, submenu_select_key_for_button_4, NULL, get_key_name_for_button_4, 0 },
+-  { "Button \012L1\011", INPUT_KEY_5, submenu_select_key_for_button_5, NULL, get_key_name_for_button_5, 0 },
+-  { "Button \012R1\011", INPUT_KEY_6, submenu_select_key_for_button_6, NULL, get_key_name_for_button_6, 0 },
+-  { "Button \012L2\011", INPUT_KEY_7, submenu_select_key_for_button_7, NULL, get_key_name_for_button_7, 0 },
+-  { "Button \012R2\011", INPUT_KEY_8, submenu_select_key_for_button_8, NULL, get_key_name_for_button_8, 0 },
+-  { "Button \012START\011", INPUT_KEY_9, submenu_select_key_for_button_9, NULL, get_key_name_for_button_9, 0 },
+-  { "Button \012SELECT\011", INPUT_KEY_0, submenu_select_key_for_button_10, NULL, get_key_name_for_button_10, 0 },
+-  { "Button \012L3\011", INPUT_KEY_a, submenu_select_key_for_button_11, NULL, get_key_name_for_button_11, 0 },
+-  { "Button \012R3\011", INPUT_KEY_b, submenu_select_key_for_button_12, NULL, get_key_name_for_button_12, 0 },
+-#else
+ #ifndef GEKKO
+   { "Button \0121\011", INPUT_KEY_1, submenu_select_key_for_button_1, NULL, get_key_name_for_button_1, 0 },
+   { "Button \0122\011", INPUT_KEY_2, submenu_select_key_for_button_2, NULL, get_key_name_for_button_2, 0 },
+@@ -248,7 +234,6 @@
+   { "Button \012Z\011 on Nunchuck", INPUT_KEY_z, submenu_select_key_for_button_7, NULL, get_key_name_for_button_7, 0 },
+   { "Button \012C\011 on Nunchuck", INPUT_KEY_c, submenu_select_key_for_button_8, NULL, get_key_name_for_button_8, 0 },
+ #endif  /* #ifndef GEKKO */
+-#endif  /* ifdef GCWZERO */
+   { NULL }
+ };
+ #endif  /* #ifdef USE_JOYSTICK */
+@@ -264,6 +249,22 @@
+ };
+ 
+ #ifdef GCWZERO
++static widget_menu_entry submenu_gcw0_joystick_buttons[] = {
++  { "Select joystick button" },
++  { "Button \012A\011", INPUT_KEY_1, submenu_select_key_for_button_1, NULL, get_key_name_for_button_1, 0 },
++  { "Button \012B\011", INPUT_KEY_2, submenu_select_key_for_button_2, NULL, get_key_name_for_button_2, 0 },
++  { "Button \012X\011", INPUT_KEY_3, submenu_select_key_for_button_3, NULL, get_key_name_for_button_3, 0 },
++  { "Button \012Y\011", INPUT_KEY_4, submenu_select_key_for_button_4, NULL, get_key_name_for_button_4, 0 },
++  { "Button \012L1\011", INPUT_KEY_5, submenu_select_key_for_button_5, NULL, get_key_name_for_button_5, 0 },
++  { "Button \012R1\011", INPUT_KEY_6, submenu_select_key_for_button_6, NULL, get_key_name_for_button_6, 0 },
++  { "Button \012L2\011", INPUT_KEY_7, submenu_select_key_for_button_7, NULL, get_key_name_for_button_7, 0 },
++  { "Button \012R2\011", INPUT_KEY_8, submenu_select_key_for_button_8, NULL, get_key_name_for_button_8, 0 },
++  { "Button \012START\011", INPUT_KEY_9, submenu_select_key_for_button_9, NULL, get_key_name_for_button_9, 0 },
++  { "Button \012SELECT\011", INPUT_KEY_0, submenu_select_key_for_button_10, NULL, get_key_name_for_button_10, 0 },
++  { "Button \012L3\011", INPUT_KEY_a, submenu_select_key_for_button_11, NULL, get_key_name_for_button_11, 0 },
++  { "Button \012R3\011", INPUT_KEY_b, submenu_select_key_for_button_12, NULL, get_key_name_for_button_12, 0 },
++  { NULL }
++};
+ static widget_menu_entry submenu_gcw0_keys_buttons[] = {
+   { "Map GCW0 to keyboard key" },
+   { "Button \012U\011p", INPUT_KEY_u, submenu_select_key_for_button_1, NULL, get_key_name_for_button_1, 0 },
+@@ -306,6 +307,7 @@
+ #endif  /* #ifdef USE_JOYSTICK */
+ SUBMENU_DEVICE_SELECTIONS( keyboard )
+ #ifdef GCWZERO
++SUBMENU_DEVICE_SELECTIONS( gcw0_joystick )
+ static widget_menu_entry submenu_types_gcw0[ 4 ];
+ static char joystick_names_gcw0[ 2 ][ 100 ];
+ #define SUBMENU_DEVICE_SELECTIONS_GCW0( device ) \
+@@ -436,10 +438,12 @@
+     if(!ptr->inactive) {
+       if( ptr->submenu ) {
+ #ifdef GCWZERO
++        /* TODO: Any better form to do this? */
++        /* We count the widgets to end from this options */
+         if (widgets_to_end ||
+-            strcmp(menu->text,"Select joystick button")==0 ||
+-            strcmp(menu->text,"Map GCW0 to keyboard key")==0 ||
+-            strcmp(menu->text,"Select keyboard key")==0 )
++            strcmp(menu->text,"Select joystick button") == 0 ||
++            strcmp(menu->text,"Map GCW0 to keyboard key") == 0 ||
++            strcmp(menu->text,"Select keyboard key") == 0 )
+           widgets_to_end++;
+ #endif
+         widget_do_menu( ptr->submenu );
+@@ -744,6 +748,8 @@
+     error = widget_do_menu( submenu_type_and_mapping_for_keyboard );
+ 
+ #ifdef GCWZERO
++  else if ( action - 1 == GCW0_JOYSTICK )
++    error = widget_do_menu( submenu_type_and_mapping_for_gcw0_joystick );
+   else if ( action - 1 == GCW0_KEYBOARD )
+     error = widget_do_menu( submenu_type_and_mapping_for_gcw0_keys );
+ #endif
+diff --git a/ui/widget/options.pl b/ui/widget/options.pl
+index 891ac57..f73e5c7 100755
+--- a/ui/widget/options.pl
++++ b/ui/widget/options.pl
+@@ -583,8 +583,9 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Alt_L: /* B */
+-#endif
++#else
+   case INPUT_KEY_Escape:
++#endif
+   case INPUT_JOYSTICK_FIRE_2:
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+     widget_$_->{name}_running = 0;
+@@ -639,9 +640,10 @@
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Control_L: /* A */
+-#endif
++#else
+   case INPUT_KEY_Return:
+   case INPUT_KEY_KP_Enter:
++#endif
+   case INPUT_JOYSTICK_FIRE_1:
+ #ifdef GCWZERO
+     widget_end_widget( WIDGET_FINISHED_OK );
+diff --git a/ui/widget/query.c b/ui/widget/query.c
+index 12ba646..4d35b5b 100644
+--- a/ui/widget/query.c
++++ b/ui/widget/query.c
+@@ -32,6 +32,9 @@
+ #include "utils.h"
+ #include "widget_internals.h"
+ 
++#ifdef GCWZERO
++int dont_refresh_display = 0;
++#endif
+ widget_query_t widget_query;
+ 
+ static const char * const title = "Fuse - Confirm";
+@@ -274,6 +277,9 @@
+   case INPUT_JOYSTICK_FIRE_1:
+     query[highlight_line].click();
+     widget_end_all( WIDGET_FINISHED_OK );
++#ifdef GCWZERO
++    if (!dont_refresh_display)
++#endif
+     display_refresh_all();
+     return;
+ 
+diff --git a/ui/widget/roms.c b/ui/widget/roms.c
+index d731408..a92092a 100644
+--- a/ui/widget/roms.c
++++ b/ui/widget/roms.c
+@@ -39,6 +39,10 @@
+ static size_t first_rom, rom_count;
+ int is_peripheral;
+ 
++#ifdef GCWZERO
++static size_t highlight_line = 0;
++#endif
++
+ static void print_rom( int which );
+ 
+ int
+@@ -47,9 +51,6 @@
+   int i;
+   char buffer[32];
+   char key[] = "\x0A ";
+-#if VKEYBOARD
+-  vkeyboard_enabled = 1;
+-#endif
+   if( data ) info = data;
+ 
+   /* Get a copy of the current settings */
+@@ -72,10 +73,18 @@
+   is_peripheral = info->is_peripheral;
+ 
+   /* Blank the main display area */
++#ifdef GCWZERO
++  widget_dialog_with_border( 1, 2, 30, rom_count + 4 );
++#else
+   widget_dialog_with_border( 1, 2, 30, rom_count + 2 );
++#endif
+ 
+   widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, info->title );
++#ifdef GCWZERO
++  widget_display_lines( 2, rom_count + 4 );
++#else
+   widget_display_lines( 2, rom_count + 2 );
++#endif
+ 
+   for( i=0; i < info->count; i++ ) {
+ 
+@@ -87,12 +96,24 @@
+     print_rom( i );
+   }
+ 
++#ifdef GCWZERO
++  i++;
++  widget_printstring_right( 244, i*8+24, WIDGET_COLOUR_FOREGROUND,
++					   "\012X\001 = change rom" );
++  widget_printstring( 12, i*8+24, WIDGET_COLOUR_FOREGROUND,
++				     "\012A\001 = confirm roms" );
++  widget_display_rasters(i*8+24,8);
++#endif
++
+   return 0;
+ }
+ 
+ static void
+ print_rom( int which )
+ {
++#ifdef GCWZERO
++  int colour = ( which == highlight_line ) ?  WIDGET_COLOUR_HIGHLIGHT : WIDGET_COLOUR_BACKGROUND;
++#endif
+   const char *setting;
+ 
+   setting = *( settings_get_rom_setting( widget_settings,
+@@ -100,8 +121,13 @@
+   while( widget_stringwidth( setting ) >= 232 - 68 )
+     ++setting;
+ 
++#ifdef GCWZERO
++  widget_rectangle( 68, which * 8 + 24, 232 - 68, 8,
++		    colour );
++#else
+   widget_rectangle( 68, which * 8 + 24, 232 - 68, 8,
+ 		    WIDGET_COLOUR_BACKGROUND );
++#endif
+   widget_printstring (68, which * 8 + 24,
+ 				   WIDGET_COLOUR_FOREGROUND, setting );
+   widget_display_rasters( which * 8 + 24, 8 );
+@@ -110,6 +136,11 @@
+ void
+ widget_roms_keyhandler( input_key key )
+ {
++#ifdef GCWZERO
++  int new_highlight_line = 0;
++  int cursor_pressed = 0;
++#endif
++
+   switch( key ) {
+ 
+ #if 0
+@@ -140,16 +171,55 @@
+     widget_end_all( WIDGET_FINISHED_OK );
+     return;
+ 
++#ifdef GCWZERO
++  case INPUT_KEY_space: /* X */
++    key = INPUT_KEY_a + highlight_line;
++    break;
++
++  case INPUT_KEY_Up:
++  case INPUT_JOYSTICK_UP:
++    if ( highlight_line ) {
++      new_highlight_line = highlight_line - 1;
++      cursor_pressed = 1;
++    }
++    break;
++
++  case INPUT_KEY_Down:
++  case INPUT_JOYSTICK_DOWN:
++    if ( highlight_line + 1 < rom_count ) {
++      new_highlight_line = highlight_line + 1;
++      cursor_pressed = 1;
++    }
++    break;
++
++  case INPUT_KEY_Tab: /* L1 */
++    new_highlight_line = 0;
++    cursor_pressed = 1;
++    break;
++
++  case INPUT_KEY_BackSpace: /* R1 */
++    new_highlight_line = rom_count;
++    cursor_pressed = 1;
++    break;
++
++#endif
++
+   default:	/* Keep gcc happy */
+     break;
+ 
+   }
+ 
++#ifdef GCWZERO
++  if( cursor_pressed ) {
++    int old_highlight_line = highlight_line;
++    highlight_line = new_highlight_line;
++    print_rom( old_highlight_line );
++    print_rom( highlight_line );
++  }
++#endif
++
+   if( key >= INPUT_KEY_a && key <= INPUT_KEY_z &&
+       key - INPUT_KEY_a < (ptrdiff_t)rom_count ) {
+-#if VKEYBOARD
+-    vkeyboard_enabled = 0;
+-#endif
+     char **setting;
+     char buf[32];
+     widget_filesel_data data;
+@@ -161,9 +231,6 @@
+     data.exit_all_widgets = 0;
+     data.title = buf;
+     widget_do_fileselector( &data );
+-#if VKEYBOARD
+-    vkeyboard_enabled = 1;
+-#endif
+     if( !widget_filesel_name ) return;
+ 
+     setting = settings_get_rom_setting( widget_settings, key + first_rom,
+@@ -177,8 +244,8 @@
+ int
+ widget_roms_finish( widget_finish_state finished )
+ {
+-#if VKEYBOARD
+-  vkeyboard_enabled = 0;
++#ifdef GCWZERO
++  highlight_line = 0;
+ #endif
+   if( finished == WIDGET_FINISHED_OK ) {
+     settings_copy( &settings_current, widget_settings );
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index f655d3b..a8af411 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -880,17 +880,11 @@
+     menu_file_savesnapshot( 0 );
+     fuse_emulation_unpause();
+     break;
+-#ifdef GCWZERO
+-  case INPUT_KEY_Tab: /*L1*/
+-#endif
+   case INPUT_KEY_F3:
+     fuse_emulation_pause();
+     menu_file_open( 0 );
+     fuse_emulation_unpause();
+     break;
+-#ifdef GCWZERO
+-  case INPUT_KEY_BackSpace: /*R1*/
+-#endif
+   case INPUT_KEY_F4:
+     fuse_emulation_pause();
+     menu_options_general( 0 );
+diff --git a/ui/widget/widget_internals.h b/ui/widget/widget_internals.h
+index b4d4ccc..84ac2c8 100644
+--- a/ui/widget/widget_internals.h
++++ b/ui/widget/widget_internals.h
+@@ -59,6 +59,7 @@
+ #ifdef GCWZERO
+ /* At joystick configurations when accept a key we don't want to exit
+   completely the widgets. We want return to the configuration of other keys. */
++extern int dont_refresh_display;
+ extern int widgets_to_end;
+ int
+ widget_end_n_widgets( int number, widget_finish_state state );
+diff --git a/utils.c b/utils.c
+index 51b9caa..8621a07 100644
+--- a/utils.c
++++ b/utils.c
+@@ -499,7 +499,7 @@
+ }
+ 
+ #ifdef GCWZERO
+-char* utils_last_filename( const char *filename )
++char* utils_last_filename( const char *filename, int without_extension )
+ {
+   char *c, *test_file, *last_file;
+ 
+@@ -515,10 +515,12 @@
+     last_file = utils_safe_strdup( test_file );
+ 
+   /* Search for extension */
+-  c = strrchr( last_file, '.' );
+-  if( c ) {
+-    int n = c - last_file;
+-    last_file[n] = '\0';
++  if (without_extension) {
++    c = strrchr( last_file, '.' );
++    if( c ) {
++      int n = c - last_file;
++      last_file[n] = '\0';
++    }
+   }
+ 
+   libspectrum_free( test_file );
+diff --git a/utils.h b/utils.h
+index 82621d6..123e6d6 100644
+--- a/utils.h
++++ b/utils.h
+@@ -68,7 +68,7 @@
+ void utils_networking_end( void );
+ 
+ #ifdef GCWZERO
+-char* utils_last_filename( const char *filename );
++char* utils_last_filename( const char *filename, int without_extension );
+ #endif
+ 
+ #endif			/* #ifndef FUSE_UTILS_H */

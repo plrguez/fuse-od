@@ -1,0 +1,78 @@
+From bfbdcea6cdbc88758227f58807941d269cce42a6 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 24 ago. 2020 19:01:26
+
+Patch #013 for OpenDingux and RetroFW
+Added version info to About Widget
+
+diff --git a/configure.ac b/configure.ac
+index e078d72..22707f7 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -312,9 +312,6 @@
+   if test "$gcw0" = yes; then
+     if test "$sdl_available" = yes; then
+       AC_DEFINE([GCWZERO], 1, [Defined if GCW ZERO is in use])
+-      AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined if GCW ZERO is in use])
+-      AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
+-      AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
+       UI=sdl
+       WIDGET=widget
+       use_sdl=yes
+@@ -336,9 +333,6 @@
+   if test "$retrofw" = yes; then
+     if test "$sdl_available" = yes; then
+       AC_DEFINE([GCWZERO], 1, [Defined if RetroFW 2 is in use])
+-      AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined if RetroFW 2 is in use])
+-      AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
+-      AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
+       UI=sdl
+       WIDGET=widget
+       use_sdl=yes
+@@ -348,6 +342,14 @@
+   fi
+ fi
+ 
++dnl Common DEFINES for OpenDingux/RetroFW
++if test "$gcw0" = "yes" -o "$retrofw" = "yes"; then
++  AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined for OpenDingux/RetroFW])
++  AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
++  AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
++  AC_DEFINE([GCW0_VERSION], "0.0.1 for OpenDingux/RetroFW", [OpenDingux/RetroFW Version])
++fi
++
+ dnl Look for null UI (default=no)
+ if test -z "$UI"; then
+   AC_MSG_CHECKING(whether null UI requested)
+diff --git a/ui/widget/about.c b/ui/widget/about.c
+index 2fccd19..af6ef96 100644
+--- a/ui/widget/about.c
++++ b/ui/widget/about.c
+@@ -38,7 +38,11 @@
+   margin = 17;
+   line = 0;
+ 
++#ifdef GCWZERO
++  widget_dialog_with_border( 1, 2, dialog_cols, 9+2 );
++#else
+   widget_dialog_with_border( 1, 2, dialog_cols, 7+2 );
++#endif
+   widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, "About Fuse" );
+ 
+   string_width = widget_stringwidth( "the Free Unix Spectrum Emulator (Fuse)" );
+@@ -64,6 +68,15 @@
+   x = margin - 8 + ( dialog_cols * 8 - string_width ) / 2;
+   widget_printstring( x, ++line * 8 + 24, 0x09, PACKAGE_URL );
+ 
++#ifdef GCWZERO
++  ++line;
++
++  string_width = widget_stringwidth( GCW0_VERSION );
++  x = margin - 8 + ( dialog_cols * 8 - string_width ) / 2;
++  widget_printstring( x, ++line * 8 + 24, WIDGET_COLOUR_FOREGROUND,
++                      GCW0_VERSION );
++#endif
++
+   widget_display_lines( 2, line + 3 );
+ 
+   return 0;

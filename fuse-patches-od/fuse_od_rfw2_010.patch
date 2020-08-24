@@ -1,0 +1,229 @@
+From 90e32f806bbb16e70a7ef837de7dfbe56c3bd43f Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 23 ago. 2020 13:54:06
+
+Patch #010 for OpenDingux and RetroFW
+Control mapping filenames. 
+Dectect variants of same program from filenames (sides, disks, 
+publishers, models, etc...) and remove the variant parts for the control
+mapping filename.
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 1bdc020..c909cc1 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -346,7 +346,15 @@
+     Set the current controls as the default control mapping.
+ 
+ PITFALLS:
+-  Different sides. For now a control mapping filename is based on last filename loaded. For games with two or more files (tapes, disk sides) will be two or more control mapping files.
++  Variants of the same program:
++    Control mapping filenames are based on the filename loaded.
++    For games with two or more files (tapes, disk sides) or variations of the same program (48k, 128k, different publishers or formats) the emulator try to detect some patterns on name to cut them off:
++      - All the denominations between '()' or '[]'
++      - 'Tape', 'Disk', 'Side' for 'ABCD' or '1234', 'Part 1234 of 1234'
++      - The '128k', '48k' out of '()' '[]'
++      - The 'Small, Medium, Large' whatever 'Case'
++    The searchs are case insensitive.
++    But if the names used are no consistent then a different name for the same program may be determined.
+ 
+   When insert various media the last inserted will be the selected control mapping.
+     - If you unload it then it will be cleared and you could start a game from other media inserted with no file control mapping.
+@@ -360,6 +368,8 @@
+     5.- Open media menu and clear tape
+     6.- Now there is not control mapping file assigned
+ 
++  Bugs aside, probably there are other scenarios not taken into account but I believe that the most relevant use cases are covered.
++
+ -------------------------
+ ### External joystick ###
+ -------------------------
+diff --git a/compat.h b/compat.h
+index 4ac7b39..9847fa0 100644
+--- a/compat.h
++++ b/compat.h
+@@ -170,6 +170,7 @@
+ #ifdef GCWZERO
+ int compat_createdir( const char *path );
+ int compat_create_config_paths( const char *config_path );
++char* compat_chop_expressions( const char** re_expressions, const char* text );
+ #endif
+ 
+ /* Timing routines */
+diff --git a/compat/Makefile.am b/compat/Makefile.am
+index 1685f07..9372e4f 100644
+--- a/compat/Makefile.am
++++ b/compat/Makefile.am
+@@ -57,7 +57,8 @@
+ if BUILD_GCWZERO
+ fuse_SOURCES += \
+               compat/linux/dir.c \
+-              compat/linux/paths.c
++              compat/linux/paths.c \
++              compat/linux/regex.c
+ endif
+ endif
+ 
+diff --git a/compat/linux/regex.c b/compat/linux/regex.c
+new file mode 100644
+index 0000000..0b96e0f
+--- /dev/null
++++ b/compat/linux/regex.c
+@@ -0,0 +1,96 @@
++/* regex.c: Regusar expresion compatibility routines for OpenDingux (linux-uclibc)
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++#include <config.h>
++
++#include <sys/types.h>          /* UNIX types      POSIX */
++#include <regex.h>              /* Regular Exp     POSIX */
++#include <string.h> 
++#include <libspectrum.h>
++
++#include "compat.h"
++
++#define MAX_LENGTH  256
++#define MAX_MATCHES 100
++
++static char* cut_patterns( const char* re_expression, const char* text );
++static int   cut_pattern( const regex_t* reg_expr, const char* text, char* remain );
++
++char*
++compat_chop_expressions( const char** re_expressions, const char* text )
++{
++  int  i;
++  char *new_search;
++
++  new_search = libspectrum_new( char, MAX_LENGTH );
++  strncpy( new_search, text, MAX_LENGTH );
++
++  i = 0;
++  while ( re_expressions[i] ) {
++    strncpy(new_search, cut_patterns( re_expressions[i], new_search ), MAX_LENGTH);
++    i++;
++  }
++
++  return new_search;
++}
++
++static char*
++cut_patterns( const char* re_expression, const char* text )
++{
++  char remain[MAX_LENGTH ] = {'\0'};
++  char *new_search;
++  regex_t reg_expr;
++
++  new_search = libspectrum_new(char, MAX_LENGTH);
++  strncpy(new_search, text, MAX_LENGTH);
++
++  if (regcomp(&reg_expr, re_expression, REG_ICASE|REG_EXTENDED|REG_NEWLINE))
++    return new_search;
++
++  while ( !cut_pattern( &reg_expr, new_search, &remain[0] ) )
++    strncpy( new_search, &remain[0], 100 );
++
++  strncpy(new_search, &remain[0], 100);
++  regfree(&reg_expr);
++
++  return new_search;
++}
++
++static int
++cut_pattern( const regex_t* reg_expr, const char* text, char* remain )
++{
++  regmatch_t matches[MAX_MATCHES];
++
++  if ( !text ) return 1;
++
++  if ( regexec(reg_expr, text, MAX_MATCHES, matches, 0) ) {
++    strncpy( remain, text, MAX_LENGTH);
++    return 1;
++  }
++
++  strncpy( remain, text, matches[0].rm_so );
++  remain[matches[0].rm_so] = '\0';
++  if ( text[matches[0].rm_eo] ) strncat(remain, &text[matches[0].rm_eo], MAX_LENGTH);
++
++  return 0;
++}
+\ No newline at end of file
+diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
+index dfc7aec..c5c09de 100644
+--- a/controlmapping/controlmapping.c
++++ b/controlmapping/controlmapping.c
+@@ -104,6 +104,13 @@
+   old_mapfile = mapfile;
+   mapfile = get_mapping_filename( filename );
+   mapfile_class = class;
++
++  /* Different loads but same mapfile? (F.example SIDE B of tape
++     Maintain current mapfilen */
++  if ( old_mapfile && mapfile && !strcmp( old_mapfile,mapfile ) )
++    return 0;
++
++  /* Autosave current mapfile preiovusly to load new mapfile */
+   if ( old_mapfile ) {
+     /* Auto-save, changed mapping and Something changed or don't yet created file? */;
+     if ( settings_current.control_mapping_autosave )
+diff --git a/controlmapping/settings.pl b/controlmapping/settings.pl
+index f0afb99..e162d0f 100644
+--- a/controlmapping/settings.pl
++++ b/controlmapping/settings.pl
+@@ -116,6 +116,13 @@
+ static void control_mapping_copy_to_settings_internal( settings_info *dest, control_mapping_info *src );
+ static void control_mapping_end( void );
+ 
++const char* re_expressions[] = {
++    "(([[:space:]]|[-_])*)(([[]|[(])+[[:space:]]*)(([[:alnum:]]|[[:space:]]|[[:punct:]])*)([[:space:]]*([]]|[)])+)(([[:space:]]|[-_])*)",
++    "(([[:space:]]|[-_])*)(([(]|[[])*[[:space:]]*)(disk|tape|side|part)(([[:space:]]|[[:punct:]])*)(([abcd1234])([[:space:]]*of[[:space:]]*[1234])*)([[:space:]]*([)]|[]])*)(([[:space:]]|[-_])*)",
++    "(([[:space:]]|[-_])*)((128k|48k)+)(([[:space:]]|[-_])*)",
++    "(([[:space:]]|[-_])*)((small|medium|large)[[:space:]]*[[:alnum:]]*[[:space:]]*case)(([[:space:]]|[-_])*)",
++    NULL };
++
+ /* Fill the control mapping structure with sensible defaults */
+ void control_mapping_defaults( control_mapping_info *control_mapping )
+ {
+@@ -755,19 +762,19 @@
+ {
+   const char* cfgdir;
+   char buffer[ PATH_MAX ];
+-  char* filaneme_test;
++  char* filename_test;
+ 
+   if ( !filename ) return NULL;
+ 
+   /* Don't exist config path, no error but do nothing */
+   cfgdir = compat_get_config_path(); if( !cfgdir ) return NULL;
+ 
+-  filaneme_test = utils_last_filename( filename, 1 );
++  filename_test = compat_chop_expressions( re_expressions, utils_last_filename( filename, 1 ) );
+ 
+   snprintf( buffer, PATH_MAX, "%s"FUSE_DIR_SEP_STR"%s"FUSE_DIR_SEP_STR"%s%s",
+-            cfgdir, "mappings", filaneme_test, ".fcm" );
++            cfgdir, "mappings", filename_test, ".fcm" );
+ 
+-  libspectrum_free( filaneme_test );
++  libspectrum_free( filename_test );
+ 
+   return utils_safe_strdup( buffer );
+ }

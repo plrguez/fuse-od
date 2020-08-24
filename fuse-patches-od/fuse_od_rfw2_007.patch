@@ -1,0 +1,1451 @@
+From 714c0d21e547b6b2b2f44863e9752ea91c6d9b91 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 18 ago. 2020 4:07:08
+
+Patch #007 for OpenDingux and RetroFW
+Initial control mapping files saving and load for tapes and snapshots.
+
+diff --git a/.gitignore b/.gitignore
+index 0bff2a4..1bc3fdd 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -113,3 +113,5 @@
+ /Platform/GCW0/gdbinit
+ /Platform/RETROFW1.0/gdbinit
+ /Platform/RETROFW2.0/gdbinit
++/controlmapping/controlmappingsettings.c
++/controlmapping/controlmappingsettings.h
+diff --git a/Makefile.am b/Makefile.am
+index 2126a2b..3d51f6b 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -210,3 +210,4 @@
+ include ui/xlib/Makefile.am
+ include unittests/Makefile.am
+ include z80/Makefile.am
++include controlmapping/Makefile.am
+diff --git a/compat/Makefile.am b/compat/Makefile.am
+index 28040c6..1685f07 100644
+--- a/compat/Makefile.am
++++ b/compat/Makefile.am
+@@ -44,17 +44,21 @@
+ if COMPAT_LINUX
+ fuse_SOURCES += \
+                 compat/unix/dir.c \
+-                compat/linux/dir.c \
+                 compat/unix/file.c \
+                 compat/unix/osname.c \
+                 compat/linux/relative_paths.c \
+                 compat/unix/paths.c \
+-                compat/linux/paths.c \
+                 compat/unix/timer.c
+ 
+ if HAVE_SOCKETS
+ fuse_SOURCES += compat/unix/socket.c
+ endif
++
++if BUILD_GCWZERO
++fuse_SOURCES += \
++              compat/linux/dir.c \
++              compat/linux/paths.c
++endif
+ endif
+ 
+ ## Morphos routines
+diff --git a/compat/linux/dir.c b/compat/linux/dir.c
+index 6aa4ecd..396d775 100644
+--- a/compat/linux/dir.c
++++ b/compat/linux/dir.c
+@@ -25,6 +25,7 @@
+ 
+ #include <sys/stat.h>
+ #include <sys/types.h>
++#include <errno.h>
+ 
+ #include "compat.h"
+ 
+diff --git a/compat/linux/paths.c b/compat/linux/paths.c
+index f344fc4..d4281ad 100644
+--- a/compat/linux/paths.c
++++ b/compat/linux/paths.c
+@@ -1,4 +1,4 @@
+-/* dir.c: Directory-related compatibility routines for OpenDingux (linux-uclibc)
++/* paths.c: Directory-related compatibility routines for OpenDingux (linux-uclibc)
+    Copyright (c) 2020 Pedro Luis Rodríguez González
+ 
+    This program is free software; you can redistribute it and/or modify
+@@ -25,6 +25,8 @@
+ 
+ #include <sys/stat.h>
+ #include <string.h>
++#include <limits.h>
++#include <errno.h>
+ 
+ #include "compat.h"
+ #include "ui/ui.h"
+diff --git a/configure.ac b/configure.ac
+index b4c5d08..e078d72 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -984,6 +984,9 @@
+ dnl This tells the Makefile to use SDL_CFLAGS and SDL_LIBS during the build
+ AM_CONDITIONAL(USE_SDL, test "$use_sdl" = "yes")
+ 
++dnl This tells the Makefile to build some parts for OpenDingux/RetroFW
++AM_CONDITIONAL(BUILD_GCWZERO, test [ "$gcw0" = "yes" -o "$retrofw" = "yes" ])
++
+ dnl Decide whether to install desktop and mime files
+ AC_ARG_ENABLE(desktop-integration,
+ AS_HELP_STRING([--enable-desktop-integration], [add menu entry and file associations]),
+diff --git a/controlmapping/Makefile.am b/controlmapping/Makefile.am
+new file mode 100644
+index 0000000..bc3ceb2
+--- /dev/null
++++ b/controlmapping/Makefile.am
+@@ -0,0 +1,48 @@
++## Process this file with automake to produce Makefile.in
++## Copyright (c) 2020 Pedro Luis Rodríguez González
++
++## This program is free software; you can redistribute it and/or modify
++## it under the terms of the GNU General Public License as published by
++## the Free Software Foundation; either version 2 of the License, or
++## (at your option) any later version.
++##
++## This program is distributed in the hope that it will be useful,
++## but WITHOUT ANY WARRANTY; without even the implied warranty of
++## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++## GNU General Public License for more details.
++##
++## You should have received a copy of the GNU General Public License along
++## with this program; if not, write to the Free Software Foundation, Inc.,
++## 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++##
++## Author contact information:
++##
++## E-mail: pl.rguez@gmail.com
++
++if BUILD_GCWZERO
++
++fuse_SOURCES += \
++                controlmapping/controlmapping.c \
++                controlmapping/controlmappingsettings.c
++
++noinst_HEADERS += \
++                  controlmapping/controlmapping.h \
++                  controlmapping/controlmappingsettings.h
++
++EXTRA_DIST += controlmapping/settings.pl \
++	      controlmapping/settings-header.pl
++
++BUILT_SOURCES += $(control_mapping_build_sources)
++
++endif
++
++CLEANFILES += $(control_mapping_build_sources)
++
++control_mapping_build_sources = controlmapping/controlmappingsettings.c \
++                                controlmapping/controlmappingsettings.h
++
++controlmapping/controlmappingsettings.c: $(srcdir)/controlmapping/settings.pl $(srcdir)/settings.dat
++	$(AM_V_GEN)$(PERL) -I$(srcdir)/perl $(srcdir)/controlmapping/settings.pl $(srcdir)/settings.dat > $@.tmp && mv $@.tmp $@
++
++controlmapping/controlmappingsettings.h: $(srcdir)/controlmapping/settings-header.pl $(srcdir)/settings.dat
++	$(AM_V_GEN)$(PERL) -I$(srcdir)/perl $(srcdir)/controlmapping/settings-header.pl $(srcdir)/settings.dat > $@.tmp && mv $@.tmp $@
+diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
+new file mode 100644
+index 0000000..36791ad
+--- /dev/null
++++ b/controlmapping/controlmapping.c
+@@ -0,0 +1,113 @@
++/* controlmapping.c: Control Mapping for OpenDingux
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++#include <config.h>
++
++#include <string.h>
++#include <limits.h>
++#include <libspectrum.h>
++
++#include "compat.h"
++#include "utils.h"
++#include "settings.h"
++#include "controlmapping/controlmapping.h"
++#include "controlmapping/controlmappingsettings.h"
++
++#ifdef GCWZERO
++char *mapfile = NULL;              /* Path of a .fcm file to load */
++
++/* Automatic search after the load of snapshots or tapes */
++static char* get_mapping_filename( const char* filename );
++
++static char*
++get_mapping_filename( const char* filename )
++{
++  const char* cfgdir;
++  char buffer[ PATH_MAX ];
++  char* filaneme_test;
++
++  if ( !filename ) return NULL;
++
++  /* Don't exist config path, no error but do nothing */
++  cfgdir = compat_get_config_path(); if( !cfgdir ) return NULL;
++
++  filaneme_test = utils_last_filename( filename, 1 );
++
++  snprintf( buffer, PATH_MAX, "%s"FUSE_DIR_SEP_STR"%s"FUSE_DIR_SEP_STR"%s%s",
++            cfgdir, "mappings", filaneme_test, ".fcm" );
++
++  return utils_safe_strdup( buffer );
++}
++
++/* Called on emulator startup */
++int
++controlmapping_init( void )
++{
++  int error;
++
++  control_mapping_defaults( &control_mapping_default );
++  control_mapping_defaults( &control_mapping_current );
++
++  error = control_mapping_read_config_file( &control_mapping_current );
++  if( error ) return error;
++
++  return 0;
++}
++
++void
++controlmapping_register_startup( void )
++{
++  control_mapping_register_startup();
++}
++
++int
++controlmapping_load_mapfile( const char *filename )
++{
++  mapfile = get_mapping_filename( filename );
++  if ( !mapfile ) return 1;
++
++  if ( control_mapping_read_config_file( &control_mapping_current ) ) return 1;
++
++  control_mapping_copy_to_settings( &settings_current, &control_mapping_current );
++  return 0;
++}
++
++int
++controlmapping_save_mapfile( const char *filename )
++{
++  mapfile = get_mapping_filename( filename );
++  if ( !mapfile ) return 1;
++
++  control_mapping_copy_from_settings( &control_mapping_current, &settings_current );
++  return control_mapping_write_config( &control_mapping_current );
++}
++
++const char*
++controlmapping_get_filename( void )
++{
++  if ( last_filename )
++    return last_filename;
++  else
++    return NULL;
++}
++#endif /* GCWZERO */
+diff --git a/controlmapping/controlmapping.h b/controlmapping/controlmapping.h
+new file mode 100644
+index 0000000..4f67cd5
+--- /dev/null
++++ b/controlmapping/controlmapping.h
+@@ -0,0 +1,36 @@
++/* controlmapping.h: Control Mapping for OpenDingux
++   Copyright (c) 2020 Pedro Luis Rodríguez González
++
++   This program is free software; you can redistribute it and/or modify
++   it under the terms of the GNU General Public License as published by
++   the Free Software Foundation; either version 2 of the License, or
++   (at your option) any later version.
++
++   This program is distributed in the hope that it will be useful,
++   but WITHOUT ANY WARRANTY; without even the implied warranty of
++   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++   GNU General Public License for more details.
++
++   You should have received a copy of the GNU General Public License along
++   with this program; if not, write to the Free Software Foundation, Inc.,
++   51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++   Author contact information:
++
++   E-mail: pl.rguez@gmail.com
++
++*/
++
++
++#ifndef FUSE_CONTROLMAPPING_H
++#define FUSE_CONTROLMAPPING_H
++
++extern char *mapfile;
++
++int controlmapping_load_mapfile( const char *filename );
++int controlmapping_save_mapfile( const char *filename );
++int controlmapping_init( void );
++void controlmapping_register_startup( void );
++const char* controlmapping_get_filename( void );
++
++#endif /* FUSE_CONTROLMAPPING_H */
+diff --git a/controlmapping/settings-header.pl b/controlmapping/settings-header.pl
+new file mode 100644
+index 0000000..9ebc57f
+--- /dev/null
++++ b/controlmapping/settings-header.pl
+@@ -0,0 +1,121 @@
++#!/usr/bin/perl -w
++
++# settings-header.pl: generate controlmappingsettings.h from settings.dat
++# Copyright (c) 2020 Pedro Luis Rodríguez González
++
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++
++# You should have received a copy of the GNU General Public License along
++# with this program; if not, write to the Free Software Foundation, Inc.,
++# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++# Author contact information:
++
++# E-mail: pl.rguez@gmail.com
++
++use strict;
++
++use lib 'perl';
++
++use Fuse;
++
++my %options;
++
++while(<>) {
++
++    next if /^\s*$/;
++    next if /^\s*#/;
++
++    chomp;
++
++    my( $name, $type, $default, $short, $commandline, $configfile ) =
++	split /\s*,\s*/;
++
++    if( not defined $commandline ) {
++	$commandline = $name;
++	$commandline =~ s/_/-/g;
++    }
++
++    if( not defined $configfile ) {
++	$configfile = $commandline;
++	$configfile =~ s/-//g;
++    }
++
++
++    next if !($name =~ /^joystick/) && !($name =~ /kempston/)
++         && !($name =~ /fuller/) && !($name =~ /^issue2/)
++         && !($name =~ /^keyboard/);
++
++    $options{$name} = { type => $type, default => $default, short => $short,
++			commandline => $commandline,
++			configfile => $configfile };
++}
++
++print Fuse::GPL( 'settings.h: Handling configuration settings',
++		 '2001-2003 Philip Kendall' );
++
++print << 'CODE';
++
++/* This file is autogenerated from settings.dat by settings-header.pl.
++   Do not edit unless you know what will happen! */
++
++#ifndef FUSE_CONTROL_MAPPING_SETTINGS_H
++#define FUSE_CONTROL_MAPPING_SETTINGS_H
++
++#include <sys/types.h>
++
++#include "settings.h"
++
++typedef struct control_mapping_info {
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++	print "   int $name;\n";
++    } elsif( $type eq 'string' ) {
++	print "  char *$name;\n";
++    } elsif( $type eq 'null' ) {
++	# Do nothing
++    } else {
++	die "Unknown setting type `$type'";
++    }
++
++}
++
++print << 'CODE';
++
++} control_mapping_info;
++
++extern control_mapping_info control_mapping_current;
++extern control_mapping_info control_mapping_default;
++extern char *mapfile;
++
++void control_mapping_defaults( control_mapping_info *control_mapping );
++void control_mapping_copy( control_mapping_info *dest, control_mapping_info *src );
++void control_mapping_copy_from_settings( control_mapping_info *dest, settings_info *src );
++void control_mapping_copy_to_settings( settings_info *dest, control_mapping_info *src );
++
++void control_mapping_set_string( char **string_setting, const char *value );
++
++int control_mapping_free( control_mapping_info *control_mapping );
++int control_mapping_settings_free( settings_info *control_mapping );
++
++int control_mapping_read_config_file( control_mapping_info *control_mapping );
++int control_mapping_write_config( control_mapping_info *control_mapping );
++
++void control_mapping_register_startup( void );
++
++#endif				/* #ifndef FUSE_CONTROL_MAPPING_SETTINGS_H */
++CODE
+diff --git a/controlmapping/settings.pl b/controlmapping/settings.pl
+new file mode 100644
+index 0000000..222cf51
+--- /dev/null
++++ b/controlmapping/settings.pl
+@@ -0,0 +1,693 @@
++#!/usr/bin/perl -w
++
++# settings.pl: generate controlmappingsettings.c from settings.dat
++# Copyright (c) 2020 Pedro Luis Rodríguez González
++
++# This program is free software; you can redistribute it and/or modify
++# it under the terms of the GNU General Public License as published by
++# the Free Software Foundation; either version 2 of the License, or
++# (at your option) any later version.
++
++# This program is distributed in the hope that it will be useful,
++# but WITHOUT ANY WARRANTY; without even the implied warranty of
++# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++# GNU General Public License for more details.
++
++# You should have received a copy of the GNU General Public License along
++# with this program; if not, write to the Free Software Foundation, Inc.,
++# 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
++
++# Author contact information:
++
++# E-mail: pl.rguez@gmail.com
++
++use strict;
++
++use Fuse;
++
++sub hashline ($) { '#line ', $_[0] + 1, '"', __FILE__, "\"\n" }
++
++my %options;
++
++while(<>) {
++
++    next if /^\s*$/;
++    next if /^\s*#/;
++
++    chomp;
++
++    my( $name, $type, $default, $short, $commandline, $configfile ) =
++	split /\s*,\s*/;
++
++    if( ( not defined $commandline ) || ( $commandline eq '' ) ) {
++	$commandline = $name;
++	$commandline =~ s/_/-/g;
++    }
++
++    if( ( not defined $configfile ) || ( $configfile eq '' ) ) {
++	$configfile = $commandline;
++	$configfile =~ s/-//g;
++    }
++
++
++    next if !($name =~ /^joystick/) && !($name =~ /kempston/)
++         && !($name =~ /fuller/) && !($name =~ /^issue2/)
++         && !($name =~ /^keyboard/);
++
++    $options{$name} = { type => $type, default => $default, short => $short,
++			commandline => $commandline,
++			configfile => $configfile };
++}
++
++print Fuse::GPL( 'settings.c: Handling configuration settings',
++		 '2002 Philip Kendall' );
++
++print hashline( __LINE__ ), << 'CODE';
++
++/* This file is autogenerated from settings.dat by settings.pl.
++   Do not edit unless you know what will happen! */
++
++#include <config.h>
++
++#include <errno.h>
++#include <stdio.h>
++#include <stdlib.h>
++#include <string.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <unistd.h>
++
++#ifdef HAVE_GETOPT_LONG		/* Did our libc include getopt_long? */
++#include <getopt.h>
++#elif defined AMIGA || defined __MORPHOS__            /* #ifdef HAVE_GETOPT_LONG */
++/* The platform uses GNU getopt, but not getopt_long, so we get
++   symbol clashes on this platform. Just use getopt */
++#else				/* #ifdef HAVE_GETOPT_LONG */
++#include "compat.h"		/* If not, use ours */
++#endif				/* #ifdef HAVE_GETOPT_LONG */
++
++#ifdef HAVE_LIB_XML2
++#include <libxml/xmlmemory.h>
++#include <libxml/parser.h>
++#endif				/* #ifdef HAVE_LIB_XML2 */
++
++#include "fuse.h"
++#include "infrastructure/startup_manager.h"
++#include "machine.h"
++#include "controlmapping/controlmappingsettings.h"
++#include "settings.h"
++#include "spectrum.h"
++#include "ui/ui.h"
++#include "utils.h"
++
++/* The current control mappings */
++control_mapping_info control_mapping_current;
++control_mapping_info control_mapping_default;
++
++#ifdef HAVE_LIB_XML2
++static int control_mapping_parse_xml( xmlDocPtr doc, control_mapping_info *control_mapping );
++#else				/* #ifdef HAVE_LIB_XML2 */
++static int control_mapping_parse_ini( utils_file *file, control_mapping_info *control_mapping );
++#endif				/* #ifdef HAVE_LIB_XML2 */
++
++static void control_mapping_copy_internal( control_mapping_info *dest, control_mapping_info *src );
++static void control_mapping_copy_from_settings_internal( control_mapping_info *dest, settings_info *src );
++static void control_mapping_copy_to_settings_internal( settings_info *dest, control_mapping_info *src );
++static void control_mapping_end( void );
++
++/* Fill the control mapping structure with sensible defaults */
++void control_mapping_defaults( control_mapping_info *control_mapping )
++{
++  control_mapping_copy_from_settings_internal( control_mapping, &settings_default );
++}
++
++#ifdef HAVE_LIB_XML2
++
++/* Read control mappings from the mapping file (if libxml2 is available) */
++
++int
++control_mapping_read_config_file( control_mapping_info *control_mapping )
++{
++  xmlDocPtr doc;
++
++  /* If don't have file to load there is no error */
++  if ( !mapfile ) return 0;
++
++  /* See if the file exists, if don't there is no error */
++  if( !compat_file_exists( mapfile ) ) {
++      return 0;
++  }
++
++  doc = xmlReadFile( mapfile, NULL, 0 );
++  if( !doc ) {
++    ui_error( UI_ERROR_ERROR, "error reading mapping controls file" );
++    return 1;
++  }
++
++  if( control_mapping_parse_xml( doc, control_mapping ) ) {
++    xmlFreeDoc( doc );
++    return 1;
++  }
++
++  xmlFreeDoc( doc );
++
++  return 0;
++}
++
++static int
++control_mapping_parse_xml( xmlDocPtr doc, control_mapping_info *control_mapping )
++{
++  xmlNodePtr node;
++  xmlChar *xmlstring;
++
++  node = xmlDocGetRootElement( doc );
++  if( xmlStrcmp( node->name, (const xmlChar*)"control_mapping" ) ) {
++    ui_error( UI_ERROR_ERROR, "control_mapping file's root node is not 'control_mapping'" );
++    return 1;
++  }
++
++  node = node->xmlChildrenNode;
++  while( node ) {
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++
++	print << "CODE";
++    if( !strcmp( (const char*)node->name, "$options{$name}->{configfile}" ) ) {
++      xmlstring = xmlNodeListGetString( doc, node->xmlChildrenNode, 1 );
++      if( xmlstring ) {
++        control_mapping->$name = atoi( (char*)xmlstring );
++        xmlFree( xmlstring );
++      }
++    } else
++CODE
++
++    } elsif( $type eq 'string' ) {
++
++	    print << "CODE";
++    if( !strcmp( (const char*)node->name, "$options{$name}->{configfile}" ) ) {
++      xmlstring = xmlNodeListGetString( doc, node->xmlChildrenNode, 1 );
++      if( xmlstring ) {
++        libspectrum_free( control_mapping->$name );
++        control_mapping->$name = utils_safe_strdup( (char*)xmlstring );
++        xmlFree( xmlstring );
++      }
++    } else
++CODE
++
++    } elsif( $type eq 'null' ) {
++
++	    print << "CODE";
++    if( !strcmp( (const char*)node->name, "$options{$name}->{configfile}" ) ) {
++      /* Do nothing */
++    } else
++CODE
++
++    } else {
++	die "Unknown setting type `$type'";
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++    if( !strcmp( (const char*)node->name, "text" ) ) {
++      /* Do nothing */
++    } else {
++      ui_error( UI_ERROR_WARNING, "Unknown setting '%s' in control mapping file",
++		node->name );
++    }
++
++    node = node->next;
++  }
++
++  return 0;
++}
++
++int
++control_mapping_write_config( control_mapping_info *control_mapping )
++{
++  char buffer[80];
++
++  xmlDocPtr doc; xmlNodePtr root;
++
++  /* No file loaded do nothing */
++  if ( !mapfile ) return 0;
++
++  /* Create the XML document */
++  doc = xmlNewDoc( (const xmlChar*)"1.0" );
++
++  root = xmlNewNode( NULL, (const xmlChar*)"control_mapping" );
++  xmlDocSetRootElement( doc, root );
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' ) {
++
++	print "  xmlNewTextChild( root, NULL, (const xmlChar*)\"$options{$name}->{configfile}\", (const xmlChar*)(control_mapping->$name ? \"1\" : \"0\") );\n";
++
++    } elsif( $type eq 'string' ) {
++	print << "CODE";
++  if( control_mapping->$name )
++    xmlNewTextChild( root, NULL, (const xmlChar*)"$options{$name}->{configfile}", (const xmlChar*)control_mapping->$name );
++CODE
++    } elsif( $type eq 'numeric' ) {
++	print << "CODE";
++  snprintf( buffer, 80, "%d", control_mapping->$name );
++  xmlNewTextChild( root, NULL, (const xmlChar*)"$options{$name}->{configfile}", (const xmlChar*)buffer );
++CODE
++    } elsif( $type eq 'null' ) {
++	# Do nothing
++    } else {
++	die "Unknown setting type `$type'";
++    }
++}
++
++  print hashline( __LINE__ ), << 'CODE';
++
++  xmlSaveFormatFile( mapfile, doc, 1 );
++
++  xmlFreeDoc( doc );
++
++  return 0;
++}
++
++#else				/* #ifdef HAVE_LIB_XML2 */
++
++/* Read control mapping from the config file as ini file (if libxml2 is not available) */
++
++static int
++control_mapping_read_config_file( control_mapping_info *control_mapping )
++{
++  struct stat stat_info;
++  int error;
++
++  utils_file file;
++
++  /* If don't have file to load there is no error */
++  if ( !mapfile ) return 0;
++
++  /* See if the file exists; if doesn't, it's not a problem */
++  if( stat( mapfile, &stat_info ) ) {
++    if( errno == ENOENT ) {
++      return 0;
++    } else {
++      ui_error( UI_ERROR_ERROR, "couldn't stat '%s': %s", mapfile,
++		strerror( errno ) );
++      return 1;
++    }
++  }
++
++  error = utils_read_file( mapfile, &file );
++  if( error ) {
++    ui_error( UI_ERROR_ERROR, "error reading control mapping file" );
++    return 1;
++  }
++
++  if( control_mapping_parse_ini( &file, control_mapping ) ) { utils_close_file( &file ); return 1; }
++
++  utils_close_file( &file );
++
++  return 0;
++}
++
++static int
++control_mapping_var( control_mapping_info *control_mapping, unsigned char *name, unsigned char *last,
++              int **val_int, char ***val_char, unsigned char **next  )
++{
++  unsigned char* cpos;
++  size_t n;
++
++  *val_int = NULL;
++  *val_char = NULL;
++
++  *next = name;
++  while( name < last && ( *name == ' ' || *name == '\t' || *name == '\r' ||
++                          *name == '\n' ) ) {
++    *next = ++name;					/* seek to first char */
++  }
++  cpos = name;
++
++  while( cpos < last && ( *cpos != '=' && *cpos != ' ' && *cpos != '\t' &&
++                          *cpos != '\r' && *cpos != '\n' ) ) cpos++;
++  *next = cpos;
++  n = cpos - name;		/* length of name */
++
++  while( *next < last && **next != '=' ) {		/* search for '=' */
++    if( **next != ' ' && **next != '\t' && **next != '\r' && **next != '\n' )
++      return 1;	/* error in value */
++    (*next)++;
++  }
++  if( *next < last) (*next)++;		/* set after '=' */
++/*  ui_error( UI_ERROR_WARNING, "Config: (%5s): ", name ); */
++
++CODE
++my %type = ('null' => 0, 'boolean' => 1, 'numeric' => 1, 'string' => 2 );
++foreach my $name ( sort keys %options ) {
++    my $len = length $options{$name}->{configfile};
++
++    print << "CODE";
++  if( n == $len && !strncmp( (const char *)name, "$options{$name}->{configfile}", n ) ) {
++CODE
++    print "    *val_int = \&control_mapping->$name;\n" if( $options{$name}->{type} eq 'boolean' or $options{$name}->{type} eq 'numeric' );
++    print "    *val_char = \&control_mapping->$name;\n" if( $options{$name}->{type} eq 'string' );
++    print "/*    *val_null = \&control_mapping->$name; */\n" if( $options{$name}->{type} eq 'null' );
++    print << "CODE";
++    return 0;
++  }
++CODE
++}
++    print << "CODE";
++  return 1;
++}
++
++static int
++control_mapping_parse_ini( utils_file *file, control_mapping_info *control_mapping )
++{
++  unsigned char *cpos, *cpos_new;
++  int *val_int;
++  char **val_char;
++
++  cpos = file->buffer;
++
++  /* Read until the end of file */
++  while( cpos < file->buffer + file->length ) {
++    if( control_mapping_var( control_mapping, cpos, file->buffer + file->length, &val_int,
++                      &val_char, &cpos_new ) ) {
++      /* error in name or something else ... */
++      cpos = cpos_new + 1;
++      ui_error( UI_ERROR_WARNING,
++                "Unknown and/or invalid setting '%s' in control mapping file", cpos );
++      continue;
++    }
++    cpos = cpos_new;
++    if( val_int ) {
++	*val_int = atoi( (char *)cpos );
++	while( cpos < file->buffer + file->length && 
++		( *cpos != '\\0' && *cpos != '\\r' && *cpos != '\\n' ) ) cpos++;
++    } else if( val_char ) {
++	char *value = (char *)cpos;
++	size_t n = 0;
++	while( cpos < file->buffer + file->length && 
++		( *cpos != '\\0' && *cpos != '\\r' && *cpos != '\\n' ) ) cpos++;
++	n = (char *)cpos - value;
++	if( n > 0 ) {
++	  if( *val_char != NULL ) {
++	    libspectrum_free( *val_char );
++	    *val_char = NULL;
++	  }
++	  *val_char = libspectrum_new( char, n + 1 );
++	  (*val_char)[n] = '\\0';
++	  memcpy( *val_char, value, n );
++	}
++    }
++    /* skip 'new line' like chars */
++    while( ( cpos < ( file->buffer + file->length ) ) &&
++           ( *cpos == '\\r' || *cpos == '\\n' ) ) cpos++;
++
++CODE
++print hashline( __LINE__ ), << 'CODE';
++  }
++
++  return 0;
++}
++
++static int
++control_mapping_file_write( compat_fd fd, const char *buffer, size_t length )
++{
++  return compat_file_write( fd, (const unsigned char *)buffer, length );
++}
++
++static int
++control_mapping_string_write( compat_fd doc, const char* name, const char* config )
++{
++  if( config != NULL &&
++      ( control_mapping_file_write( doc, name, strlen( name ) ) ||
++        control_mapping_file_write( doc, "=", 1 ) ||
++        control_mapping_file_write( doc, config, strlen( config ) ) ||
++        control_mapping_file_write( doc, FUSE_EOL, strlen( FUSE_EOL ) ) ) )
++    return 1;
++  return 0;
++}
++
++static int
++control_mapping_boolean_write( compat_fd doc, const char* name, int config )
++{
++  return control_mapping_string_write( doc, name, config ? "1" : "0" );
++}
++
++static int
++control_mapping_numeric_write( compat_fd doc, const char* name, int config )
++{
++  char buffer[80]; 
++  snprintf( buffer, sizeof( buffer ), "%d", config );
++  return control_mapping_string_write( doc, name, buffer );
++}
++
++int
++control_mapping_write_config( control_mapping_info *control_mapping )
++{
++  const char *cfgdir; char path[ PATH_MAX ];
++
++  compat_fd doc;
++
++  if ( !mapfile ) return 1;
++
++  doc = compat_file_open( mapfile, 1 );
++  if( doc == COMPAT_FILE_OPEN_FAILED ) {
++    ui_error( UI_ERROR_ERROR, "couldn't open `%s' for writing: %s\n",
++	      path, strerror( errno ) );
++    return 1;
++  }
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++    my $len = length "$options{$name}->{configfile}";
++
++    if( $type eq 'boolean' ) {
++
++	print << "CODE";
++  if( control_mapping_boolean_write( doc, "$options{$name}->{configfile}",
++                              control_mapping->$name ) )
++    goto error;
++CODE
++
++    } elsif( $type eq 'string' ) {
++	print << "CODE";
++  if( control_mapping_string_write( doc, "$options{$name}->{configfile}",
++                             control_mapping->$name ) )
++    goto error;
++CODE
++
++    } elsif( $type eq 'numeric' ) {
++	print << "CODE";
++  if( control_mapping_numeric_write( doc, "$options{$name}->{configfile}",
++                              control_mapping->$name ) )
++    goto error;
++CODE
++
++    } elsif( $type eq 'null' ) {
++	# Do nothing
++    } else {
++	die "Unknown setting type `$type'";
++    }
++}
++
++  print hashline( __LINE__ ), << 'CODE';
++
++  compat_file_close( doc );
++
++  return 0;
++error:
++  compat_file_close( doc );
++
++  return 1;
++}
++
++#endif				/* #ifdef HAVE_LIB_XML2 */
++
++/* Copy one custom mapping object to another */
++static void
++control_mapping_copy_internal( control_mapping_info *dest, control_mapping_info *src )
++{
++  control_mapping_free( dest );
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++	print "  dest->$name = src->$name;\n";
++    } elsif( $type eq 'string' ) {
++	print << "CODE";
++  dest->$name = NULL;
++  if( src->$name ) {
++    dest->$name = utils_safe_strdup( src->$name );
++  }
++CODE
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++}
++
++/* Copy one control mapping object to settings */
++static void
++control_mapping_copy_to_settings_internal( settings_info *dest, control_mapping_info *src )
++{
++  control_mapping_settings_free( dest );
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++	print "  dest->$name = src->$name;\n";
++    } elsif( $type eq 'string' ) {
++	print << "CODE";
++  dest->$name = NULL;
++  if( src->$name ) {
++    dest->$name = utils_safe_strdup( src->$name );
++  }
++CODE
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++}
++
++/* Copy one settings object to control mapping */
++static void
++control_mapping_copy_from_settings_internal( control_mapping_info *dest, settings_info *src )
++{
++  control_mapping_free( dest );
++
++CODE
++
++foreach my $name ( sort keys %options ) {
++
++    my $type = $options{$name}->{type};
++
++    if( $type eq 'boolean' or $type eq 'numeric' ) {
++	print "  dest->$name = src->$name;\n";
++    } elsif( $type eq 'string' ) {
++	print << "CODE";
++  dest->$name = NULL;
++  if( src->$name ) {
++    dest->$name = utils_safe_strdup( src->$name );
++  }
++CODE
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++}
++
++/* Copy one control mapping object to another */
++void control_mapping_copy( control_mapping_info *dest, control_mapping_info *src )
++{
++  control_mapping_defaults( dest );
++  control_mapping_copy_internal( dest, src );
++}
++
++/* Copy one settings object to control mapping */
++void control_mapping_copy_from_settings( control_mapping_info *dest, settings_info *src )
++{
++  control_mapping_copy_from_settings_internal( dest, src );
++}
++
++/* Copy one control mapping object to settings */
++void control_mapping_copy_to_settings( settings_info *dest, control_mapping_info *src )
++{
++  control_mapping_copy_to_settings_internal( dest, src );
++}
++
++void
++control_mapping_set_string( char **string_setting, const char *value )
++{
++  /* No need to do anything if the two strings are in fact the
++     same pointer */
++  if( *string_setting == value ) return;
++
++  if( *string_setting ) libspectrum_free( *string_setting );
++  *string_setting = utils_safe_strdup( value );
++}
++
++int
++control_mapping_free( control_mapping_info *control_mapping )
++{
++CODE
++
++foreach my $name ( sort keys %options ) {
++    if( $options{$name}->{type} eq 'string' ) {
++	print "  if( control_mapping->$name ) libspectrum_free( control_mapping->$name );\n";
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++
++  return 0;
++}
++
++int
++control_mapping_settings_free( settings_info *settings )
++{
++CODE
++
++foreach my $name ( sort keys %options ) {
++    if( $options{$name}->{type} eq 'string' ) {
++	print "  if( settings->$name ) libspectrum_free( settings->$name );\n";
++    }
++}
++
++print hashline( __LINE__ ), << 'CODE';
++
++  return 0;
++}
++
++static void
++control_mapping_end( void )
++{
++  if( settings_current.autosave_settings ) {
++    control_mapping_copy_from_settings( &control_mapping_current, &settings_current );
++    control_mapping_write_config( &control_mapping_current );
++  }
++
++  control_mapping_free( &control_mapping_current );
++
++#ifdef HAVE_LIB_XML2
++  xmlCleanupParser();
++#endif				/* #ifdef HAVE_LIB_XML2 */
++}
++
++void
++control_mapping_register_startup( void )
++{
++  /* control_mapping_init not yet managed by the startup manager */
++
++  startup_manager_module dependencies[] = {
++  /* Fuse for OS X requires that settings_end is called before memory is
++     deallocated as settings need to look up machine names etc */
++    /* STARTUP_MANAGER_MODULE_MEMORY, */
++    STARTUP_MANAGER_MODULE_SETTINGS_END,
++    STARTUP_MANAGER_MODULE_SETUID
++  };
++  startup_manager_register( STARTUP_MANAGER_MODULE_CONTROL_MAPPING_END, dependencies,
++                            ARRAY_SIZE( dependencies ), NULL, NULL,
++                            control_mapping_end );
++}
++
++CODE
+diff --git a/fuse.c b/fuse.c
+index 7364a17..ab911aa 100644
+--- a/fuse.c
++++ b/fuse.c
+@@ -115,6 +115,9 @@
+ #include "ui/uimedia.h"
+ #include "unittests/unittests.h"
+ #include "utils.h"
++#ifdef GCWZERO
++#include "controlmapping/controlmapping.h"
++#endif
+ 
+ #include "z80/z80.h"
+ 
+@@ -353,6 +356,9 @@
+   zxatasp_register_startup();
+   zxcf_register_startup();
+   zxmmc_register_startup();
++#ifdef GCWZERO
++  controlmapping_register_startup();
++#endif
+ 
+   return startup_manager_run();
+ }
+@@ -384,6 +390,7 @@
+   if( settings_init( &first_arg, argc, argv ) ) return 1;
+ 
+ #ifdef GCWZERO
++  if( controlmapping_init() ) return 1;
+   settings_current.full_screen = 1;
+ #endif
+ 
+@@ -773,17 +780,8 @@
+     utils_close_file( &file );
+ 
+ #ifdef GCWZERO
+-    if (class != LIBSPECTRUM_CLASS_UNKNOWN) {
+-      char *path = 0;
+-      char buffer[PATH_MAX];
+-      last_filename = utils_last_filename( filename, 1 );
+-      strncpy( buffer, filename, PATH_MAX );
+-      path = dirname(buffer);
+-      if (path && path[0] != '\0') {
+-        snprintf(buffer, PATH_MAX, "%s", path);
+-        chdir(buffer);
+-      }
+-    }
++    if (class != LIBSPECTRUM_CLASS_UNKNOWN)
++      utils_set_last_loaded_file( filename );
+ #endif
+   }
+ 
+diff --git a/infrastructure/startup_manager.h b/infrastructure/startup_manager.h
+index 8404f21..06bd55a 100644
+--- a/infrastructure/startup_manager.h
++++ b/infrastructure/startup_manager.h
+@@ -79,7 +79,10 @@
+   STARTUP_MANAGER_MODULE_ZXATASP,
+   STARTUP_MANAGER_MODULE_ZXCF,
+   STARTUP_MANAGER_MODULE_ZXMMC,
+- 
++#ifdef GCWZERO
++  STARTUP_MANAGER_MODULE_CONTROL_MAPPING_END,
++#endif
++
+ } startup_manager_module;
+ 
+ /* Callback for each module's init function */
+diff --git a/menu.c b/menu.c
+index cf394d2..2224bbe 100644
+--- a/menu.c
++++ b/menu.c
+@@ -64,6 +64,9 @@
+ #include "ui/uimedia.h"
+ #include "utils.h"
+ #include "z80/z80.h"
++#ifdef GCWZERO
++#include "controlmapping/controlmapping.h"
++#endif
+ 
+ static int menu_select_machine_roms( libspectrum_machine machine, size_t start,
+ 				     size_t n );
+@@ -1107,6 +1110,14 @@
+   return joystick_name[ settings_current.joystick_2_output ];
+ }
+ 
++#ifdef GCWZERO
++const char*
++menu_control_mapping_detail( void )
++{
++  return controlmapping_get_filename();
++}
++#endif
++
+ const char*
+ menu_tape_detail( void )
+ {
+diff --git a/menu.h b/menu.h
+index b58c44d..2eae0b6 100644
+--- a/menu.h
++++ b/menu.h
+@@ -160,12 +160,15 @@
+ MENU_DETAIL( menu_disciple1_detail );
+ MENU_DETAIL( menu_disciple2_detail );
+ MENU_CALLBACK_WITH_ACTION( menu_options_joysticks_select );
+-#ifdef GCWZERO
+-MENU_DETAIL( menu_gcw0_keyboard_detail );
+-#endif
+ MENU_DETAIL( menu_keyboard_joystick_detail );
+ MENU_DETAIL( menu_joystick_1_detail );
+ MENU_DETAIL( menu_joystick_2_detail );
++#ifdef GCWZERO
++MENU_DETAIL( menu_gcw0_keyboard_detail );
++MENU_DETAIL( menu_control_mapping_detail );
++MENU_CALLBACK_WITH_ACTION( menu_options_load_control_mapping );
++MENU_CALLBACK_WITH_ACTION( menu_options_save_control_mapping );
++#endif
+ 
+ MENU_CALLBACK( menu_machine_pause );
+ MENU_CALLBACK_WITH_ACTION( menu_machine_reset );
+diff --git a/menu_data.dat b/menu_data.dat
+index ae7bac2..3c23366 100644
+--- a/menu_data.dat
++++ b/menu_data.dat
+@@ -98,6 +98,8 @@
+ Options/Joysticks/_Keyboard..., Item,, menu_options_joysticks_select, menu_keyboard_joystick_detail, 3
+ #ifdef GCWZERO
+ Options/Joysticks/_GCW0 Keyboard..., Item,, menu_options_joysticks_select, menu_gcw0_keyboard_detail, 4
++Options/Joysticks/_Load control mapping, Item,, menu_options_load_control_mapping, menu_control_mapping_detail, 5
++Options/Joysticks/_Save control mapping, Item,, menu_options_save_control_mapping, menu_control_mapping_detail, 5
+ #endif
+ 
+ Options/S_elect ROMs, Branch
+diff --git a/ui/Makefile.am b/ui/Makefile.am
+index 195109c..0bf450d 100644
+--- a/ui/Makefile.am
++++ b/ui/Makefile.am
+@@ -24,9 +24,13 @@
+                   ui/ui.h \
+                   ui/uidisplay.h \
+                   ui/uijoystick.h \
+-                  ui/uimedia.h \
++                  ui/uimedia.h
++
++if BUILD_GCWZERO
++noinst_HEADERS += \
+                   ui/vkeyboard.h \
+                   ui/hotkeys.h
++endif
+ 
+ EXTRA_DIST += \
+               ui/options.dat \
+diff --git a/ui/sdl/Makefile.am b/ui/sdl/Makefile.am
+index 01b7a1c..bfbecc3 100644
+--- a/ui/sdl/Makefile.am
++++ b/ui/sdl/Makefile.am
+@@ -39,9 +39,13 @@
+                ui/sdl/sdlkeyboard.c \
+                ui/sdl/sdlkeyboard.h \
+                ui/sdl/sdlui.c \
+-               ui/sdl/sdlhotkeys.c \
+                ui/sdl/keysyms.c
+ 
++if BUILD_GCWZERO
++ui_sdl_files += \
++               ui/sdl/sdlhotkeys.c
++endif
++
+ ui_sdl_built = ui/sdl/keysyms.c
+ 
+ ui/sdl/keysyms.c: $(srcdir)/keysyms.pl $(srcdir)/keysyms.dat
+diff --git a/ui/widget/Makefile.am b/ui/widget/Makefile.am
+index 7442c9d..aa5f023 100644
+--- a/ui/widget/Makefile.am
++++ b/ui/widget/Makefile.am
+@@ -51,11 +51,15 @@
+                   ui/widget/roms.c \
+                   ui/widget/select.c \
+                   ui/widget/text.c \
+-                  ui/widget/vkeyboard.c \
+                   ui/widget/widget_internals.h \
+                   ui/widget/widget.c \
+                   ui/widget/widget.h
+ 
++if BUILD_GCWZERO
++ui_widget_files +=  \
++                    ui/widget/vkeyboard.c
++endif
++
+ ui_widget_built = \
+                   ui/widget/fuse.font \
+                   ui/widget/menu_data.c \
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index 4b8ac5f..6ab6603 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -48,6 +48,9 @@
+ #include "utils.h"
+ #include "widget_internals.h"
+ #include "widget.h"
++#ifdef GCWZERO
++#include "controlmapping/controlmapping.h"
++#endif
+ 
+ widget_menu_entry *menu;
+ static size_t highlight_line = 0;
+@@ -772,6 +775,36 @@
+ #endif
+ }
+ 
++#ifdef GCWZERO
++void
++menu_options_load_control_mapping( int action )
++{
++  const char *message = "Load control mapping?";
++
++  if( widget_do_query( message ) ||
++      !widget_query.confirm )
++    return;
++
++  widget_end_all( WIDGET_FINISHED_OK );
++
++  controlmapping_load_mapfile( controlmapping_get_filename() );
++}
++
++void
++menu_options_save_control_mapping( int action )
++{
++  const char *message = "Save control mapping?";
++
++  if( widget_do_query( message ) ||
++      !widget_query.confirm )
++    return;
++
++  widget_end_all( WIDGET_FINISHED_OK );
++
++  controlmapping_save_mapfile( controlmapping_get_filename() );
++}
++#endif
++
+ /* Options/Select ROMs/<type> */
+ int
+ menu_select_roms_with_title( const char *title, size_t start, size_t count,
+diff --git a/utils.c b/utils.c
+index 8621a07..854b52c 100644
+--- a/utils.c
++++ b/utils.c
+@@ -59,6 +59,8 @@
+ #include "utils.h"
+ 
+ #ifdef GCWZERO
++#include "controlmapping/controlmapping.h"
++
+ char* last_filename = NULL;
+ #endif
+ 
+@@ -107,12 +109,18 @@
+   case LIBSPECTRUM_CLASS_SNAPSHOT:
+     error = snapshot_read_buffer( file.buffer, file.length, type );
+     pokemem_find_pokfile( filename );
++#ifdef GCWZERO
++    controlmapping_load_mapfile( filename );
++#endif
+     break;
+ 
+   case LIBSPECTRUM_CLASS_TAPE:
+     error = tape_read_buffer( file.buffer, file.length, type, filename,
+ 			      autoload );
+     pokemem_find_pokfile( filename );
++#ifdef GCWZERO
++    controlmapping_load_mapfile( filename );
++#endif
+     break;
+ 
+   case LIBSPECTRUM_CLASS_DISK_PLUS3:
+@@ -499,6 +507,23 @@
+ }
+ 
+ #ifdef GCWZERO
++void utils_set_last_loaded_file( const char *filename )
++{
++  char *path = 0;
++  char buffer[PATH_MAX];
++
++  if (!filename) return;
++
++  last_filename = utils_last_filename( filename, 1 );
++
++  /* Change current working directory to the path of last loaded file */
++  strncpy( buffer, filename, PATH_MAX );
++  path = dirname(buffer);
++  if (path && path[0] != '\0') {
++     chdir(path);
++  }
++}
++
+ char* utils_last_filename( const char *filename, int without_extension )
+ {
+   char *c, *test_file, *last_file;
+diff --git a/utils.h b/utils.h
+index 123e6d6..88ab120 100644
+--- a/utils.h
++++ b/utils.h
+@@ -68,6 +68,7 @@
+ void utils_networking_end( void );
+ 
+ #ifdef GCWZERO
++void  utils_set_last_loaded_file( const char *filename);
+ char* utils_last_filename( const char *filename, int without_extension );
+ #endif
+ 

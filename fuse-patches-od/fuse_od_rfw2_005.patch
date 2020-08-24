@@ -1,0 +1,143 @@
+From d4f9c07fe1bf018554f86c9fff8bc2de6fb9d619 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 16 ago. 2020 16:18:54
+
+Patch #005 for OpenDingux and RetroFW
+Allow to restore default rom in roms widget
+
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 3e62eac..0517084 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -310,7 +310,9 @@
+ - Repeat until all the needed ROMs are assigned.
+ - Finally do accept all pressing the `A` button.
+ 
+-The emulator detect your rom as custom if they not have the name expected, including path. This affect to auto-load, cutoms roms don't autoload. For this reason I have introduced the option "Auto-load media with custom rom".
++You can also put Fuse's default rom with the `Y` button.
++
++The emulator detect your rom as custom if they not have the name expected, including path. This affect to auto-load, cutoms roms don't autoload. For this reason it's introduced the option "Auto-load media with custom rom".
+ 
+ Also you can put the roms at routes:
+ 
+diff --git a/ui/widget/roms.c b/ui/widget/roms.c
+index a92092a..f2706f5 100644
+--- a/ui/widget/roms.c
++++ b/ui/widget/roms.c
+@@ -41,6 +41,7 @@
+ 
+ #ifdef GCWZERO
+ static size_t highlight_line = 0;
++static void set_default_rom( input_key key );
+ #endif
+ 
+ static void print_rom( int which );
+@@ -74,14 +75,14 @@
+ 
+   /* Blank the main display area */
+ #ifdef GCWZERO
+-  widget_dialog_with_border( 1, 2, 30, rom_count + 4 );
++  widget_dialog_with_border( 1, 2, 30, rom_count + 5 );
+ #else
+   widget_dialog_with_border( 1, 2, 30, rom_count + 2 );
+ #endif
+ 
+   widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, info->title );
+ #ifdef GCWZERO
+-  widget_display_lines( 2, rom_count + 4 );
++  widget_display_lines( 2, rom_count + 5 );
+ #else
+   widget_display_lines( 2, rom_count + 2 );
+ #endif
+@@ -99,10 +100,14 @@
+ #ifdef GCWZERO
+   i++;
+   widget_printstring_right( 244, i*8+24, WIDGET_COLOUR_FOREGROUND,
+-					   "\012X\001 = change rom" );
++                       "\012A\001 = confirm changes" );
+   widget_printstring( 12, i*8+24, WIDGET_COLOUR_FOREGROUND,
+-				     "\012A\001 = confirm roms" );
+-  widget_display_rasters(i*8+24,8);
++				       "\012X\001 = change rom" );
++  i++;
++  widget_printstring( 12, i*8+24, WIDGET_COLOUR_FOREGROUND,
++					   "\012Y\001 = default rom" );
++  i--;
++  widget_display_rasters(i*8+24,16);
+ #endif
+ 
+   return 0;
+@@ -133,6 +138,31 @@
+   widget_display_rasters( which * 8 + 24, 8 );
+ }
+ 
++#ifdef GCWZERO
++void
++set_default_rom( input_key key )
++{
++  char **setting, **default_rom;
++  static int default_init = 0;
++  static settings_info default_roms;
++
++  if (!default_init) {
++    settings_defaults( &default_roms );
++    default_init = 1;
++  }
++
++  key -= INPUT_KEY_a;
++
++  setting = settings_get_rom_setting( widget_settings, key + first_rom,
++					is_peripheral );
++  default_rom = settings_get_rom_setting( &default_roms, key + first_rom,
++					is_peripheral );
++  settings_set_string( setting, *default_rom );
++
++  print_rom( key );
++}
++#endif
++
+ void
+ widget_roms_keyhandler( input_key key )
+ {
+@@ -150,24 +180,26 @@
+ #endif
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Home:
+-  case INPUT_KEY_End: /* RetroFW */
++  case INPUT_KEY_Home:  /* Power */
++  case INPUT_KEY_End:   /* RetroFW */
+     widget_end_all( WIDGET_FINISHED_CANCEL );
+     return;
+ #endif
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Alt_L: /* B */
+-#endif
++#else
+   case INPUT_KEY_Escape:
++#endif
+     widget_end_widget( WIDGET_FINISHED_CANCEL );
+     return;
+ 
+ #ifdef GCWZERO
+   case INPUT_KEY_Control_L: /* A */
+-#endif
++#else
+   case INPUT_KEY_Return:
+   case INPUT_KEY_KP_Enter:
++#endif
+     widget_end_all( WIDGET_FINISHED_OK );
+     return;
+ 
+@@ -176,6 +208,10 @@
+     key = INPUT_KEY_a + highlight_line;
+     break;
+ 
++  case INPUT_KEY_Shift_L: /* Y */
++    set_default_rom( INPUT_KEY_a + highlight_line );
++    break;
++
+   case INPUT_KEY_Up:
+   case INPUT_JOYSTICK_UP:
+     if ( highlight_line ) {
