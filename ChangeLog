@@ -1,0 +1,44 @@
+2020-09-19 Fuse 1.5.4 OpenDingux/RetroFW v0.0.2
+
+    * Renamed OpenDingux/RetroFW options to prefix them with 'od_'.
+
+      You must check your options and enable/disable it again if needed.
+
+      Options renamed:
+        - Triple Buffer
+        - Show FPS instead of speed percentaje
+        - Confirm overwrite files
+        - Show hidden files
+        - Hotkey combos
+        - Auto-load media with custom roms
+
+    * Authomatic load of control mapping files for RZX Recordings.
+
+    * New options:
+      * General:
+        * 'Filter known extensions for load and save' (default enabled).
+        * 'Independendt directory access for each media type' (default disabled).
+        * 'Save last visited directory' (default disabled).
+
+      * Control mapping per game:
+        * 'Enable kempston joystick if needed' (default enabled).
+
+    * File dialogs:
+        * Select button assigned to switch on/off filters in file dialogs.
+        * Active filters are printed on title in file dialogs.
+        * Y button assigned to quick save. The filename to save is the name of
+          last filename loaded and default extension for the media being saved.
+        * For names entered manually if no extension supplied the default
+          extension for the saved media type will be assigned.
+
+    * Fixed eventual flashing attributes in virtual keyboard.
+
+    * Triple buffer. Trying to fix screen freeze when disable triple buffer.
+
+    * Makefiles refactored to reuse common rules.
+
+    * IPK build now has entry for systems and the manual is accesible
+
+2020-08-24 Fuse 1.5.4 OpenDingux/RetroFW v0.0.1 released
+
+    * Initial release

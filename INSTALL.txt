@@ -79,19 +79,19 @@ CFLAGS='-mips32 -O3'
 
 4.- Build Fuse
 
-For Opendingux:
+For OpenDingux:
 
 $ cd $HOME/src/fuse-1.5.7/Platform/GCW0
 $ make
 
-fuse-gcw0.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
+fuse-1.5.7-od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
 
 For RetroFW 2:
 
 $ cd $HOME/src/fuse-1.5.7/Platform/RETROFW2.0
 $ make
 
-fuse-retrofw.opk should be created in
+fuse-1.5.7-retrofw-v{version}.opk should be created in
 $HOME/src/fuse-1.5.7/Platform/RETROFW2.0/build
 
 For RetroFW 1:
@@ -99,4 +99,6 @@ For RetroFW 1:
 $ cd $HOME/src/fuse-1.5.7/Platform/RETROFW1.0
 $ make
 
-fuse.ipk $HOME/src/fuse-1.5.7/Platform/RETROFW1.0/build
+fuse-1.5.7-retrofw-v{version}.ipk $HOME/src/fuse-1.5.7/Platform/RETROFW1.0/build
+
+In all cases {version] is for OpenDingux/RetrFW version
