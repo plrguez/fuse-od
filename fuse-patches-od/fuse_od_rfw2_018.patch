@@ -1,0 +1,64 @@
+From 6eaf9bcf985e1789f1d1f4a5c0604033d4c0a60c Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 19 sept. 2020 13:23:36
+
+Patch #018 for OpenDingux and RetroFW
+Second attempt to fix screen frozen when disabling triple buffering
+RetroFW fixes
+
+
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index e9cca06..bd1b836 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -123,6 +123,12 @@
+ #ifdef GCWZERO
+ static libspectrum_byte sdldisplay_is_triple_buffer = 0;
+ static libspectrum_byte sdldisplay_flips_triple_buffer = 0;
++typedef enum sdldisplay_od_system_types {
++      OPENDINGUX,
++      RETROFW_1,
++      RETROFW_2
++} sdldisplay_t_od_system;
++static sdldisplay_t_od_system sdldisplay_od_system_type = OPENDINGUX;
+ #endif
+ 
+ static int image_width;
+@@ -328,8 +334,12 @@
+         if ( strcmp( ptok, "NAME" ) == 0 ) {
+           ptok = strtok( NULL, "=" );
+           /* And we are on RetroFW 1.X */
+-          if ( strcmp( ptok, "Buildroot\n" ) == 0)
++          if ( strcmp( ptok, "Buildroot\n" ) == 0) {
+             settings_current.sdl_fullscreen_mode = utils_safe_strdup( "320x240" );
++            sdldisplay_od_system_type = RETROFW_1;
++          } else {
++            sdldisplay_od_system_type = RETROFW_2;
++          }
+           break;
+         }
+       }
+@@ -337,8 +347,10 @@
+     }
+ 
+   /* We are on OpenDingux */
+-  } else
++  } else {
+     fclose( allow_downscaling );
++    sdldisplay_od_system_type = OPENDINGUX;
++  }
+ }
+ #endif
+ 
+@@ -568,7 +580,10 @@
+ #ifdef GCWZERO
+   Uint32 flags;
+   if (settings_current.od_triple_buffer) {
+-    sdldisplay_flips_triple_buffer = 0;
++    if ( sdldisplay_od_system_type == OPENDINGUX )
++      sdldisplay_flips_triple_buffer = 0;
++    else
++      sdldisplay_flips_triple_buffer = 1;
+     flags = settings_current.full_screen ? (SDL_FULLSCREEN | SDL_HWSURFACE | SDL_TRIPLEBUF)
+     : (SDL_HWSURFACE | SDL_TRIPLEBUF);
+   } else {

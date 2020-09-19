@@ -1,0 +1,787 @@
+From 2501ca7ab4040fa90fe8800234e85940af9aac7c Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 18 sept. 2020 1:29:32
+
+Patch #017 for OpenDingux and RetroFW
+Added OpenDingux/RetroFW VERSION file and Makefiles refactor
+Update readme.txt with last added options and added ChangeLog.
+
+
+diff --git a/Makefile.am b/Makefile.am
+index 53fdd69..d2271bb 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -151,7 +151,9 @@
+ if BUILD_GCWZERO
+ EXTRA_DIST += \
+ 	     Platform/readme.txt \
++	     Platform/ChangeLog \
+ 	     Platform/INSTALL.txt \
++	     Platform/Makefile.commonrules \
+ 	     Platform/roms/read.me \
+ 	     Platform/GCW0/Makefile \
+ 	     Platform/GCW0/default.gcw0.desktop \
+diff --git a/Platform/ChangeLog b/Platform/ChangeLog
+new file mode 100644
+index 0000000..6b588bb
+--- /dev/null
++++ b/Platform/ChangeLog
+@@ -0,0 +1,42 @@
++2020-09-19 Fuse 1.5.4 OpenDingux/RetroFW v0.0.2
++
++    * Renamed OpenDingux/RetroFW options to prefix them with 'od_'.
++
++      You must check your options and enable/disable it again if needed.
++
++      Options renamed:
++        - Triple Buffer
++        - Show FPS instead of speed percentaje
++        - Confirm overwrite files
++        - Show hidden files
++        - Hotkey combos
++        - Auto-load media with custom roms
++
++    * Authomatic load of control mapping files for RZX Recordings.
++
++    * New options:
++      * General:
++        * 'Filter known extensions for load and save' (default enabled).
++        * 'Independendt directory access for each media type' (default disabled).
++        * 'Save last visited directory' (default disabled).
++
++      * Control mapping per game:
++        * 'Enable kempston joystick if needed' (default enabled).
++
++    * File dialogs:
++        * Select button assigned to switch on/off filters in file dialogs.
++        * Active filters are printed on title in file dialogs.
++        * Y button assigned to quick save. The filename to save is the name of
++          last filename loaded and default extension for the media being saved.
++        * For names entered manually if no extension supplied the default
++          extension for the saved media type will be assigned.
++
++    * Fixed eventual flashing attributes in virtual keyboard.
++
++    * Triple buffer. Trying to fix screen freeze when disable triple buffer.
++
++    * Makefiles refactored to reuse common rules.
++
++2020-08-24 Fuse 1.5.4 OpenDingux/RetroFW v0.0.1 released
++
++    * Initial release
+diff --git a/Platform/GCW0/Makefile b/Platform/GCW0/Makefile
+index c79a57f..2dc2906 100644
+--- a/Platform/GCW0/Makefile
++++ b/Platform/GCW0/Makefile
+@@ -1,65 +1,12 @@
+-BASEDIR = ../..
+-BUILDDIR = build
+-TARGET = fuse-gcw0.opk
+-BUILD = fuse-gcw0
+-ICON = fuse.png
+-README = ../readme.txt
+-UIDIR = $(BUILDDIR)/ui
+-FONT = fuse.font
+-LIBDIR = $(BUILDDIR)/lib
+-LIBFILES = $(LIBDIR)/cassette.bmp $(LIBDIR)/microdrive.bmp $(LIBDIR)/plus3disk.bmp $(LIBDIR)/keyboard.png $(LIBDIR)/keyboard.scr
+-ROMSDIR = $(BUILDDIR)/roms
+-BASEROMSDIR = $(BASEDIR)/roms
+-EXTRAROMSDIR = ../roms
+-ROMS = $(ROMSDIR)/*.rom
++DEVICE = gcw0
++BUILD_TYPE = od
++PACKAGE_TYPE = opk
+ 
+-all: buildfuse opk
++all: buildfuse package
+ 
+-$(TARGET): $(BUILD) $(ICON) $(FONT) $(ROMS) $(LIBFILES) $(README)
+-	@mksquashfs \
+-	default.gcw0.desktop \
+-	system.gcw0.desktop \
+-	$(README) \
+-	$(BUILDDIR)/$(BUILD) \
+-	$(ROMSDIR) \
+-	$(BUILDDIR)/$(ICON) \
+-	$(UIDIR) \
+-	$(LIBDIR) \
+-        $(BUILDDIR)/$(TARGET) \
+-	-all-root -noappend -no-exports -no-xattrs
++include ../Makefile.commonrules
+ 
+-$(BUILD): $(BASEDIR)/fuse
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ICON): $(BASEDIR)/data/icons/32x32/fuse.png
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ROMS): $(BASEDIR)/roms/*.rom
+-	mkdir -p $(ROMSDIR)
+-	cp $(BASEROMSDIR)/*.rom $(ROMSDIR)
+-	-cp $(EXTRAROMSDIR)/*.rom $(ROMSDIR)
+-
+-$(FONT): $(BASEDIR)/ui/widget/fuse.font
+-	mkdir -p $(UIDIR)/widget
+-	cp $^ $(UIDIR)/widget/$@
+-
+-$(LIBFILES): libfiles
+-
+-libfiles: $(BASEDIR)/lib/cassette.bmp $(BASEDIR)/lib/microdrive.bmp $(BASEDIR)/lib/plus3disk.bmp $(BASEDIR)/lib/keyboard.png $(BASEDIR)/lib/keyboard.scr
+-	mkdir -p $(LIBDIR)
+-	cp $^ $(LIBDIR)
+-
+-opk: $(TARGET)
+-
+-buildfuse:
+-	cd $(BASEDIR) && $(MAKE)
+-	mkdir -p $(BUILDDIR)
+-
+-
+-.PHONY: clean deploy debug all libfiles
+-clean:
+-	cd $(BASEDIR) && $(MAKE) clean
+-	rm -rf $(BUILDDIR)
++$(TARGET): opk_package
+ 
+ deploy: $(BUILDDIR)/$(TARGET)
+ 	scp $^ root@10.1.1.2:/media/sdcard/apps/
+diff --git a/Platform/GCW0/default.gcw0.desktop b/Platform/GCW0/default.gcw0.desktop
+index 01178a4..346f171 100644
+--- a/Platform/GCW0/default.gcw0.desktop
++++ b/Platform/GCW0/default.gcw0.desktop
+@@ -1,6 +1,6 @@
+ [Desktop Entry]
+-Name=Fuse 1.5.7
+-Comment=Fuse ZX Spectrum emulator 1.5.7
++Name=Fuse FUSE_VERSION
++Comment=Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION)
+ Exec=fuse-gcw0 %f
+ Icon=fuse
+ Type=Application
+diff --git a/Platform/GCW0/system.gcw0.desktop b/Platform/GCW0/system.gcw0.desktop
+index d6ddfda..86b273f 100644
+--- a/Platform/GCW0/system.gcw0.desktop
++++ b/Platform/GCW0/system.gcw0.desktop
+@@ -1,6 +1,6 @@
+ [Desktop Entry]
+-Name=Fuse 1.5.7
+-Comment=Fuse ZX Spectrum emulator 1.5.7 (no file selector)
++Name=Fuse FUSE_VERSION
++Comment=Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION) (System)
+ Exec=fuse-gcw0
+ Icon=fuse
+ Type=Application
+diff --git a/Platform/INSTALL.txt b/Platform/INSTALL.txt
+index fe06eb1..2a84ccb 100644
+--- a/Platform/INSTALL.txt
++++ b/Platform/INSTALL.txt
+@@ -79,19 +79,19 @@
+ 
+ 4.- Build Fuse
+ 
+-For Opendingux:
++For OpenDingux:
+ 
+ $ cd $HOME/src/fuse-1.5.7/Platform/GCW0
+ $ make
+ 
+-fuse-gcw0.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
++fuse-1.5.7-od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
+ 
+ For RetroFW 2:
+ 
+ $ cd $HOME/src/fuse-1.5.7/Platform/RETROFW2.0
+ $ make
+ 
+-fuse-retrofw.opk should be created in
++fuse-1.5.7-retrofw-v{version}.opk should be created in
+ $HOME/src/fuse-1.5.7/Platform/RETROFW2.0/build
+ 
+ For RetroFW 1:
+@@ -99,4 +99,6 @@
+ $ cd $HOME/src/fuse-1.5.7/Platform/RETROFW1.0
+ $ make
+ 
+-fuse.ipk $HOME/src/fuse-1.5.7/Platform/RETROFW1.0/build
++fuse-1.5.7-retrofw-v{version}.ipk $HOME/src/fuse-1.5.7/Platform/RETROFW1.0/build
++
++In all cases {version] is for OpenDingux/RetrFW version
+diff --git a/Platform/Makefile.commonrules b/Platform/Makefile.commonrules
+new file mode 100644
+index 0000000..70f2fec
+--- /dev/null
++++ b/Platform/Makefile.commonrules
+@@ -0,0 +1,107 @@
++BASEDIR = ../..
++BUILDDIR = build
++
++FUSE_VERSION = 1.5.7
++FUSE_OD_VERSION = $(shell cat ../VERSION)
++
++ICON = fuse.png
++README = ../readme.txt
++UIDIR = $(BUILDDIR)/ui
++FONT = fuse.font
++LIBDIR = $(BUILDDIR)/lib
++LIBFILES = $(LIBDIR)/cassette.bmp $(LIBDIR)/microdrive.bmp $(LIBDIR)/plus3disk.bmp $(LIBDIR)/keyboard.png $(LIBDIR)/keyboard.scr
++
++ROMSDIR = $(BUILDDIR)/roms
++BASEROMSDIR = $(BASEDIR)/roms
++EXTRAROMSDIR = ../roms
++ROMS = $(ROMSDIR)/*.rom
++
++TARGET = fuse-$(FUSE_VERSION)-$(BUILD_TYPE)-v$(FUSE_OD_VERSION).$(PACKAGE_TYPE)
++BUILD = fuse-$(DEVICE)
++
++DEFAULT_DESKTOP_FILE = default.$(DEVICE).desktop
++SYSTEM_DESKTOP_FILE = system.$(DEVICE).desktop
++DEFAULT_DESKTOP = $(BUILDDIR)/$(DEFAULT_DESKTOP_FILE)
++SYSTEM_DESKTOP = $(BUILDDIR)/$(SYSTEM_DESKTOP_FILE)
++
++CONTROL = control
++LNK = fuse.lnk
++CONTROL_FILE = $(BUILDDIR)/$(CONTROL)
++LNK_FILE = $(BUILDDIR)/$(LNK)
++
++$(BUILD): $(BASEDIR)/fuse
++	cp $^ $(BUILDDIR)/$@
++
++$(ICON): $(BASEDIR)/data/icons/32x32/fuse.png
++	cp $^ $(BUILDDIR)/$@
++
++$(ROMS): $(BASEDIR)/roms/*.rom
++	mkdir -p $(ROMSDIR)
++	cp $(BASEROMSDIR)/*.rom $(ROMSDIR)
++	-cp $(EXTRAROMSDIR)/*.rom $(ROMSDIR)
++
++$(FONT): $(BASEDIR)/ui/widget/fuse.font
++	mkdir -p $(UIDIR)/widget
++	cp $^ $(UIDIR)/widget/$@
++
++$(DEFAULT_DESKTOP): $(DEFAULT_DESKTOP_FILE)
++	@cp $(DEFAULT_DESKTOP_FILE) $(DEFAULT_DESKTOP)
++	@sed -i "s/FUSE_VERSION/${FUSE_VERSION}/g" $(DEFAULT_DESKTOP)
++	@sed -i "s/FUSE_OD_VERSION/${FUSE_OD_VERSION}/g" $(DEFAULT_DESKTOP)
++
++$(SYSTEM_DESKTOP): $(SYSTEM_DESKTOP_FILE)
++	@cp $(SYSTEM_DESKTOP_FILE) $(SYSTEM_DESKTOP)
++	@sed -i "s/FUSE_VERSION/${FUSE_VERSION}/g" $(SYSTEM_DESKTOP)
++	@sed -i "s/FUSE_OD_VERSION/${FUSE_OD_VERSION}/g" $(SYSTEM_DESKTOP)
++
++$(CONTROL_FILE): $(CONTROL)
++	@cp $(CONTROL) $(CONTROL_FILE)
++	@sed -i "s/FUSE_VERSION/${FUSE_VERSION}/g" $(CONTROL_FILE)
++	@sed -i "s/FUSE_OD_VERSION/${FUSE_OD_VERSION}/g" $(CONTROL_FILE)
++	@sed -i "s/DATE_VERSION/$$(date +%Y%m%d)/g" $(CONTROL_FILE)
++
++$(LNK_FILE): $(LNK)
++	@cp $(LNK) $(LNK_FILE)
++	@sed -i "s/FUSE_VERSION/${FUSE_VERSION}/g" $(LNK_FILE)
++	@sed -i "s/FUSE_OD_VERSION/${FUSE_OD_VERSION}/g" $(LNK_FILE)
++
++$(LIBFILES): libfiles
++
++libfiles: $(BASEDIR)/lib/cassette.bmp $(BASEDIR)/lib/microdrive.bmp $(BASEDIR)/lib/plus3disk.bmp $(BASEDIR)/lib/keyboard.png $(BASEDIR)/lib/keyboard.scr
++	mkdir -p $(LIBDIR)
++	cp $^ $(LIBDIR)
++
++buildfuse:
++	cd $(BASEDIR) && $(MAKE)
++	mkdir -p $(BUILDDIR)
++
++opk_package: $(BUILD) $(ICON) $(FONT) $(ROMS) $(LIBFILES) $(README) $(DEFAULT_DESKTOP) $(SYSTEM_DESKTOP)
++	@mksquashfs \
++	$(DEFAULT_DESKTOP) \
++	$(SYSTEM_DESKTOP) \
++	$(README) \
++	$(BUILDDIR)/$(BUILD) \
++	$(ROMSDIR) \
++	$(BUILDDIR)/$(ICON) \
++	$(UIDIR) \
++	$(LIBDIR) \
++        $(BUILDDIR)/$(TARGET) \
++	-all-root -noappend -no-exports -no-xattrs
++
++ipk_package: $(BUILD) $(ICON) $(FONT) $(ROMS) $(LIBFILES) $(README) $(CONTROL_FILE) $(LNK_FILE)
++	@rm -rf /tmp/.fuse-ipk/ && mkdir -p /tmp/.fuse-ipk/root/home/retrofw/emus/fuse /tmp/.fuse-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
++	@cp -r $(BUILDDIR)/* $(README) /tmp/.fuse-ipk/root/home/retrofw/emus/fuse
++	@cp $(LNK_FILE) /tmp/.fuse-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
++	@cp $(CONTROL_FILE) /tmp/.fuse-ipk/control
++	@cp conffiles postinst /tmp/.fuse-ipk/
++	@tar --owner=0 --group=0 -czvf /tmp/.fuse-ipk/control.tar.gz -C /tmp/.fuse-ipk/ control conffiles
++	@tar --owner=0 --group=0 -czvf /tmp/.fuse-ipk/data.tar.gz -C /tmp/.fuse-ipk/root/ .
++	@echo 2.0 > /tmp/.fuse-ipk/debian-binary
++	@ar r $(BUILDDIR)/$(TARGET) /tmp/.fuse-ipk/control.tar.gz /tmp/.fuse-ipk/data.tar.gz /tmp/.fuse-ipk/debian-binary
++
++package: $(TARGET)
++
++.PHONY: clean deploy debug all libfiles
++clean:
++	cd $(BASEDIR) && $(MAKE) clean
++	rm -rf $(BUILDDIR)
+diff --git a/Platform/RETROFW1.0/Makefile b/Platform/RETROFW1.0/Makefile
+index 7d363bb..e767df8 100644
+--- a/Platform/RETROFW1.0/Makefile
++++ b/Platform/RETROFW1.0/Makefile
+@@ -1,69 +1,18 @@
+-BASEDIR = ../..
+-BUILDDIR = build
+-TARGET = fuse.ipk
+-BUILD = fuse-retrofw
+-ICON = fuse.png
+-README = ../readme.txt
+-UIDIR = $(BUILDDIR)/ui
+-FONT = fuse.font
+-LIBDIR = $(BUILDDIR)/lib
+-LIBFILES = $(LIBDIR)/cassette.bmp $(LIBDIR)/microdrive.bmp $(LIBDIR)/plus3disk.bmp $(LIBDIR)/keyboard.png $(LIBDIR)/keyboard.scr
+-ROMSDIR = $(BUILDDIR)/roms
+-BASEROMSDIR = $(BASEDIR)/roms
+-EXTRAROMSDIR = ../roms
+-ROMS = $(ROMSDIR)/*.rom
++DEVICE = retrofw
++BUILD_TYPE = retrofw
++PACKAGE_TYPE = ipk
+ 
+-all: buildfuse ipk
++all: buildfuse package
+ 
+-$(TARGET): $(BUILD) $(ICON) $(FONT) $(ROMS) $(LIBFILES) $(README)
+-	@rm -rf /tmp/.fuse-ipk/ && mkdir -p /tmp/.fuse-ipk/root/home/retrofw/emus/fuse /tmp/.fuse-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
+-	@cp -r $(BUILDDIR)/* $(README) /tmp/.fuse-ipk/root/home/retrofw/emus/fuse
+-	@cp fuse.lnk /tmp/.fuse-ipk/root/home/retrofw/apps/gmenu2x/sections/emulators
+-	@sed "s/^Version:.*/Version: $$(date +%Y%m%d)/" control > /tmp/.fuse-ipk/control
+-	@cp conffiles postinst /tmp/.fuse-ipk/
+-	@tar --owner=0 --group=0 -czvf /tmp/.fuse-ipk/control.tar.gz -C /tmp/.fuse-ipk/ control conffiles
+-	@tar --owner=0 --group=0 -czvf /tmp/.fuse-ipk/data.tar.gz -C /tmp/.fuse-ipk/root/ .
+-	@echo 2.0 > /tmp/.fuse-ipk/debian-binary
+-	@ar r $(BUILDDIR)/$(TARGET) /tmp/.fuse-ipk/control.tar.gz /tmp/.fuse-ipk/data.tar.gz /tmp/.fuse-ipk/debian-binary
++include ../Makefile.commonrules
+ 
+-$(BUILD): $(BASEDIR)/fuse
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ICON): $(BASEDIR)/data/icons/32x32/fuse.png
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ROMS): $(BASEDIR)/roms/*.rom
+-	mkdir -p $(ROMSDIR)
+-	cp $(BASEROMSDIR)/*.rom $(ROMSDIR)
+-	-cp $(EXTRAROMSDIR)/*.rom $(ROMSDIR)
+-
+-$(FONT): $(BASEDIR)/ui/widget/fuse.font
+-	mkdir -p $(UIDIR)/widget
+-	cp $^ $(UIDIR)/widget/$@
+-
+-$(LIBFILES): libfiles
+-
+-libfiles: $(BASEDIR)/lib/cassette.bmp $(BASEDIR)/lib/microdrive.bmp $(BASEDIR)/lib/plus3disk.bmp $(BASEDIR)/lib/keyboard.png $(BASEDIR)/lib/keyboard.scr
+-	mkdir -p $(LIBDIR)
+-	cp $^ $(LIBDIR)
+-
+-ipk: $(TARGET)
+-
+-buildfuse:
+-	cd $(BASEDIR) && $(MAKE)
+-	mkdir -p $(BUILDDIR)
+-
+-
+-.PHONY: clean deploy debug all libfiles
+-clean:
+-	cd $(BASEDIR) && $(MAKE) clean
+-	rm -rf $(BUILDDIR)
++$(TARGET): ipk_package
+ 
+ deploy: $(BUILDDIR)/$(TARGET)
+ 	echo -e "user root\n"\
+-	        "cd /media/mmcblk1p1/apps\n"\
+-	        "lcd $(BUILDDIR)\n"\
+-	        "put $(TARGET)\n"\
+-	        "bye\n" > deploy_fuse.ftp
++	"cd /media/mmcblk1p1/apps\n"\
++	"lcd $(BUILDDIR)\n"\
++	"put $(TARGET)\n"\
++	"bye\n" > deploy_fuse.ftp
+ 	ftp -inv 169.254.1.1 < deploy_fuse.ftp
+ 	rm deploy_fuse.ftp
+\ No newline at end of file
+diff --git a/Platform/RETROFW1.0/control b/Platform/RETROFW1.0/control
+index a34c3d8..ef502ef 100644
+--- a/Platform/RETROFW1.0/control
++++ b/Platform/RETROFW1.0/control
+@@ -1,10 +1,10 @@
+-Package: Fuse 1.5.7
+-Version:
+-Description: RetroFW 1 port of Fuse ZX Spectrum emulator 1.5.7
++Package: Fuse FUSE_VERSION
++Version: DATE_VERSION-FUSE_VERSION-FUSE_OD_VERSION
++Description: Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION)
+ Section: emus
+ Priority: optional
+ Maintainer: plrguez
+ Architecture: mipsel
+-Homepage: https://github.com/plrguez/fuse-rg350
++Homepage: https://github.com/plrguez/fuse-od
+ Depends:
+-Source: https://github.com/plrguez/fuse-rg350
++Source: https://github.com/plrguez/fuse-od
+diff --git a/Platform/RETROFW1.0/fuse.lnk b/Platform/RETROFW1.0/fuse.lnk
+index e56de74..01cbcec 100644
+--- a/Platform/RETROFW1.0/fuse.lnk
++++ b/Platform/RETROFW1.0/fuse.lnk
+@@ -1,5 +1,5 @@
+-title=Fuse 1.5.7
+-description=Fuse 1.5.7 ZX Spectrum emulator
++title=Fuse FUSE_VERSION
++description=Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION)
+ exec=/home/retrofw/emus/fuse/fuse-retrofw
+ selectordir=/home/retrofw/roms/zxspectrum
+ clock=600
+diff --git a/Platform/RETROFW2.0/Makefile b/Platform/RETROFW2.0/Makefile
+index 3838978..d7086bf 100644
+--- a/Platform/RETROFW2.0/Makefile
++++ b/Platform/RETROFW2.0/Makefile
+@@ -1,71 +1,18 @@
+-BASEDIR = ../..
+-BUILDDIR = build
+-TARGET = fuse-retrofw.opk
+-BUILD = fuse-retrofw
+-ICON = fuse.png
+-README = ../readme.txt
+-UIDIR = $(BUILDDIR)/ui
+-FONT = fuse.font
+-LIBDIR = $(BUILDDIR)/lib
+-LIBFILES = $(LIBDIR)/cassette.bmp $(LIBDIR)/microdrive.bmp $(LIBDIR)/plus3disk.bmp $(LIBDIR)/keyboard.png $(LIBDIR)/keyboard.scr
+-ROMSDIR = $(BUILDDIR)/roms
+-BASEROMSDIR = $(BASEDIR)/roms
+-EXTRAROMSDIR = ../roms
+-ROMS = $(ROMSDIR)/*.rom
++DEVICE = retrofw
++BUILD_TYPE = retrofw
++PACKAGE_TYPE = opk
+ 
+-all: buildfuse opk
++all: buildfuse package
+ 
+-$(TARGET): $(BUILD) $(ICON) $(FONT) $(ROMS) $(LIBFILES) $(README)
+-	@mksquashfs \
+-	default.retrofw.desktop \
+-	system.retrofw.desktop \
+-	$(README) \
+-	$(BUILDDIR)/$(BUILD) \
+-	$(ROMSDIR) \
+-	$(BUILDDIR)/$(ICON) \
+-	$(UIDIR) \
+-	$(LIBDIR) \
+-        $(BUILDDIR)/$(TARGET) \
+-	-all-root -noappend -no-exports -no-xattrs
++include ../Makefile.commonrules
+ 
+-$(BUILD): $(BASEDIR)/fuse
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ICON): $(BASEDIR)/data/icons/32x32/fuse.png
+-	cp $^ $(BUILDDIR)/$@
+-
+-$(ROMS): $(BASEDIR)/roms/*.rom
+-	mkdir -p $(ROMSDIR)
+-	cp $(BASEROMSDIR)/*.rom $(ROMSDIR)
+-	-cp $(EXTRAROMSDIR)/*.rom $(ROMSDIR)
+-
+-$(FONT): $(BASEDIR)/ui/widget/fuse.font
+-	mkdir -p $(UIDIR)/widget
+-	cp $^ $(UIDIR)/widget/$@
+-
+-$(LIBFILES): libfiles
+-
+-libfiles: $(BASEDIR)/lib/cassette.bmp $(BASEDIR)/lib/microdrive.bmp $(BASEDIR)/lib/plus3disk.bmp $(BASEDIR)/lib/keyboard.png $(BASEDIR)/lib/keyboard.scr
+-	mkdir -p $(LIBDIR)
+-	cp $^ $(LIBDIR)
+-
+-opk: $(TARGET)
+-
+-buildfuse:
+-	cd $(BASEDIR) && $(MAKE)
+-	mkdir -p $(BUILDDIR)
+-
+-
+-.PHONY: clean deploy debug all libfiles
+-clean:
+-	cd $(BASEDIR) && $(MAKE) clean
+-	rm -rf $(BUILDDIR)
++$(TARGET): opk_package
+ 
+ deploy: $(BUILDDIR)/$(TARGET)
+ 	echo -e "user root\n"\
+-	        "cd /media/mmcblk1p1/apps\n"\
+-	        "lcd $(BUILDDIR)\n"\
+-	        "put $(TARGET)\n"\
+-	        "bye\n" > deploy_fuse.ftp
++	"cd /media/mmcblk1p1/apps\n"\
++	"lcd $(BUILDDIR)\n"\
++	"put $(TARGET)\n"\
++	"bye\n" > deploy_fuse.ftp
+ 	ftp -inv 169.254.1.1 < deploy_fuse.ftp
+ 	rm deploy_fuse.ftp
+diff --git a/Platform/RETROFW2.0/default.retrofw.desktop b/Platform/RETROFW2.0/default.retrofw.desktop
+index f3d1aa6..a02d586 100644
+--- a/Platform/RETROFW2.0/default.retrofw.desktop
++++ b/Platform/RETROFW2.0/default.retrofw.desktop
+@@ -1,6 +1,6 @@
+ [Desktop Entry]
+-Name=Fuse 1.5.7
+-Comment=Fuse ZX Spectrum emulator 1.5.7
++Name=Fuse FUSE_VERSION
++Comment=Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION)
+ Exec=fuse-retrofw %f
+ Icon=fuse
+ Type=Application
+diff --git a/Platform/RETROFW2.0/system.retrofw.desktop b/Platform/RETROFW2.0/system.retrofw.desktop
+index 297c163..a0714d8 100644
+--- a/Platform/RETROFW2.0/system.retrofw.desktop
++++ b/Platform/RETROFW2.0/system.retrofw.desktop
+@@ -1,6 +1,6 @@
+ [Desktop Entry]
+-Name=Fuse 1.5.7
+-Comment=Fuse ZX Spectrum emulator 1.5.7 (no file selector)
++Name=Fuse FUSE_VERSION
++Comment=Fuse ZX Spectrum emulator FUSE_VERSION (vFUSE_OD_VERSION) (System)
+ Exec=fuse-retrofw
+ Icon=fuse
+ Type=Application
+diff --git a/Platform/VERSION b/Platform/VERSION
+new file mode 100644
+index 0000000..7bcd0e3
+--- /dev/null
++++ b/Platform/VERSION
+@@ -0,0 +1 @@
++0.0.2
+\ No newline at end of file
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 1f76179..6fcecdc 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -44,9 +44,9 @@
+   - OpenDingux: '/media/data/local/home'
+   - RetroFW: '/home/retrofw'
+ 
+---------------------------------------------
+-### Extra Options for OpenDingux/RetroFW ###
+---------------------------------------------
++----------------------------------
++### OpenDingux/RetroFW options ###
++----------------------------------
+ 
+ For the OpenDingux/RetroFW port some additional options had been added.
+ 
+@@ -60,7 +60,7 @@
+     Enable/Disable triple buffer.
+     BUG: Disabling triple buffer sometimes freeze the screen but emulator will
+     be still running.
+-    If Hotkey combos are enabled you can enable/disable with `L1` + `R1` + `B`
++    If Hotkey combos are enabled you can enable/disable it with `L1` + `R1` + `B`
+ 
+   - Show FSP instead of speed percentaje
+     ------------------------------------
+@@ -70,37 +70,32 @@
+ 
+   - Filter Known extensions for load and save
+     -----------------------------------------
+-    Default enabled. Highly recommendable to maintain enabled.
++    Default enabled.
+ 
+     Only the supported file extensions will be presented in file dialogs for
+-    save and some load operations for known media.
++    save and load operations for known media.
+ 
+-    Filter can be switched on/off with `Select` button
++    Filter can be enabled/disabled with `Select` button in file dialogs.
+ 
+-    Is highly recomendable have enabled this option to avoid overwrite any file
+-    that is not for type pretended to save.
++    Enable this option can help to avoid overwrite any file type other than the
++    type pretended to save. See also 'Confirm overwrite files' option to prevent
++    overwrite files without advise.
+ 
+-    See also 'Confirm overwrite files' option to prevent overwrite files without
+-    advise.
++    Filters are applied in save dialogs for:
++        - Save snapshot, Screenshots, Recordings, AY logging, Movie.
++        - Media types: Tape, Microdrive, Disk (+3, Beta, +D/DISCiPLE, Didaktik).
++        - Control mapping files use the '.FCM' extension
++          (Options -> Joysticks -> Save control mapping to file)
++        - For profiler saves '.PRF' extension had been chosen in this port.
+ 
+-    Save:
+-      Save options for known media types:
+-         - In the File MenÃº: Save snapshot, Screenshots, Recordings, AY logging,
+-           Movie.
+-         - In the Media MenÃº: Tape, Microdrives, Disks (+3, Beta, +D/DISCiPLE,
+-           Didaktik).
+-         - Control mapping files use the '.fcm' extension
+-           (Options -> Joysticks -> Save control mapping to file)
+-         - For profiler saves '.prf' extension had been chosen.
++      No filters are applied for:
++        - Binary data (File -> Save binary data...)
+ 
+-      No filters nor known extension to save:
+-         - Binary data (File -> Save binary data...)
++    Filters are applied in load dialogs for:
++        - Media types: Tape, Disks (+3, Beta, +D/DISCiPLE, Didaktik),
++          Interface 1, Cartridges.
+ 
+-    Load:
+-      Affect to insert/open operations from Media menÃº for this media: Tape,
+-      Interface 1, Disk, Cartridges.
+-
+-      No filters are applied to load:
++      No filters are applied for:
+         - Binary data (File -> Load binary data...)
+         - General open files (File -> Open (or L1 + X hotkey)
+ 
+@@ -113,27 +108,40 @@
+       - Didaktik:    .D80, .D40
+       - Opus:        .OPD, .OPU
+       - +D/Disciple: .IMG, .MGT, .SAD
++      - Saving screenshots: .SCR, .MLT or .PNG formats.
++      - In OpenDingux Scalable Vector Graphics: .SVG
++      - Recordings:  .RZX
++      - Movie files: .FMF
++      - AY Logging:  .PSG
++      - Control mapping: .FCM
++      - Profiler: .PRF
+ 
+-    For saving screenshots there are options for .SCR, .MLT or .PNG formats.
+-    In OpenDingux Scalable Vector Graphics: .SVG
+-    Recordings:  .RZX
+-    Movie files: .FMF
+-    AY Logging:  .PSG
+-    Control mapping: .FCM
+-
+-    Profiler: .PRF (This was and arbitrary decission)
+-
+-    If no extension is supplied when enter name in save dialogs then the first
++    If no extension is supplied when enter a name in save dialogs then the first
+     extension of each media known type will be added to the name.
+ 
++  - Independent directory access for each media type:
++    -------------------------------------------------
++    Default disabled.
++
++    Each media type dialog will use their own navigation path from the common
++    inital path.
++
++    The common inital path will be:
++      - If Fuse is loaded selecting a spectrum media file from GMenu2x/GMenuNx
++        then the loaded program's path..
++      - If Fuse is loaded withouth file selector:
++        - The last saved directory if 'Save last directory visited' is enabled
++          and there is a last directory saved.
++        - The Fuse's executable path.
++
+   - Confirm overwrite files:
+     ------------------------
+     Default disabled.
+ 
+     Fuse asks for confirmation to overwrite for some media, but not for all.
+-    This option ask for confirmation for all overwrites.
++    This option will ask for confirmation for all overwrites.
+ 
+-    It must be convenient to activate.
++    It must be convenient to enable it.
+ 
+   - Show hidden files:
+     ------------------
+@@ -148,6 +156,32 @@
+     If you want to quick access some functions. See section Hotkey combinations
+     for details.
+ 
++  - Save last directory visited:
++    ----------------------------
++    Default disabled.
++
++    The last visited directory will be saved to use as initial path. This will
++    be used if Fuse is loaded without file selector.
++
++Options - Media
++---------------
++
++  - Auto-load media with custom roms:
++    ---------------------------------
++    Default disabled.
++
++    If Machine ROM has been changed the rom files used are not in roms paths
++    or do not have default names then they will be considered custom roms and
++    no autoload for media types will be used.
++
++    With this option enabled the auto-load will be used despite custom roms are
++    used.
++
++    This will be helpful if different version or language official ROMS are used
++    and they are not in roms path or not have the default fuse rom names.
++
++    See ROMS section for more details.
++
+ ------------------------
+ ### Virtual Keyboard ###
+ ------------------------
+@@ -246,13 +280,20 @@
+                  Example: Sound options -> AY stereo separation
+                - It open 'enter name' dialog for file save dialogs.
+ 
++  `Y`        At save dialogs save with the default name and type. Default name
++             will be the name of the last loaded media and extension changed to
++             default extension of media to save.
++
++  `Select`   Enable/Disable filters in file dialogs if `Filter known extensions`
++             option is enabled.
++
+   `L1`       Go to the first menu option
+   `R1`       Go to the last menu option
+   `L2`       In the file selector go to the first entry in the current directory
+   `R2`       In the file selector go to the last entry in the current directory
+   `Power`    Cancel and exit completely from any level of menu to the emulator
+ 
+-  `Y`, `Select`, `Start`, `L2`, `R3`, `Right Stick`
++  `Start`, `L2`, `R3`, `Right Stick`
+              Nothing
+ 
+ #### Maintain options ####
+@@ -415,6 +456,25 @@
+     With this option disabled the control mapping filename follow the rules
+     indicated above.
+ 
++  - Enable Kempston Joystick if needed:
++    -----------------------------------
++    Default enabled. Only take effect if 'Control mapping per game' is enabled.
++
++    If control mapping to load have assigned Kempston Joystick in
++    GCW0 Joystick 1, Joystick 2 or Keyboard and 'Kempston Joystick' option is
++    not enabled in Peripherals -> General then it will be enabled.
++
++    When load a program if the control mapping file not exist yet but default
++    controls have assigned Kempston Joystick in GCW0 Joystick 1, Joystick 2 or
++    Keyboard then the same logic is applied.
++
++    NOTE: Custom control mapping is not intended to manage the hardware
++    attached to machine, only control mappings.
++    But enabling/disabling Kempston Joystick without reset machine is supported
++    by Fuse.
++    Other peripherlas as Fuller Box need to reset the machine and this is not
++    viable to manage in control mapping.
++
+ When you exit from Fuse and have General Auto-save setting enabled then default
+ control mapping will be saved at general file.
+ 
+diff --git a/configure.ac b/configure.ac
+index 519a5b4..bc49e0f 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -347,7 +347,7 @@
+   AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined for OpenDingux/RetroFW])
+   AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
+   AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
+-  AC_DEFINE([GCW0_VERSION], "0.0.2 for OpenDingux/RetroFW", [OpenDingux/RetroFW Version])
++  AC_DEFINE([GCW0_VERSION], "m4_normalize(m4_include(Platform/VERSION)) for OpenDingux/RetroFW", [OpenDingux/RetroFW Version])
+ fi
+ 
+ dnl Look for null UI (default=no)
