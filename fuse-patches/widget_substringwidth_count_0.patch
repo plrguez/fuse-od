@@ -1,0 +1,13 @@
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index fa40db2..6d461b7 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -279,7 +279,7 @@
+ {
+   size_t width = 0;
+   int c;
+-  if( !s )
++  if( !s || !count )
+     return 0;
+   while( count-- && (c = *(libspectrum_byte *)s++) != 0 ) {
+     if( c < 18 )

@@ -1,0 +1,37 @@
+diff --git a/ChangeLog b/ChangeLog
+index 3cd393b5..3ba30875 100644
+--- a/ChangeLog
++++ b/ChangeLog
+@@ -33,6 +33,8 @@
+             (Jools Wills).
+           * WidgetUI: Enable HOME and END keys in menus on widget UIs (Gergely
+             Szasz).
++	  * Timex: don't abort if the Timex dock cartridge image is not
++	    found (Alberto Garcia).
+ 
+ 2018-12-09  Philip Kendall  <philip-fuse@shadowmagic.org.uk>
+ 
+diff --git a/machines/tc2068.c b/machines/tc2068.c
+index a023b6de..828f988b 100644
+--- a/machines/tc2068.c
++++ b/machines/tc2068.c
+@@ -178,6 +178,7 @@ tc2068_reset( void )
+   if( error ) {
+     ui_error( UI_ERROR_INFO, "Ignoring Timex dock file '%s'",
+             settings_current.dck_file );
++    settings_set_string( &settings_current.dck_file, NULL );
+   }
+ 
+   return 0;
+diff --git a/machines/ts2068.c b/machines/ts2068.c
+index 4a7b2fb8..8c16cdaa 100644
+--- a/machines/ts2068.c
++++ b/machines/ts2068.c
+@@ -117,6 +117,7 @@ ts2068_reset( void )
+   if( error ) {
+     ui_error( UI_ERROR_INFO, "Ignoring Timex dock file '%s'",
+             settings_current.dck_file );
++    settings_set_string( &settings_current.dck_file, NULL );
+   }
+ 
+   return 0;
