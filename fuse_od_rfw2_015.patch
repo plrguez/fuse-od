@@ -1,0 +1,2433 @@
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 2f113d17..d9b24c48 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -1,12 +1,12 @@
+ Using the Fuse emulator
+ =======================
+ 
+-This port of Fuse to OpenDingux and RetroFW is a compilation of Fuse 1.5.7 for Opendingux/RetroFW
+-with some additions to the SDL UI and some new options.
++This port of Fuse to OpenDingux and RetroFW is a compilation of Fuse 1.5.7 for
++Opendingux/RetroFW with some additions to the SDL UI and some new options.
+ 
+ So the thanks for this port are for Phillip Kendall and all the Fuse team.
+-And also to the GCW0/OpenDingux and RetroFW community for all documentation, development threads, and
+-all opensource ports.
++And also to the GCW0/OpenDingux and RetroFW community for all documentation,
++development threads, and all opensource ports.
+ 
+ At the end of this doc is the man page of Fuse 1.5.7 for a complete reference.
+ 
+@@ -16,25 +16,137 @@ At the end of this doc is the man page of Fuse 1.5.7 for a complete reference.
+ 
+ You can open the menu with the `Power` or `Select` button.
+ 
+-If `Select` button is mapped to joystick or keyboard then the only option to open menu will be `Power` button.
++If `Select` button is mapped to joystick or keyboard then the only option to
++open menu will be `Power` button.
+ 
+ ---------------------
+ ### Save settings ###
+ ---------------------
+ 
+-By default the emulator don't save settings changes. You can save settings at any time from menu: `Menu -> Options -> Save`.
++By default the emulator don't save settings changes. You can save settings at
++any time from menu: `Menu -> Options -> Save`.
+ 
+ You also can activate "Auto-save" to save settings when you exit the emulator.
+ 
+-|To activate auto-save access to `Menu -> Options -> General` and check 'Auto-save settings'.
++|To activate auto-save access to `Menu -> Options -> General` and
++check 'Auto-save settings'.
+ |Check the option with the `X` button and accept options with the `A` button.
+ |You should exit from the emulator or use the 'Save' to save this changes.
+ 
+ In this port the options are saved into 'fuse.cfg' file in the fuse config path.
+-If some option changes prevent to open the emulator delete this file and try to start again.
++If some option changes prevent to open the emulator delete this file and try
++to start again.
+ 
+-The config path is in '$HOME/.fuse' directory. If it does not exist the emulator will create it at start.
+-|$HOME is located in '/media/data/local/home' for OpenDingux and in '/home/retrofw' for RetroFW.
++The config path is in '$HOME/.fuse' directory. If it does not exist the emulator
++will create it at start.
++
++|$HOME is located in:
++  - OpenDingux: '/media/data/local/home'
++  - RetroFW: '/home/retrofw'
++
++--------------------------------------------
++### Extra Options for OpenDingux/RetroFW ###
++--------------------------------------------
++
++For the OpenDingux/RetroFW port some additional options had been added.
++
++Options - General GCW0
++----------------------
++
++  - Triple Buffer
++    -------------
++    Default disabled. Experimental!
++
++    Enable/Disable triple buffer.
++    BUG: Disabling triple buffer sometimes freeze the screen but emulator will
++    be still running.
++    If Hotkey combos are enabled you can enable/disable with `L1` + `R1` + `B`
++
++  - Show FSP instead of speed percentaje
++    ------------------------------------
++    Default disbled.
++
++    If you want to view FPS instead emulation speed %.
++
++  - Filter Known extensions for load and save
++    -----------------------------------------
++    Default enabled. Highly recommendable to maintain enabled.
++
++    Only the supported file extensions will be presented in file dialogs for
++    save and some load operations for known media.
++
++    Filter can be switched on/off with `Select` button
++
++    Is highly recomendable have enabled this option to avoid overwrite any file
++    that is not for type pretended to save.
++
++    See also 'Confirm overwrite files' option to prevent overwrite files without
++    advise.
++
++    Save:
++      Save options for known media types:
++         - In the File MenÃº: Save snapshot, Screenshots, Recordings, AY logging,
++           Movie.
++         - In the Media MenÃº: Tape, Microdrives, Disks (+3, Beta, +D/DISCiPLE,
++           Didaktik).
++         - Control mapping files use the '.fcm' extension
++           (Options -> Joysticks -> Save control mapping to file)
++         - For profiler saves '.prf' extension had been chosen.
++
++      No filters nor known extension to save:
++         - Binary data (File -> Save binary data...)
++
++    Load:
++      Affect to insert/open operations from Media menÃº for this media: Tape,
++      Interface 1, Disk, Cartridges.
++
++      No filters are applied to load:
++        - Binary data (File -> Load binary data...)
++        - General open files (File -> Open (or L1 + X hotkey)
++
++    Known extesions for media to save:
++      - Snapshots:   .SZX, .Z80 and .SNA
++      - Tape:        .TZX
++      - Microdrive:  .MDR
++      - +3 Disks:    .DSK (only the old CPC format), UDI, FDI
++      - Beta:        .TRD, .SCL, .UDI, .FDI
++      - Didaktik:    .D80, .D40
++      - Opus:        .OPD, .OPU
++      - +D/Disciple: .IMG, .MGT, .SAD
++
++    For saving screenshots there are options for .SCR, .MLT or .PNG formats.
++    In OpenDingux Scalable Vector Graphics: .SVG
++    Recordings:  .RZX
++    Movie files: .FMF
++    AY Logging:  .PSG
++    Control mapping: .FCM
++
++    Profiler: .PRF (This was and arbitrary decission)
++
++    If no extension is supplied when enter name in save dialogs then the first
++    extension of each media known type will be added to the name.
++
++  - Confirm overwrite files:
++    ------------------------
++    Default disabled.
++
++    Fuse asks for confirmation to overwrite for some media, but not for all.
++    This option ask for confirmation for all overwrites.
++
++    It must be convenient to activate.
++
++  - Show hidden files:
++    ------------------
++    Default disabled.
++
++    Show all files and directorys including hidden (they begin with .).
++
++  - Hotkey combos:
++    --------------
++    Default disabled.
++
++    If you want to quick access some functions. See section Hotkey combinations
++    for details.
+ 
+ ------------------------
+ ### Virtual Keyboard ###
+@@ -43,19 +155,24 @@ The config path is in '$HOME/.fuse' directory. If it does not exist the emulator
+ Press the `Start` button to open a Virtual Keyboard when you are at emulator.
+ 
+ The keys in keyboard correspond to ZX Spectrum 48k keys.
+-When you press them are send to emulator as if you are using a real ZX Spectrum keyboard.
++When you press them are send to emulator as if you are using a real
++ZX Spectrum keyboard.
+ 
+   `Cursor`    Move to select keys.
+   `A`         Press selected key.
+ 
+   `B`         Lock key. It's marked in blue.
+-              The locked keys are used when press the `A` button over a Key and then are unlocked.
+-              For use in combinations of Caps Shift or Symbol Shift with other keys.
+-              For example: In 48k mode you can Lock key "Ss" and then press 'Cs' key to change keyboard to "Extended" mode.
++              The locked keys are used when press the `A` button over a Key and
++              then are unlocked.
++              For use in combinations of Caps Shift or Symbol Shift with
++              other keys.
++              For example: In 48k mode you can Lock key "Ss" and then press 'Cs'
++              key to change keyboard to "Extended" mode.
+ 
+   `X`         Sticky key. It's marked in Red.
+               The key is continously pressed.
+-              For example: In 48k mode you can press key 'J' then Sticky key 'Ss' and then press twice key 'P' to obtain 'LOAD ""'.
++              For example: In 48k mode you can press key 'J' then Sticky key
++              'Ss' and then press twice key 'P' to obtain 'LOAD ""'.
+ 
+   `Y`         Clean all Lock and Sticky keys.
+   `Start`     Close Virtual Keyboard
+@@ -98,8 +215,9 @@ The buttons function detailed are when no mapping is assigned.
+ 
+   `Right Stick`
+               Nothing.
+-              On some systems you can enable an emulated mouse that uses the left
+-              stick to move the mouse. In Fuse you can use it as Kempston mouse.
++              On some systems you can enable an emulated mouse that uses the 
++              left stick to move the mouse.
++              In Fuse you can use it as Kempston mouse.
+               |In RG350 you can enable it with `Power`+`B` hotkey.
+ 
+   `L2`        Nothing.
+@@ -118,11 +236,14 @@ These are no dependent of button mapping.
+              Move
+ 
+   `A`        Select the option or accept the options at form
+-  `B`        Cancel and go back to previous menu or to the emulator if there is no previous menu
++  `B`        Cancel and go back to previous menu or to the emulator if there is
++             no previous menu
+ 
+   `X`        At different contexts:
+-               - Mark/Unmark for check options: For example at General options -> Auto-save settings
+-               - Open list of options for list options: For example at Sound options -> AY stereo separation
++               - Mark/Unmark for check options.
++                 Example: General options -> Auto-save settings
++               - Open list of options for list options.
++                 Example: Sound options -> AY stereo separation
+                - It open 'enter name' dialog for file save dialogs.
+ 
+   `L1`       Go to the first menu option
+@@ -136,7 +257,8 @@ These are no dependent of button mapping.
+ 
+ #### Maintain options ####
+ --------------------------
+-Some menu options open a form with options to check/uncheck or choose option from a list.
++Some menu options open a form with options to check/uncheck or choose an option
++from a list.
+ 
+   - To check/uncheck options use `X` button.
+   - To confirm changes in form use the `A` button.
+@@ -147,73 +269,91 @@ Some examples of forms are General, Media and Sound.
+ #### Virtual keyboard in menu options ####
+ ------------------------------------------
+ 
+-In some menu options the virtual keyboard is presented to allow to use different options presented or enter values.
++In some menu options the virtual keyboard is presented to allow to use different
++options presented or enter values.
+ 
+-Examples where the virtual keyboard it's appearing are: 'Enter name' for save dialogs, Debugger, Poke Finder, Poke Memory.
++Examples where the virtual keyboard it's appearing are: 'Enter name' for save
++dialogs, Debugger, Poke Finder, Poke Memory.
+ 
+   `Cursor`   Move to select keys
+   `A`        Press the selected key
+-  `X`        Change the keyboard mode between upper and lower case and some additional characters
++  `X`        Change the keyboard mode between upper and lower case and some
++             additional characters
+   `Y`        Delete previous character
+   `B`        Cancel and exit to previous option in menu
+ 
+   Confirm input
+              To confirm the input press 'En' key at virtual Keyboard
+ 
+-|For the 'Enter the name' in save dialogs the last loaded filename without the extension is proposed.
++|For the 'Enter the name' in save dialogs the last loaded filename without the
++extension is proposed.
+ 
+ ------------------------------------------------
+ ### Mapping buttons to Joysticks or Keyboard ###
+ ------------------------------------------------
+ 
+-You can map handheld buttons to Joysticks or Spectrum keys in `Menu -> Options -> Joysticks`
++You can map handheld buttons to Joysticks or Spectrum keys in
++`Menu -> Options -> Joysticks`
+ 
+ ==== GCW0 Joystick 1 ====
+ This option allows to emulate a ZX Spectrum joystick with the handheld buttons.
+ It also allows you to assign keyboard keys to buttons
+ 
+   - Type: Choose the Joystick to emulate or None. Default is None.
+-  - Button mapping: Map the handheld buttons to Joystick fire, ZX Spectrum keys or to Nothing.
++  - Button mapping: Map the handheld buttons to Joystick fire, ZX Spectrum keys
++    or to Nothing.
+ 
+   Some type of Joysticks may require other emulator options enabled.
+-  |For example for Kempston joystick emulation you need to enable 'Kempston joystick'
++  |For example for Kempston joystick emulation need enabled 'Kempston joystick'
+   |in `Menu --> Options --> Peripherals --> General`.
+   By default all buttons are mapped to Joystick fire.
+ 
+ ==== GCW0 Keyboard ====
+-This option allows to map handheld buttons to ZX Spectrum keys. The cursors also can be mapped.
++This option allows to map handheld buttons to ZX Spectrum keys.
++The cursors also can be mapped.
+ 
+   - Type: Choose Activated or None. Default is None.
+-  - Button mapping: Map buttons to ZX Spectrum keys or Nothing. By default all buttons are mapped to Nothing.
++  - Button mapping: Map buttons to ZX Spectrum keys or Nothing.
++                    By default all buttons are mapped to Nothing.
+ 
+ --------------------------
+ 
+-When both mappings, "GCW0 Joystick 1" and "GCW0 Keyboard", are enabled at the same time only "GCW0 Joystick 1" will work.
++When both mappings, "GCW0 Joystick 1" and "GCW0 Keyboard", are enabled at
++the same time only "GCW0 Joystick 1" will work.
+ 
+-When you choose any 'Type' other than "None" in "GCW0 Joystick 1" or "GCW0 Keyboard", some buttons may lose their original functionality if they are
+-mapped to joystick fire or to keyboard keys.
+-  - `Select`, `Start`, `L1` and `R1` buttons have functionanility that may be lost.
+-  - If you have mapped the `Select` button, you can still access the menu with the` Power` button.
++When you choose any 'Type' other than "None" in "GCW0 Joystick 1" or
++"GCW0 Keyboard", some buttons may lose their original functionality if they are
++mapped to joystick fire or to keyboard keys:
++  - `Select`, `Start`, `L1` and `R1` buttons have functionanility
++    that may be lost.
++  - If you have mapped the `Select` button, you can still access the menu
++    with the` Power` button.
+ 
+ ----------------------------------------------
+ ### Control mapping per game configuration ###
+ ----------------------------------------------
+ 
+-To have control gaming configuration per game you must activate it in the menu 'Options -> Joysticks -> Control mapping'.
++To have control gaming configuration per game you must activate it in the
++menu 'Options -> Joysticks -> Control mapping'.
+ 
+ Files for save control mapping:
+-  - The configuration files per game are saved in 'mappings' directory in fuse config path ($HOME/.fuse/mappings).
++  - The configuration files per game are saved in 'mappings' directory in
++    fuse config path ($HOME/.fuse/mappings).
+   - They have extension '.fcm' (fcm is for Fuse Control Mapping).
+-  - The options saved are the 'Types' and buttons mappings for GCW0 Joystick 1, Joystick 2, Keyboard and GCW0 Keyboard.
+-  - The format of the file is the same used for the general settings: XML for OpenDingux or plain text for RetroFW.
+-  - By default for the control mapping filenames will be tried to detect some patterns on name to cut them off:
++  - The options saved are the 'Types' and buttons mappings for GCW0 Joystick 1,
++    Joystick 2, Keyboard and GCW0 Keyboard.
++  - The format of the file is the same used for the general settings: XML for
++    OpenDingux or plain text for RetroFW.
++  - By default for the control mapping filenames will be tried to detect some
++    patterns on name to cut them off:
+         - All the denominations between '()' or '[]'
+         - 'Tape', 'Disk', 'Side' for 'ABCD' or '1234', 'Part 1234 of 1234'
+         - The '128k', '48k' out of '()' '[]'
+         - The 'Small, Medium, Large' whatever 'Case'
+         (The search of patterns are case insensitive)
+ 
+-The supported media for auto-load control mapping files are tapes, microdrives, snapshots, disks (not IDE), rom cartridges and Timex cartridges.
++The supported media for auto-load control mapping files are tapes, microdrives,
++snapshots, disks (not IDE), rom cartridges and Timex cartridges.
+ 
+ See PITFALLs at the end of this section.
+ 
+@@ -221,22 +361,28 @@ Options:
+   - Control mapping per game:
+     -------------------------
+     Default disabled.
+-    It enable the save and load of control mappings per game for supported media: : tapes, snapshots, disks (not IDE), rom cartridges, Timex cartridges.
++    It enable the save and load of control mappings per game for supported
++    media: tapes, snapshots, disks (not IDE), rom cartridges, Timex cartridges.
+ 
+     If you disable it:
+-      - If defaults are detached they are saved and restored as current defaults.
+-      - If changes were made to controls those changes are saved to correponding control mapping file.
++      - If defaults are detached they are saved and restored as current
++        defaults.
++      - If changes were made to controls those changes are saved to
++        correponding control mapping file.
+ 
+     If you enable it:
+       - If defaults are detached they are loaded.
+-      - If you do after you have load any supported media the emulator try to initialize control mapping for that media.
++      - If you do after you have load any supported media the emulator try to
++        initialize control mapping for that media.
+ 
+   - Auto-load:
+     ----------
+     Default enabled. Only take effect if 'Control mapping per game' is enabled.
+ 
+-    If enabled the autoload of control mapping files associated to the file loaded.
+-    This apply for supported media when are loaded from 'File -> Open' or inserted from the 'Media' menu.
++    If enabled the autoload of control mapping files associated to the file
++    loaded.
++    This apply for supported media when are loaded from 'File -> Open' or
++    inserted from the 'Media' menu.
+ 
+   - Auto-save:
+     ----------
+@@ -255,7 +401,8 @@ Options:
+     If this option is enabled you can't maintain separated default controls.
+ 
+     The default controls are used:
+-      - At start of Fuse, if no media is autoload or no control mapping autoload is enable
++      - At start of Fuse, if no media is autoload or no control mapping
++        autoload is enable
+       - When you insert a media with not yet control mapping configuration
+       - When you clear or eject a media
+ 
+@@ -263,10 +410,13 @@ Options:
+     ---------------------------
+     Default disabled. Only take effect if 'Control mapping per game' is enabled.
+ 
+-    With this option enabled the filename for mapping control will be the same of the file loaded replacing the extension by '.fmc'.
+-    With this option disabled the control mapping filename follow the rules indicated above.
++    With this option enabled the filename for mapping control will be the same
++    of the file loaded replacing the extension by '.fmc'.
++    With this option disabled the control mapping filename follow the rules
++    indicated above.
+ 
+-When you exit from Fuse and have General Auto-save setting enabled then default control mapping will be saved at general file.
++When you exit from Fuse and have General Auto-save setting enabled then default
++control mapping will be saved at general file.
+ 
+ Other options in Joystick menu for Control mapping:
+ 
+@@ -274,56 +424,71 @@ Other options in Joystick menu for Control mapping:
+     ---------------------
+     Enabled if 'Control mapping per game' is enabled.
+ 
+-    When a control mapping file exists for the last media loaded then it's name will be printed here, only the first 20 characters of name.
+-    This option allows to restore controls mapping from configuration file if changes have been made to them.
++    When a control mapping file exists for the last media loaded then it's name
++    will be printed here, only the first 20 characters of name.
++    This option allows to restore controls mapping from configuration file if
++    changes have been made to them.
+ 
+   - Save control mapping:
+     ---------------------
+     Enabled if 'Control mapping per game' is enabled.
+ 
+-    If supported media is inserted then the name of control mapping file will be printed here, only the first 20 characters of name.
+-    This allow you to save the current control mapping if changes have been made to them or if the file does not exist yet.
++    If supported media is inserted then the name of control mapping file will
++    be printed here, only the first 20 characters of name.
++    This allow you to save the current control mapping if changes have been
++    made to them or if the file does not exist yet.
+ 
+-    If Auto-save of control mapping is active the save will be at designed evets, see 'Auto-save' options. You can force the save with this option.
++    If Auto-save of control mapping is active the save will be at designed 
++    events, see 'Auto-save' options. You can force the save with this option.
+ 
+   - Load control mapping from file:
+     -------------------------------
+     Allways enabled.
+ 
+-    This option allow you to load a control mapping file to change the current control mappings.
++    This option allow you to load a control mapping file to change the current
++    control mappings.
+ 
+   - Save control mapping from file:
+     -------------------------------
+     Allways enabled.
+ 
+-    This option allows you to save a control mapping file with the current control mappings.
++    This option allows you to save a control mapping file with the current
++    control mappings.
+ 
+   - Default control mapping:
+     ------------------------
+-    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++    Enabled when 'Control mapping per game' is enabled and 'Not detached
++    defaults' is disabled.
+ 
+     Submenu to maintain default control mapping.
+ 
+   - Reset to default controls:
+     --------------------------
+-    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++    Enabled when 'Control mapping per game' is enabled and 'Not detached
++    defaults' is disabled.
+ 
+     Reset the current controls to default control mapping.
+ 
+   - Set current as default:
+     -----------------------
+-    Enabled when 'Control mapping per game' is enabled and 'Not detached defaults' is disabled.
++    Enabled when 'Control mapping per game' is enabled and 'Not detached
++    defaults' is disabled.
+ 
+     Set the current controls as the default control mapping.
+ 
+ PITFALLS:
+   Variants of the same program:
+-    If 'No cut/transform filenames' is disabled (default) the emulator try to clean the name of filename to make it equal name for variations.
+-    But if the filenames used are no consistent, including letter case, then a different name for the same program may be determined.
+-
+-  When insert various media the last inserted will be the selected control mapping.
+-    - If you unload it then it will be cleared and you could start a game from other media inserted with no file control mapping.
+-    - If you start from Loader the system can load from media different to the last assigned control mapping file.
++    If 'No cut/transform filenames' is disabled (default) the emulator try to
++    clean the name of filename to make it equal name for variations.
++    But if the filenames used are no consistent, including letter case, then a
++    different name for the same program may be determined.
++
++  When insert various media the last inserted will be the selected control
++  mapping.
++    - If you unload it then it will be cleared and you could start a game from
++      other media inserted with no file control mapping.
++    - If you start from Loader the system can load from media different to the
++      last assigned control mapping file.
+ 
+   Example:
+     1.- Select +3 machine
+@@ -331,27 +496,35 @@ PITFALLS:
+     3.- Open media menu and insert a tape
+     4.- The control mapping file will be the last tape inserted
+     5.- Open media menu and clear tape
+-    6.- Now there is not control mapping file assigned but you can load a program from disk
++    6.- Now there is not control mapping file assigned but you can load a
++        program from disk
+ 
+-  Bugs aside, probably there are other scenarios not taken into account but I believe that the most relevant use cases are covered.
++  Bugs aside, probably there are other scenarios not taken into account but I
++  believe that the most relevant use cases are covered.
+ 
+ -------------------------
+ ### External joystick ###
+ -------------------------
+ 
+-On some handhelds it is possible to connect an external Joystick using USB OTG. The mapping of 'Joystick 2' will be applied to it.
++On some handhelds it is possible to connect an external Joystick using USB OTG.
++The mapping of 'Joystick 2' will be applied to it.
+ 
+-For controllers the number of each button in mapping depends on the controller layout.
++For controllers the number of each button in mapping depends on the controller
++layout.
+ 
+-=>Fuse count buttons from 1 not from 0, so add 1 to translate your layout into Fuse's config.
++=>Fuse count buttons from 1 not from 0, so add 1 to translate your layout into
++  Fuse's config.
+ 
+ |On my RG350 I've tested this with an 8Bitdo FC30 Pro controller.
+-|The mapping layout: A=1, B=2, X=4, Y=5, L1=7, R1=8, L2=9, R2=10, Select=11, Start=12, L3=14, R3=15.
+-|From SDL Game controller DB (https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt)
++|The mapping layout:
++|A=1, B=2, X=4, Y=5, L1=7, R1=8, L2=9, R2=10, Select=11, Start=12, L3=14, R3=15.
++|From SDL Game controller DB
++(https://github.com/gabomdq/SDL_GameControllerDB/blob/master/gamecontrollerdb.txt)
+     "03000000c82d00001038000000000000,8BitDo FC30 Pro,
+         a:b0,b:b1,back:b10,dpdown:h0.4,dpleft:h0.8,dpright:h0.2,dpup:h0.1,
+         leftshoulder:b6,leftstick:b13,lefttrigger:b8,leftx:a0,lefty:a1,
+-	rightshoulder:b7,rightstick:b14,righttrigger:b9,rightx:a3,righty:a4,start:b11,x:b3,y:b4,
++	rightshoulder:b7,rightstick:b14,righttrigger:b9,
++        rightx:a3,righty:a4,start:b11,x:b3,y:b4,
+ 	hint:SDL_GAMECONTROLLER_USE_BUTTON_LABELS:=1,"
+ 
+ -------------------------
+@@ -359,44 +532,56 @@ For controllers the number of each button in mapping depends on the controller l
+ -------------------------
+ 
+ I don't have tested a Keyboard on USB OTG but in theory it should "work".
+-But keep in mind that current adaptations made for handhelds buttons have probably made it unusable.
++But keep in mind that current adaptations made for handhelds buttons have
++probably made it unusable.
+ 
+-The handheld buttons are keystrokes that have conflict with some keys used for SDL menus.
++The handheld buttons are keystrokes that have conflict with some keys used for
++SDL menus.
+ 
+ ----------------------
+ ### Kempston mouse ###
+ ----------------------
+ 
+-In some handhelds you can emulate mouse with the Right stick and `L2`, `R2` buttons.
++In some handhelds you can emulate mouse with the Right stick and
++`L2`, `R2` buttons.
+ This make possible emulating the Kempston mouse.
+-You must enable 'Kempston mouse' in the peripherals: `Menu -> Options -> Peripherals -> General`, and enable the mouse emulation in the handheld.
++You must enable 'Kempston mouse' in the peripherals: 
++  `Menu -> Options -> Peripherals -> General`, and enable the mouse emulation
++  in the handheld.
+ 
+-|For example, in the RG350 you can activate the mouse with hotkey `Power` + `B`.
++|In the RG350 you can activate the mouse with hotkey `Power` + `B`.
+ 
+ ---------------------
+ ### Triple Buffer ###
+ ---------------------
+ 
+-There is an implementation to use the triple buffer. It can be enabled at 'General GCW0' options or whith combo hotkeys 'L1' + 'R1' + 'B'.
++There is an implementation to use the triple buffer. It can be enabled at
++'General GCW0' options or whith combo hotkeys 'L1' + 'R1' + 'B'.
+ 
+ If tripple buffer is activated then an [B] will be at status line.
+ 
+-It affect to the speed of emulator that can be observed in the speed for fastloading.
++It affect to the speed of emulator that can be observed in the speed for
++fastloading.
+ 
+-In general I believe that is not needed, but I've seen diference activating it on some demos for Pentagon's models as "mescaline synesthesia by deMarche".
++In general I believe that is not needed, but I've seen diference activating it
++on some demos for Pentagon's models as "mescaline synesthesia by deMarche".
+ 
+-BUG: At disabling triple buffer sometimes the screen will be frozen but the emulator still will be running .
+-     This is surely motivated by some mistake on my code or for missunderestanding triple buffer by my side.
++BUG: At disabling triple buffer sometimes the screen will be frozen but the
++     emulator still will be running .
++     This is surely motivated by some mistake on my code or for
++     missunderestanding triple buffer by my side.
+ 
+ ---------------------------
+ ### Hotkey combinations ###
+ ---------------------------
+ 
+-For use hotkey combos it they must be enabled in 'Menu -> Options -> General GCW0'.
++For use hotkey combos they must be enabled in 'Menu -> Options -> General GCW0'.
+ 
+-If `L1` and `R1` buttons are not mapped to Joystick or Keyboard it will be used to start the hotkey combinations.
++If `L1` and `R1` buttons are not mapped to Joystick or Keyboard it will be used
++to start the hotkey combinations.
+ 
+-The implemented hotkeys correspond to Fx key functions in Fuse's SDL implementation:
++The implemented hotkeys correspond to Fx key functions in Fuse's SDL
++implementation:
+ 
+     L1 + R1 + B      Toggle triple buffer
+     L1 + R1 + X      Joystick
+@@ -414,34 +599,45 @@ The implemented hotkeys correspond to Fx key functions in Fuse's SDL implementat
+ ### Media options ###
+ ---------------------
+ 
+-If you have problems loading some programs keep in mind the compatibility issues of software with the model emulated.
++If you have problems loading some programs keep in mind the compatibility
++issues of software with the model emulated.
+ 
+-Also some options in 'Media' options can influence to some loaders as 'Accelerate loaders'. Try enabling/disabling different otions.
++Also some options in 'Media' options can influence to some loaders as
++'Accelerate loaders'. Try enabling/disabling different otions.
+ 
+ ------------
+ ### ROMs ###
+ ------------
+ 
+-Fuse provides roms for some systems and peripherals it emulate but not for all models or peripherals that it support.
++Fuse provides roms for some systems and peripherals it emulate but not for all
++models or peripherals that it support.
+ 
+ You can assign new roms or change the defaults from the emulator itself:
+ 
+-- Open menu with `Select` or `Power` button. Then navigate from Menu --> Options --> Select Roms --> Machine ROMs or Peripheral ROMs
++- Open menu with `Select` or `Power` button. 
++- Then navigate from Menu --> Options -> Select Roms -> Machine ROMs or
++  Peripheral ROMs
+ - With `cursor` select the rom to change and press `X` button
+-- At file selector use the `cursor` keys to navigate to folder where your roms are located and to select the needed rom. And press the `A` button to confirm selection.
++- At file selector use the `cursor` keys to navigate to folder where your roms
++  are located and to select the needed rom. And press the `A` button to
++  confirm selection.
+ - Repeat until all the needed ROMs are assigned.
+ - Finally do accept all pressing the `A` button.
+ 
+ You can reset a rom to default with the `Y` button.
+ 
+ NOTE:
+-  The emulator detect your rom as custom if they not have the name expected, including the path.
+-  This affect to auto-load media (tapes, disks). In standard Fuse compilation cutoms roms don't autoload.
+-  The option "Auto-load media with custom rom" in General options (default False) auto-load also with custom roms.
+-
+-Also roms con be added to the 'rom' directory in config path ("$HOME/.fuse/roms").
++  The emulator detect your rom as custom if they not have the name expected,
++  including the path.
++  This affect to auto-load media (tapes, disks). In standard Fuse compilation
++  cutoms roms don't autoload.
++  The option "Auto-load media with custom rom" in General options
++  (default False) auto-load also with custom roms.
++
++Also roms con be added to the 'rom' directory in Fuse config path.
+ Fuse search in this path for rom files with the default names.
+ 
++Fuse config path is located in "$HOME/.fuse/roms":
+     For OpenDingux   "/media/data/local/home/.fuse/roms"
+     For RetroFW      "/home/retrofw/.fuse/roms"
+ 
+diff --git a/compat.h b/compat.h
+index bfe76c20..5cc95009 100644
+--- a/compat.h
++++ b/compat.h
+@@ -166,6 +166,7 @@ int compat_closedir( compat_dir directory );
+ #ifdef GCWZERO
+ int compat_createdir( const char *path );
+ int compat_create_config_paths( const char *config_path );
++int compat_allowed_path_to_write( const char *path );
+ char* compat_chop_expressions( const char** re_expressions, const char* text );
+ #endif
+ 
+diff --git a/compat/linux/paths.c b/compat/linux/paths.c
+index d4281ad3..110fc31e 100644
+--- a/compat/linux/paths.c
++++ b/compat/linux/paths.c
+@@ -27,13 +27,24 @@
+ #include <string.h>
+ #include <limits.h>
+ #include <errno.h>
++#include <mntent.h>
++#include <unistd.h>
++#include <stdlib.h>
++#include <libgen.h>
+ 
+ #include "compat.h"
+-#include "ui/ui.h"
++#include "utils.h"
++#include "ui/ui.h" /* For launch error messages */
+ 
+ #ifdef GCWZERO
+-static int create_config_path( const char *config_path );
+-
++static int   create_config_path( const char *config_path );
++
++/*
++ * Create config path if it not exists
++ *
++ *  1 - Error creting path supplied
++ *  0 - Path created or already exist
++ */
+ int create_config_path( const char *config_path )
+ {
+   struct stat stat_info;
+@@ -42,33 +53,39 @@ int create_config_path( const char *config_path )
+     if ( errno == ENOENT ) {
+       if ( compat_createdir( config_path ) == -1 ) {
+         ui_error( UI_ERROR_ERROR, "error creating config directory '%s'", config_path );
+-        return 0;
++        return 1;
+       }
+     } else {
+       ui_error( UI_ERROR_ERROR, "couldn't stat '%s': %s", config_path, strerror( errno ) );
+-      return 0;
++      return 1;
+     }
+   }
+ 
+-  return 1;
++  return 0;
+ }
+ 
++/*
++ *  Create config paths used for OpenDingux/RetroFW
++ *
++ *  1 - Failed to create all paths
++ *  0 - All paths created or already exists
++ */
+ int
+ compat_create_config_paths( const char *config_path ) {
+   char next_path[ PATH_MAX ];
+ 
+-  if ( !create_config_path( config_path ) )
+-    return 0;
++  if ( create_config_path( config_path ) )
++    return 1;
+ 
+   snprintf( next_path, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", config_path, "roms" );
+-  if ( !create_config_path( next_path ) )
+-    return 0;
++  if ( create_config_path( next_path ) )
++    return 1;
+ 
+   snprintf( next_path, PATH_MAX, "%s" FUSE_DIR_SEP_STR "%s", config_path, "mappings" );
+-  if ( !create_config_path( next_path ) )
+-    return 0;
++  if ( create_config_path( next_path ) )
++    return 1;
+ 
+-  return 1;
++  return 0;
+ }
+ #endif /* GCWZERO */
+ 
+diff --git a/compat/unix/file.c b/compat/unix/file.c
+index f7e9ff23..377d3d97 100644
+--- a/compat/unix/file.c
++++ b/compat/unix/file.c
+@@ -33,6 +33,9 @@
+ #include "compat.h"
+ #include "utils.h"
+ #include "ui/ui.h"
++#ifdef GCWZERO
++#include "settings.h"
++#endif
+ 
+ const compat_fd COMPAT_FILE_OPEN_FAILED = NULL;
+ 
+diff --git a/configure.ac b/configure.ac
+index 99dccaf3..1d1a4c65 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -332,7 +332,7 @@ if test -z "$UI"; then
+   AC_MSG_RESULT($retrofw)
+   if test "$retrofw" = yes; then
+     if test "$sdl_available" = yes; then
+-      AC_DEFINE([GCWZERO], 1, [Defined if RetroFW 2 is in use])
++      AC_DEFINE([GCWZERO], 1, [Defined if RetroFW is in use])
+       UI=sdl
+       WIDGET=widget
+       use_sdl=yes
+@@ -347,7 +347,7 @@ if test "$gcw0" = "yes" -o "$retrofw" = "yes"; then
+   AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined for OpenDingux/RetroFW])
+   AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
+   AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
+-  AC_DEFINE([GCW0_VERSION], "0.0.1 for OpenDingux/RetroFW", [OpenDingux/RetroFW Version])
++  AC_DEFINE([GCW0_VERSION], "0.0.2 for OpenDingux/RetroFW", [OpenDingux/RetroFW Version])
+ fi
+ 
+ dnl Look for null UI (default=no)
+diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
+index b32507d3..1dbc91bc 100644
+--- a/controlmapping/controlmapping.c
++++ b/controlmapping/controlmapping.c
+@@ -33,6 +33,7 @@
+ #include "ui/ui.h"
+ #include "controlmapping/controlmapping.h"
+ #include "controlmapping/controlmappingsettings.h"
++#include "peripherals/joystick.h"
+ 
+ #ifdef GCWZERO
+ char *mapfile = NULL;              /* Path of a .fcm file to load */
+@@ -40,6 +41,24 @@ libspectrum_class_t mapfile_class;
+ settings_info settings_old;
+ static control_mapping_info control_mapping_tmp;
+ 
++static void
++controlmapping_enable_joystick_kempston( void )
++{
++  /* Enable Kempston joystick if there is some mapping to it.
++     Kemposton joystick do not require restart and actually hot activate it
++     is supported.
++     Other peripherals, as fuller, need restart and the mapping control is
++     not designed to change hardware. */
++  if ( !settings_current.control_mapping_enable_kempston_joy ) return;
++  if ( !settings_current.joy_kempston &&
++        ( settings_current.joystick_1_output == JOYSTICK_TYPE_KEMPSTON ||
++          settings_current.joystick_2_output == JOYSTICK_TYPE_KEMPSTON ||
++          settings_current.joystick_keyboard_output == JOYSTICK_TYPE_KEMPSTON ) ) {
++    settings_current.joy_kempston = 1;
++    periph_update();
++  }
++}
++
+ /* Stablish current settings and control mapping defaults */
+ void
+ controlmapping_set_defaults( settings_info *settings ) {
+@@ -92,6 +111,7 @@ int
+ controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, int is_autoload )
+ {
+   char *old_mapfile;
++  int error;
+ 
+   /* Mapping per game don't active o unset mapfile */
+   if ( !settings_current.control_mapping_per_game ) {
+@@ -107,8 +127,11 @@ controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, in
+ 
+   /* Different loads but same mapfile? (F.example SIDE B of tape
+      Maintain current mapfilen */
+-  if ( old_mapfile && mapfile && !strcmp( old_mapfile,mapfile ) )
++  if ( old_mapfile && mapfile && !strcmp( old_mapfile,mapfile ) ) {
++    /* Releoad of snapshot whithout joystick kempston configured */
++    controlmapping_enable_joystick_kempston();
+     return 0;
++  }
+ 
+   /* Autosave current mapfile preiovusly to load new mapfile */
+   if ( old_mapfile ) {
+@@ -128,7 +151,11 @@ controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, in
+   if ( !settings_current.control_mapping_not_detached_defaults )
+     control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
+ 
+-  return controlmapping_load_from_file( mapfile, 1 );
++  error = controlmapping_load_from_file( mapfile, 1 );
++  /* Activate kempston joystick if not conifigured even if not mapdile exist yet */
++  if ( error && mapfile ) controlmapping_enable_joystick_kempston();
++
++  return error;
+ }
+ 
+ int
+@@ -146,6 +173,7 @@ controlmapping_load_mapfile_with_class( const char *filename, libspectrum_class_
+   case LIBSPECTRUM_CLASS_CARTRIDGE_IF2:
+   case LIBSPECTRUM_CLASS_MICRODRIVE:
+   case LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX:
++  case LIBSPECTRUM_CLASS_RECORDING:
+     if ( filename )
+       return controlmapping_load_mapfile( filename, class, 1 );
+     else
+@@ -168,6 +196,7 @@ controlmapping_load_from_file( const char *filename, int current )
+   control_mapping_copy_to_settings( &settings_current, &control_mapping_tmp );
+   if ( settings_current.control_mapping_not_detached_defaults )
+     control_mapping_copy( &control_mapping_default, &control_mapping_tmp );
++  controlmapping_enable_joystick_kempston();
+   return 0;
+ }
+ 
+diff --git a/display.c b/display.c
+index 6ff68d05..6d3457af 100644
+--- a/display.c
++++ b/display.c
+@@ -1070,7 +1070,7 @@ void display_refresh_rect( int x, int y, int w, int h )
+     display_is_dirty[i] |= dirty;
+     for ( j = column; j < column + bytes; j++) {
+       index = j + i * DISPLAY_SCREEN_WIDTH_COLS;
+-      display_last_screen[index] = 0xff;
++      display_last_screen[index] = 0xffffffff;
+     }
+   }
+ }
+diff --git a/fuse.c b/fuse.c
+index f2fb11d6..fa424726 100644
+--- a/fuse.c
++++ b/fuse.c
+@@ -782,6 +782,12 @@ parse_nonoption_args( int argc, char **argv, int first_arg,
+ #endif
+   }
+ 
++#ifdef GCWZERO
++  if ( ( i == first_arg || class == LIBSPECTRUM_CLASS_UNKNOWN ) &&
++       settings_current.od_last_directory )
++    chdir( settings_current.od_last_directory );
++#endif
++
+   return 0;
+ }
+ 
+diff --git a/menu.c b/menu.c
+index 75c83fb2..abaea223 100644
+--- a/menu.c
++++ b/menu.c
+@@ -79,6 +79,9 @@ MENU_CALLBACK( menu_file_open )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_GENERAL, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Open Spectrum File" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -152,6 +155,9 @@ MENU_CALLBACK( menu_file_recording_play )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 0 );
++#endif
+   recording = ui_get_open_filename( "Fuse - Start Replay" );
+   if( !recording ) { fuse_emulation_unpause(); return; }
+ 
+@@ -185,6 +191,9 @@ MENU_CALLBACK( menu_file_recording_finalise )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 0 );
++#endif
+   rzx_filename = ui_get_open_filename( "Fuse - Finalise Recording" );
+   if( !rzx_filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -198,6 +207,9 @@ MENU_CALLBACK( menu_file_recording_finalise )
+ 
+   libspectrum_free( rzx_filename );
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_RECORDING , 0 );
++#endif
+   fuse_emulation_unpause();
+ }  
+ 
+@@ -217,6 +229,9 @@ MENU_CALLBACK( menu_file_screenshot_openscrscreenshot )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SCREENSHOT, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Open SCR Screenshot" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -233,6 +248,9 @@ MENU_CALLBACK( menu_file_screenshot_openmltscreenshot )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SCREENSHOT_MLT, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Open MLT Screenshot" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -349,6 +367,9 @@ MENU_CALLBACK( menu_machine_profiler_stop )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_PROFILER, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Save Profile Data" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -377,6 +398,9 @@ MENU_CALLBACK( menu_media_tape_open )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_TAPE, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Open Tape" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -441,6 +465,9 @@ MENU_CALLBACK_WITH_ACTION( menu_media_if1_rs232 )
+     ui_widget_finish();
+     if1_unplug( action & 0x0f );
+   } else {
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_MEDIA_IF_RS232, 0 );
++#endif
+     filename = ui_get_open_filename( "Fuse - Select File for Communication" );
+     if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -491,12 +518,31 @@ MENU_CALLBACK_WITH_ACTION( menu_media_insert )
+ 
+   switch( type ) {
+   case 3:
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_MICRODRIVE, 0 );
++#endif
+     snprintf( title, 80, "Fuse - Insert Microdrive Cartridge %i", which + 1 );
+     break;
+   default:
+     drive = ui_media_drive_find( type, which );
+     if( !drive )
+       return;
++#if USE_WIDGET && GCWZERO
++    if ( strncmp( drive->name, "+3 Disk", 7 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUS3, 0 );
++    else if ( strncmp( drive->name, "Beta Disk", 9 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_TRDOS, 0 );
++    else if ( strncmp( drive->name, "Opus Disk", 9 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_OPUS, 0 );
++    else if ( strncmp( drive->name, "Didaktik Disk", 13 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_DIDAKTIK, 0 );
++    else if ( strncmp( drive->name, "DISCiPLE Disk", 13 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUSD, 0 );
++    else if ( strncmp( drive->name, "+D Disk", 7 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUSD, 0 );
++    else
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_GENERAL, 0 );
++#endif
+     snprintf( title, sizeof(title), "Fuse - Insert %s", drive->name );
+     break;
+   }
+@@ -613,6 +659,9 @@ MENU_CALLBACK( menu_media_cartridge_timexdock_insert )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_CARTRIDGE_TIMEX, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Insert Timex Dock Cartridge" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -643,6 +692,9 @@ MENU_CALLBACK( menu_media_cartridge_interface2_insert )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_CARTRIDGE_IF2, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Insert Interface 2 Cartridge" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -673,6 +725,9 @@ MENU_CALLBACK_WITH_ACTION( menu_media_ide_insert )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_GENERAL, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Insert Hard Disk File" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -742,6 +797,9 @@ MENU_CALLBACK( menu_file_savesnapshot )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SNAPSHOT, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Save Snapshot" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -760,6 +818,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenasscr )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SCREENSHOT, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Save Screenshot as SCR" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -785,6 +846,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenasmlt )
+     return;
+   }
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SCREENSHOT_MLT, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Save Screenshot as MLT" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -812,6 +876,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenaspng )
+     return;
+   }
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SCREENSHOT_PNG, 1 );
++#endif
+   filename =
+     ui_get_save_filename( "Fuse - Save Screenshot as PNG" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+@@ -836,6 +903,9 @@ MENU_CALLBACK( menu_file_scalablevectorgraphics_startcaptureinlinemode )
+ 
+     fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_SCALABLE_VECTOR_GRAPHICS, 1 );
++#endif
+     filename = ui_get_save_filename( "Fuse - Capture to SVG File" );
+     if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -855,6 +925,9 @@ MENU_CALLBACK( menu_file_scalablevectorgraphics_startcaptureindotmode )
+ 
+     fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_SCALABLE_VECTOR_GRAPHICS, 1 );
++#endif
+     filename = ui_get_save_filename( "Fuse - Capture to SVG File" );
+     if( !filename ) { fuse_emulation_unpause(); return; }
+     ui_menu_activate( UI_MENU_ITEM_FILE_SVG_CAPTURE, 1 );
+@@ -890,6 +963,9 @@ MENU_CALLBACK( menu_file_movie_record )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_MOVIE_FILE, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Record Movie File" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
+@@ -909,6 +985,9 @@ MENU_CALLBACK( menu_file_movie_record_recordfromrzx )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 0 );
++#endif
+   rzx_file = ui_get_open_filename( "Fuse - Load RZX" );
+   if( !rzx_file ) { fuse_emulation_unpause(); return; }
+ 
+@@ -917,6 +996,9 @@ MENU_CALLBACK( menu_file_movie_record_recordfromrzx )
+   display_refresh_all();
+ 
+   if( rzx_playback ) {
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_MOVIE_FILE, 1 );
++#endif
+     fmf_file = ui_get_save_filename( "Fuse - Record Movie File" );
+     if( !fmf_file ) { 
+       rzx_stop_playback( 1 );
+@@ -940,6 +1022,9 @@ MENU_CALLBACK( menu_file_recording_record )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 1 );
++#endif
+   recording = ui_get_save_filename( "Fuse - Start Recording" );
+   if( !recording ) { fuse_emulation_unpause(); return; }
+ 
+@@ -958,12 +1043,22 @@ MENU_CALLBACK( menu_file_recording_recordfromsnapshot )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SNAPSHOT, 0 );
++#endif
+   snap = ui_get_open_filename( "Fuse - Load Snapshot " );
+   if( !snap ) { fuse_emulation_unpause(); return; }
+ 
++#if USE_WIDGET && GCWZERO
++  utils_set_last_loaded_file( snap, LIBSPECTRUM_CLASS_SNAPSHOT , 0 );
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 1 );
++#endif
+   recording = ui_get_save_filename( "Fuse - Start Recording" );
+   if( !recording ) {
+     libspectrum_free( snap );
++#ifdef GCWZERO
++    utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_SNAPSHOT , 0 );
++#endif
+     fuse_emulation_unpause();
+     return;
+   }
+@@ -971,10 +1066,17 @@ MENU_CALLBACK( menu_file_recording_recordfromsnapshot )
+   if( snapshot_read( snap ) ) {
+     libspectrum_free( snap );
+     libspectrum_free( recording );
++#ifdef GCWZERO
++    utils_set_last_loaded_file( NULL, LIBSPECTRUM_CLASS_SNAPSHOT , 0 );
++#endif
+     fuse_emulation_unpause();
+     return;
+   }
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( recording, LIBSPECTRUM_CLASS_RECORDING , 0 );
++#endif
++
+   rzx_start_recording( recording, settings_current.embed_snapshot );
+ 
+   libspectrum_free( recording );
+@@ -993,9 +1095,16 @@ MENU_CALLBACK( menu_file_recording_continuerecording )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_RECORDING, 0 );
++#endif
+   rzx_filename = ui_get_open_filename( "Fuse - Continue Recording" );
+   if( !rzx_filename ) { fuse_emulation_unpause(); return; }
+ 
++#ifdef GCWZERO
++  utils_set_last_loaded_file( rzx_filename, LIBSPECTRUM_CLASS_RECORDING , 0 );
++#endif
++
+   error = rzx_continue_recording( rzx_filename );
+ 
+   if( error != LIBSPECTRUM_ERROR_NONE ) {
+@@ -1015,6 +1124,9 @@ MENU_CALLBACK( menu_file_aylogging_record )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_AY_LOGGING, 1 );
++#endif
+   psgfile = ui_get_save_filename( "Fuse - Start AY Log" );
+   if( !psgfile ) { fuse_emulation_unpause(); return; }
+ 
+diff --git a/settings.dat b/settings.dat
+index 748c2019..a2ce33b4 100644
+--- a/settings.dat
++++ b/settings.dat
+@@ -39,12 +39,10 @@ mouse_swap_buttons, boolean, 0
+ tape_traps, boolean, 1,, traps, tapetraps
+ fastload, boolean, 1
+ auto_load, boolean, 1
+-auto_load_with_custom_roms, boolean, 0
+ detect_loader, boolean, 1
+ accelerate_loader, boolean, 1
+ slt_traps, boolean, 1,, slt, slttraps
+ double_screen, null, 0
+-triple_buffer, boolean, 0
+ full_screen, boolean, 0
+ writable_roms, boolean, 0
+ autosave_settings, boolean, 0
+@@ -57,10 +55,6 @@ raw_rs232, null, 0
+ raw_s_net, boolean, 0
+ snet, string, NULL
+ confirm_actions, boolean, 1
+-confirm_overwrite_files, boolean, 0
+-hidden_files, boolean, 0
+-hotkey_combos, boolean, 0
+-show_fps, boolean, 0
+ printer, boolean, 0
+ statusbar, boolean, 1
+ interface1, boolean, 0
+@@ -169,12 +163,6 @@ joystick_gcw0_r3, numeric, 0
+ 
+ keyboard_arrows_shifted, boolean, 1
+ 
+-control_mapping_per_game, boolean, 0
+-control_mapping_autoload, boolean, 1
+-control_mapping_autosave, boolean, 1
+-control_mapping_not_detached_defaults, boolean, 0
+-control_mapping_no_transform_filename, boolean, 0
+-
+ rzx_compression, boolean, 1,, compress-rzx
+ competition_mode, boolean, 0
+ competition_code, numeric, 0
+@@ -322,3 +310,22 @@ teletext_port_1, numeric, 19761
+ teletext_port_2, numeric, 19762
+ teletext_port_3, numeric, 19763
+ teletext_port_4, numeric, 19764
++
++od_confirm_overwrite_files, boolean, 0
++od_hidden_files, boolean, 0
++od_hotkey_combos, boolean, 0
++od_show_fps, boolean, 0
++od_filter_known_extensions, boolean, 1
++od_independent_directory_access, boolean, 0
++od_triple_buffer, boolean, 0
++od_save_last_directory, boolean, 0
++od_last_directory, string, NULL
++
++od_auto_load_with_custom_roms, boolean, 0
++
++control_mapping_per_game, boolean, 0
++control_mapping_autoload, boolean, 1
++control_mapping_autosave, boolean, 1
++control_mapping_not_detached_defaults, boolean, 0
++control_mapping_no_transform_filename, boolean, 0
++control_mapping_enable_kempston_joy, boolean, 1
+diff --git a/settings.pl b/settings.pl
+index 32a8c287..b5a398d6 100644
+--- a/settings.pl
++++ b/settings.pl
+@@ -175,7 +175,7 @@ read_config_file( settings_info *settings )
+ 
+   cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
+ #ifdef GCWZERO
+-  if ( !compat_create_config_paths( cfgdir ) ) return 1;
++  if ( compat_create_config_paths( cfgdir ) ) return 1;
+ #endif
+ 
+   snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
+@@ -341,7 +341,7 @@ read_config_file( settings_info *settings )
+ 
+   cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
+ #ifdef GCWZERO
+-  if ( !compat_create_config_paths( cfgdir ) ) return 1;
++  if ( compat_create_config_paths( cfgdir ) ) return 1;
+ #endif
+ 
+   snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
+diff --git a/tape.c b/tape.c
+index fb543824..3cae18b7 100644
+--- a/tape.c
++++ b/tape.c
+@@ -374,7 +374,7 @@ int tape_can_autoload( void )
+ {
+ #ifdef GCWZERO
+   /* Allow to autoload with custom roms */
+-  return( settings_current.auto_load && ( settings_current.auto_load_with_custom_roms || !memory_custom_rom() ) );
++  return( settings_current.auto_load && ( settings_current.od_auto_load_with_custom_roms || !memory_custom_rom() ) );
+ #else
+   return( settings_current.auto_load && !memory_custom_rom() );
+ #endif
+diff --git a/timer/timer.c b/timer/timer.c
+index 96b7ec5f..9591fcaa 100644
+--- a/timer/timer.c
++++ b/timer/timer.c
+@@ -97,7 +97,7 @@ timer_estimate_speed( void )
+   }
+ 
+ #ifdef GCWZERO
+-  if ( settings_current.show_fps ) {
++  if ( settings_current.od_show_fps ) {
+     ui_statusbar_update_speed( frames_per_second );
+     frame_count = 0;
+   } else
+diff --git a/ui.c b/ui.c
+index 17ae22f7..2dac36ce 100644
+--- a/ui.c
++++ b/ui.c
+@@ -39,6 +39,9 @@
+ #include "ui/ui.h"
+ #include "ui/uimedia.h"
+ #include "ui/widget/widget.h"
++#ifdef GCWZERO
++#include "utils.h"
++#endif
+ 
+ #define MESSAGE_MAX_LENGTH 256
+ 
+@@ -750,16 +753,12 @@ ui_tape_write( void )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_TAPE, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Write Tape" );
+   if( !filename ) { fuse_emulation_unpause(); return 1; }
+ 
+-#ifdef GCWZERO
+-  /* Add the extension .TZX */
+-  filename = realloc( filename, strlen( filename ) + 4 );
+-  if( !filename ) { fuse_emulation_unpause(); return 1; }
+-  strncat( filename, ".tzx", 4 );
+-#endif
+-
+   tape_write( filename );
+ 
+   libspectrum_free( filename );
+@@ -780,15 +779,11 @@ ui_mdr_write( int which, int saveas )
+   snprintf( title, 80, "Fuse - Write Microdrive Cartridge %i", which + 1 );
+ 
+   if( saveas ) {
++#if USE_WIDGET && GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_MICRODRIVE, 1 );
++#endif
+     filename = ui_get_save_filename( title );
+     if( !filename ) { fuse_emulation_unpause(); return 1; }
+-
+-#ifdef GCWZERO
+-    /* Add the extension .MDR */
+-    filename = realloc( filename, strlen( filename ) + 4 );
+-    if( !filename ) { fuse_emulation_unpause(); return 1; }
+-    strncat( filename, ".mdr", 4 );
+-#endif
+   }
+ 
+   err = if1_mdr_write( which, filename );
+@@ -814,6 +809,7 @@ ui_widget_end( void )
+ }
+ 
+ #ifdef GCWZERO
++#ifdef USE_WIDGET
+ void ui_widget_statusbar_update_info( float speed ) {
+   widget_statusbar_update_info( speed );
+ }
+@@ -821,6 +817,12 @@ void ui_widget_statusbar_update_info( float speed ) {
+ void ui_widget_statusbar_print_info( void ) {
+   widget_statusbar_print_info();
+ }
++
++void ui_widget_set_file_filter_for_class( int filter_class, int saving )
++{
++  widget_filesel_set_filter_for_class( filter_class, saving );
++}
++#endif
+ #endif
+ 
+ #if VKEYBOARD
+diff --git a/ui/options.dat b/ui/options.dat
+index 1556b984..6f876e8f 100644
+--- a/ui/options.dat
++++ b/ui/options.dat
+@@ -27,18 +27,21 @@ Checkbox, A(u)to-save settings, autosave_settings, INPUT_KEY_u
+ #ifdef GCWZERO
+ general_gcw0
+ General GCW0 Options
+-Checkbox, Triple Bu(f)fer, triple_buffer, INPUT_KEY_f
+-Checkbox, Sho(w) FPS instead of speed percentaje, show_fps, INPUT_KEY_w
+-Checkbox, Confir(m) overwrite files, confirm_overwrite_files, INPUT_KEY_m
+-Checkbox, Show hi(d)den files, hidden_files, INPUT_KEY_d
+-Checkbox, Hot(k)ey combos, hotkey_combos, INPUT_KEY_k
++Checkbox, Triple Bu(f)fer, od_triple_buffer, INPUT_KEY_f
++Checkbox, Sho(w) FPS instead of speed percentaje, od_show_fps, INPUT_KEY_w
++Checkbox, F(i)lter Known extensions for load and save, od_filter_known_extensions, INPUT_KEY_i
++Checkbox, I(n)dependent directory access for each media type, od_independent_directory_access, INPUT_KEY_n
++Checkbox, Confir(m) overwrite files, od_confirm_overwrite_files, INPUT_KEY_m
++Checkbox, Show hi(d)den files, od_hidden_files, INPUT_KEY_d
++Checkbox, Hot(k)ey combos, od_hotkey_combos, INPUT_KEY_k
++Checkbox, Sa(v)e last visited directory, od_save_last_directory, INPUT_KEY_v
+ #endif
+ 
+ media
+ Media Options
+ Checkbox, (A)uto-load media, auto_load, INPUT_KEY_a
+ #ifdef GCWZERO
+-Checkbox, A(u)to-load media with custom roms, auto_load_with_custom_roms, INPUT_KEY_u
++Checkbox, A(u)to-load media with custom roms, od_auto_load_with_custom_roms, INPUT_KEY_u
+ #endif
+ Combo, (P)hantom typist mode, phantom_typist_mode, INPUT_KEY_p, *Auto|Keyword|Keystroke|Menu|Plus 2A|Plus 3
+ Checkbox, (D)etect loaders, detect_loader, INPUT_KEY_d
+@@ -159,4 +162,5 @@ Checkbox, Auto-(l)oad, control_mapping_autoload, INPUT_KEY_L
+ Checkbox, Auto-(s)ave, control_mapping_autosave, INPUT_KEY_S
+ Checkbox, No(t) detached defaults, control_mapping_not_detached_defaults, INPUT_KEY_T
+ Checkbox, No cut/transfor(m) filenames, control_mapping_no_transform_filename, INPUT_KEY_M
++Checkbox, Enable (K)empston Joystick if needed, control_mapping_enable_kempston_joy, INPUT_KEY_K
+ #endif
+\ No newline at end of file
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index 8397d50c..6ba36efb 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -271,7 +271,7 @@ uidisplay_od_init( SDL_Rect **modes )
+ 
+ /* On OpenDingux/RetroFW fix Full Screen */
+   settings_current.full_screen = 1;
+-  sdldisplay_change_triple_buffer = settings_current.triple_buffer;
++  sdldisplay_change_triple_buffer = settings_current.od_triple_buffer;
+   settings_current.sdl_fullscreen_mode = utils_safe_strdup( '\0' );
+ 
+ /*
+@@ -1114,7 +1114,7 @@ uidisplay_frame_end( void )
+      windowed-only UI a chance to free menu etc. resources before
+      the switch to fullscreen (e.g. Mac OS X) */
+ #ifdef GCWZERO
+-  sdldisplay_change_triple_buffer = settings_current.triple_buffer;
++  sdldisplay_change_triple_buffer = settings_current.od_triple_buffer;
+   if ( ( sdldisplay_is_full_screen != settings_current.full_screen  ||
+       sdldisplay_is_triple_buffer != sdldisplay_change_triple_buffer ) &&
+ #else
+@@ -1126,7 +1126,7 @@ uidisplay_frame_end( void )
+   }
+ 
+ #ifdef GCWZERO
+-  settings_current.triple_buffer = sdldisplay_change_triple_buffer;
++  settings_current.od_triple_buffer = sdldisplay_change_triple_buffer;
+  #endif
+ 
+ #if VKEYBOARD
+diff --git a/ui/sdl/sdlhotkeys.c b/ui/sdl/sdlhotkeys.c
+index 29c54ddf..8ceeb6c3 100644
+--- a/ui/sdl/sdlhotkeys.c
++++ b/ui/sdl/sdlhotkeys.c
+@@ -90,9 +90,9 @@ int is_combo_possible( const SDL_Event *event )
+ {
+   /* There are not combos in widgets or keyboard */
+ #ifdef VKEYBOARD
+-  if ( !settings_current.hotkey_combos || ui_widget_level >= 0 || vkeyboard_enabled ) return 0;
++  if ( !settings_current.od_hotkey_combos || ui_widget_level >= 0 || vkeyboard_enabled ) return 0;
+ #else
+-  if ( !settings_current.hotkey_combos || ui_widget_level >= 0 ) return 0;
++  if ( !settings_current.od_hotkey_combos || ui_widget_level >= 0 ) return 0;
+ #endif
+ 
+  /* Mot filter if R1 and R1 are mapped to joysticks */
+@@ -204,7 +204,7 @@ push_combo_event( Uint8* flags )
+ 
+   /* Switch triple buffer */
+   } else if ( toggle_triple_buffer ) {
+-    settings_current.triple_buffer = !settings_current.triple_buffer;
++    settings_current.od_triple_buffer = !settings_current.od_triple_buffer;
+ 
+     /* Clean flags and mark combo as done */
+     *flags = 0x00;
+diff --git a/ui/ui.h b/ui/ui.h
+index 7b2547c8..eeca90a1 100644
+--- a/ui/ui.h
++++ b/ui/ui.h
+@@ -306,8 +306,11 @@ int ui_query( const char *message );
+ int ui_widget_init( void );
+ int ui_widget_end( void );
+ #ifdef GCWZERO
++#ifdef USE_WIDGET
+ void ui_widget_statusbar_update_info( float speed );
+ void ui_widget_statusbar_print_info( void );
++void ui_widget_set_file_filter_for_class( int filter_class, int saving );
++#endif
+ #endif
+ #if VKEYBOARD
+ extern int vkeyboard_enabled;
+diff --git a/ui/widget/binary.c b/ui/widget/binary.c
+index e5de1753..97df8946 100644
+--- a/ui/widget/binary.c
++++ b/ui/widget/binary.c
+@@ -140,9 +140,15 @@ ask_filename()
+ 
+   if( widget_binary.load ) {
+     filesel.title = "Fuse - Load Binary Data";
++#if GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_BINARY, 0 );
++#endif
+     widget_do_fileselector( &filesel );
+   } else {
+     filesel.title = "Fuse - Save Binary Data";
++#if GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_BINARY, 1 );
++#endif
+     widget_do_fileselector_save( &filesel );
+   }
+   if( !widget_filesel_name ) return;
+@@ -386,6 +392,9 @@ menu_file_loadbinarydata( int action )
+ 
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_BINARY, 0 );
++#endif
+   widget_binary.filename = ui_get_open_filename( "Fuse - Load Binary Data" );
+   if( !widget_binary.filename ) { fuse_emulation_unpause(); return 1; }
+ 
+@@ -409,6 +418,9 @@ menu_file_savebinarydata( int action )
+ {
+   fuse_emulation_pause();
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_BINARY, 1 );
++#endif
+   widget_binary.filename = ui_get_save_filename( "Fuse - Save Binary Data" );
+   if( !widget_binary.filename ) { fuse_emulation_unpause(); return 1; }
+ 
+diff --git a/ui/widget/filesel.c b/ui/widget/filesel.c
+index 5a58eed3..29193408 100644
+--- a/ui/widget/filesel.c
++++ b/ui/widget/filesel.c
+@@ -84,15 +84,159 @@ static int is_drivesel = 0;
+ static int is_rootdir;
+ #endif				/* #ifdef WIN32 */
+ 
++#ifdef GCWZERO
++#define ENTRIES_PER_SCREEN (is_saving ? ( last_filename ? 30 : 32 ) : 36)
++#else
+ #define ENTRIES_PER_SCREEN (is_saving ? 32 : 36)
++#endif
+ 
+ /* The number of the filename in the top-left corner of the current
+    display, that of the filename which the `cursor' is on, and that
+    which it will be on after this keypress */
+ static size_t top_left_file, current_file, new_current_file;
+ #ifdef GCWZERO
+-static size_t last_top_left_file, last_current_file;
+-static char *last_directory = NULL;
++typedef struct widget_file_filter_t {
++  widget_filter_class    class;
++  const char*            filters_write;
++  const char*            filters_read;
++} widget_file_filter_t;
++
++static widget_file_filter_t widget_file_filters[FILTER_CLASS_GENERAL+1] = {
++  { FILTER_CLASS_SNAPSHOT,
++                          "szx;z80;sna",
++                          "szx;z80;sna;mgtsnp;slt;snapshot;snp;sp;zx-state" },
++  { FILTER_CLASS_TAPE,
++                          "tzx",
++#ifdef HAVE_LIB_AUDIOFILE
++                          "tzx;tap;pzx;ltp;raw;spc;sta;csw;wav" },
++#else
++                          "tzx;tap;pzx;ltp;raw;spc;sta;csw" },
++#endif
++  { FILTER_CLASS_DISK_PLUS3,
++                          "dsk;udi;fdi",         "dsk;udi;fdi" },
++  { FILTER_CLASS_DISK_TRDOS,
++                          "trd;udi;fdi;sad",     "trd;scl;udi;fdi;sad" },
++  { FILTER_CLASS_DISK_OPUS,
++                          "opu;opd",             "opu;opd" },
++  { FILTER_CLASS_DISK_DIDAKTIK,
++                          "d40;d80;udi;fdi;sad", "d40;d80;udi;fdi;sad" },
++  { FILTER_CLASS_DISK_PLUSD,
++                          "mgt;img;udi;fdi;sad", "mgt;img;udi;fdi;sad" },
++  { FILTER_CLASS_DISK_GENERIC,
++                          "udi;fdi;sad",         "udi;fdi;sad;td0" },
++  { FILTER_CLASS_MICRODRIVE,
++                          "mdr", "mdr" },
++  { FILTER_CLASS_CARTRIDGE_IF2,
++                          NULL, "rom" },
++  { FILTER_CLASS_CARTRIDGE_TIMEX,
++                          NULL, "dck" },
++  { FILTER_CLASS_BINARY,
++                          NULL, NULL },
++  { FILTER_CLASS_ROM,
++                          NULL, "rom" },
++#ifdef LIBSPECTRUM_SUPPORTS_ZLIB_COMPRESSION
++#ifdef LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++  { FILTER_CLASS_COMPRESSED,
++                          NULL, "gz;zip;bz2" },
++#else
++  { FILTER_CLASS_COMPRESSED,
++                          NULL, "gz;zip" },
++#elseif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++  { FILTER_CLASS_COMPRESSED,
++                          NULL, "bz2" },
++#endif
++#endif
++  { FILTER_CLASS_RECORDING,
++                          "rzx", "rzx" },
++  { FILTER_CLASS_SCREENSHOT,
++                          "scr", "scr" },
++  { FILTER_CLASS_SCREENSHOT_PNG,  
++                          "png", NULL },
++  { FILTER_CLASS_SCREENSHOT_MLT,
++                          "mlt", "mlt" },
++  { FILTER_CLASS_SCALABLE_VECTOR_GRAPHICS,
++                          "svg", "svg" },
++  { FILTER_CLASS_MOVIE_FILE,
++                          "fmf", "fmf" },
++  { FILTER_CLASS_AY_LOGGING,
++                          "psg", "psg" },
++  { FILTER_CLASS_POKE_FILE,
++                          NULL, "pok" },
++  { FILTER_CLASS_CONTROL_MAPPING,
++                          "fcm", "fcm" },
++  { FILTER_CLASS_MEDIA_IF_RS232,
++                          NULL, NULL },
++  { FILTER_CLASS_PROFILER,
++                          "prf", NULL },
++  { FILTER_CLASS_GENERAL },
++};
++
++/* Filter extensions for filesel widget */
++#define MAX_FILTER_EXTENSIONS 20
++#define MAX_ROW_EXTENSIONS 10
++static char* filter_extensions[ MAX_ROW_EXTENSIONS ][ MAX_FILTER_EXTENSIONS ];
++static int last_row_extensions = -1;
++static widget_filter_class last_filter = FILTER_CLASS_GENERAL;
++static widget_filter_class last_position = FILTER_CLASS_GENERAL;
++
++typedef struct widget_last_positions_t {
++  widget_filter_class    class;
++  size_t                 last_top_left_file;
++  size_t                 last_current_file;
++  int                    apply_filters;
++  char*                  last_directory;
++} widget_last_positions_t;
++
++static widget_last_positions_t last_known_positions[ FILTER_CLASS_GENERAL+1 ] = {
++  { FILTER_CLASS_SNAPSHOT,        0, 0, 1, NULL },
++  { FILTER_CLASS_TAPE,            0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_PLUS3,      0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_TRDOS,      0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_OPUS,       0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_DIDAKTIK,   0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_PLUSD,      0, 0, 1, NULL },
++  { FILTER_CLASS_DISK_GENERIC,    0, 0, 1, NULL },
++  { FILTER_CLASS_MICRODRIVE,      0, 0, 1, NULL },
++  { FILTER_CLASS_CARTRIDGE_IF2,   0, 0, 1, NULL },
++  { FILTER_CLASS_CARTRIDGE_TIMEX, 0, 0, 1, NULL },
++  { FILTER_CLASS_BINARY,          0, 0, 1, NULL },
++  { FILTER_CLASS_ROM,             0, 0, 1, NULL },
++#ifdef LIBSPECTRUM_SUPPORTS_ZLIB_COMPRESSION
++#ifdef LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++  { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
++#else
++  { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
++#elseif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++  { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
++#endif
++#endif
++  { FILTER_CLASS_RECORDING,       0, 0, 1, NULL },
++  { FILTER_CLASS_SCREENSHOT,      0, 0, 1, NULL },
++  { FILTER_CLASS_SCREENSHOT_PNG,  0, 0, 1, NULL },
++  { FILTER_CLASS_SCREENSHOT_MLT,  0, 0, 1, NULL },
++  { FILTER_CLASS_SCALABLE_VECTOR_GRAPHICS,
++                                  0, 0, 1, NULL },
++  { FILTER_CLASS_MOVIE_FILE,      0, 0, 1, NULL },
++  { FILTER_CLASS_AY_LOGGING,      0, 0, 1, NULL },
++  { FILTER_CLASS_POKE_FILE,       0, 0, 1, NULL },
++  { FILTER_CLASS_CONTROL_MAPPING, 0, 0, 1, NULL },
++  { FILTER_CLASS_MEDIA_IF_RS232,  0, 0, 1, NULL },
++  { FILTER_CLASS_PROFILER,        0, 0, 1, NULL },
++  { FILTER_CLASS_GENERAL,         0, 0, 1, NULL },
++};
++
++#define CURRENT_FILTERS \
++( is_saving ? widget_file_filters[last_filter].filters_write \
++            : widget_file_filters[last_filter].filters_read )
++
++static  int widget_set_filter_extensions( const char* extensions );
++static void widget_free_filter_extensions( void );
++static  int widget_filter_extensions( const char *filename, int maybe_dir );
++static  int widget_check_filename_has_extension( const char *filename, const char * extension );
++static void widget_init_filter_class( widget_filter_class filter_class );
++static void widget_finish_filter_class( widget_finish_state finished );
++static char *widget_get_print_title( const char* title );
++static void widget_print_default_save_filename( void );
+ #endif
+ 
+ static char *widget_get_filename( const char *title, int saving );
+@@ -162,8 +306,12 @@ ui_get_save_filename( const char *title )
+ {
+ #if !defined AMIGA && !defined __MORPHOS__
+ #ifdef GCWZERO
+-  if ( settings_current.confirm_overwrite_files ) {
+-    char* filename = widget_get_filename( title, 1 );
++  char* filename = widget_get_filename( title, 1 );
++  if ( filename ) filename = widget_set_valid_file_extension_for_last_class( filename );
++  if ( settings_current.od_confirm_overwrite_files &&
++       /* Disks have their own overwrite confirm dialog */
++       ( last_filter < FILTER_CLASS_DISK_PLUS3 ||
++         last_filter > FILTER_CLASS_DISK_GENERIC ) ) {
+     if (filename && compat_file_exists( filename ) ) {
+         const char *filename1 = strrchr( filename, FUSE_DIR_SEP_CHR );
+         filename1 = filename1 ? filename1 + 1 : filename;
+@@ -185,8 +333,10 @@ ui_get_save_filename( const char *title )
+         }
+     } else return filename;
+   } else
+-#endif
++    return filename;
++#else
+   return widget_get_filename( title, 1 );
++#endif /* GCWZERO */
+ #else
+   return amiga_asl( title, TRUE );
+ #endif
+@@ -387,6 +537,15 @@ static int widget_scandir( const char *dir, struct widget_dirent ***namelist,
+   }
+ #endif				/* #ifdef WIN32 */
+ 
++#ifdef GCWZERO
++  if ( settings_current.od_save_last_directory && 
++       ( !settings_current.od_last_directory ||
++         strcmp( settings_current.od_last_directory, dir ) ) ) {
++    libspectrum_free( settings_current.od_last_directory );
++    settings_current.od_last_directory = utils_safe_strdup( dir );
++  }
++#endif
++
+   return number;
+ }
+ 
+@@ -474,12 +633,20 @@ widget_select_file( const char *name )
+ 
+ #ifndef WIN32
+ #ifdef GCWZERO
+-  if (!settings_current.hidden_files)
++  if (!settings_current.od_hidden_files)
+ #endif
+   /* Skip hidden files/directories */
+   if( strlen( name ) > 1 && name[0] == '.' && name[1] != '.' ) return 0;
+ #endif				/* #ifdef WIN32 */
+ 
++#ifdef GCWZERO
++  /* Filtered extensions */
++  if ( settings_current.od_filter_known_extensions &&
++       last_known_positions[last_filter].apply_filters &&
++       widget_filter_extensions( name, 1 ) )
++    return 0;
++#endif
++
+   return 1;
+ }
+ 
+@@ -527,9 +694,12 @@ widget_filesel_draw( void *data )
+ 
+   widget_scan( directory );
+ #ifdef GCWZERO
+-  if (last_directory && strcmp(directory,last_directory) == 0) {
+-    new_current_file = current_file = last_current_file;
+-    top_left_file = last_top_left_file;
++  /* Restore position and file selected
++    Only for load operations */
++  if ( !is_saving && last_known_positions[last_position].last_directory &&
++       strcmp( directory, last_known_positions[last_position].last_directory ) == 0 ) {
++    new_current_file = current_file = last_known_positions[last_position].last_current_file;
++    top_left_file = last_known_positions[last_position].last_top_left_file;
+   } else {
+ #endif
+   new_current_file = current_file = 0;
+@@ -570,11 +740,11 @@ int widget_filesel_finish( widget_finish_state finished ) {
+     widget_filesel_name = NULL;
+   }
+ #ifdef GCWZERO
+-  last_directory = widget_getcwd();
+-  if( finished == WIDGET_FINISHED_OK ) {
+-    last_top_left_file = top_left_file;
+-    last_current_file = current_file;
+-  }
++  /* Save last directory
++     For load operations save last position and selected file if we are
++     not cancelling  */
++  widget_finish_filter_class( finished );
++  widget_free_filter_extensions();
+ #endif
+   return 0;
+ }
+@@ -632,6 +802,69 @@ static char* widget_getcwd( void )
+   return directory;
+ }
+ 
++#ifdef GCWZERO
++static char *widget_get_print_title( const char* title )
++{
++  const char *filter_title = NULL;
++  const char *filters = NULL;
++  const int title_length = 40;
++  char * final_title;
++
++  if ( !settings_current.od_filter_known_extensions ) {
++    final_title = utils_safe_strdup( title );
++
++  } else {
++    /* Quit "Fuse - " */
++    if ( strncmp( title, "Fuse - ", 7 ) == 0 )
++      filter_title = title + 7;
++    else
++      filter_title = title;
++
++    if ( last_known_positions[last_filter].apply_filters ) {
++      filters = is_saving ? widget_file_filters[last_filter].filters_write
++                          : widget_file_filters[last_filter].filters_read;
++    }
++
++    final_title = libspectrum_new( char, title_length );
++    if ( filters ) {
++      if ( ( strlen( filter_title ) + strlen( filters ) + 3 ) >= title_length ) {
++        /* Title space (filters...)\0 */
++        int i = title_length - strlen( filter_title ) - 7;
++        snprintf( final_title, title_length, "%s (%.*s...)", filter_title, i, filters );
++      } else
++        snprintf( final_title, title_length, "%s (%s)", filter_title, filters );
++    } else
++      snprintf( final_title, title_length, "%s (*)", filter_title );
++  }
++
++  return final_title;
++}
++
++static void widget_print_default_save_filename( void )
++{
++  char *default_save, *c;
++  char  print_button[128];
++  const char* button_label = "\012Y\001 = Save\012";
++  const int   label_wide = 184;
++
++  if ( !last_filename ) return;
++
++  default_save = widget_set_valid_file_extension_for_last_class( utils_last_filename( last_filename, 1 ) );
++  if ( default_save ) {
++    c = default_save;
++    if ( widget_stringwidth( default_save ) > label_wide ) {
++      int prefix = widget_stringwidth( "..." ) + 1;
++      while( widget_stringwidth( default_save ) > label_wide - prefix ) default_save++;
++      snprintf( print_button, sizeof( print_button ), "%s ...%s\001", button_label, default_save );
++    } else {
++      snprintf( print_button, sizeof( print_button ), "%s %s\001", button_label, default_save );
++    }
++    widget_printstring( 12, 21 * 8, WIDGET_COLOUR_FOREGROUND, print_button );
++    libspectrum_free( c );
++  }
++}
++#endif
++
+ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
+ 				       int top_left, int current,
+ 				       const char *dir )
+@@ -643,7 +876,13 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
+   error = widget_dialog_with_border( 1, 2, 30, 22 );
+   if( error ) return error;
+ 
++#ifdef GCWZERO
++  char* title_with_filters = widget_get_print_title( title );
++  widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, title_with_filters );
++  libspectrum_free( title_with_filters );
++#else
+   widget_printstring( 10, 16, WIDGET_COLOUR_TITLE, title );
++#endif
+   if( widget_stringwidth( dir ) > 223 ) {
+     char buffer[128];
+     int prefix = widget_stringwidth( "..." ) + 1;
+@@ -672,6 +911,9 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
+ 
+   if( is_saving )
+   {
++#ifdef GCWZERO
++    widget_print_default_save_filename();
++#endif
+     widget_printstring( 12, 22 * 8, WIDGET_COLOUR_FOREGROUND,
+ #ifdef GCWZERO
+ 				     "\012A\001 = select" );
+@@ -687,7 +929,11 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
+   }
+ 
+   if( i < n )
++#ifdef GCWZERO
++    widget_down_arrow( 1, is_saving ? ( last_filename ? 19 : 20 ) : 22, WIDGET_COLOUR_FOREGROUND );
++#else
+     widget_down_arrow( 1, is_saving ? 20 : 22, WIDGET_COLOUR_FOREGROUND );
++#endif
+ 
+   /* Display that lot */
+   widget_display_lines( 2, 22 );
+@@ -863,10 +1109,6 @@ http://thread.gmane.org/gmane.comp.gnu.mingw.user/9197
+     new_current_file = 0;
+     /* Force a redisplay of all filenames */
+     current_file = 1; top_left_file = 1;
+-#ifdef GCWZERO
+-    /* Directory change. Reset last position */
+-    last_current_file = last_top_left_file = 0;
+-#endif
+   }
+ 
+   free( fn );
+@@ -989,6 +1231,64 @@ widget_filesel_keyhandler( input_key key )
+     break;
+ 
+ #ifdef GCWZERO
++  case INPUT_KEY_Escape: /* Select */
++    /* Switch on/off apply filters */
++    if ( settings_current.od_filter_known_extensions && CURRENT_FILTERS ) {
++      last_known_positions[last_filter].apply_filters = !last_known_positions[last_filter].apply_filters;
++      char *directory = widget_getcwd();
++      if( directory ) {
++        widget_scan( directory );
++        new_current_file = 0;
++        /* Force a redisplay of all filenames */
++        current_file = 1; top_left_file = 1;
++        /* Filters switch. Reset last position */
++        if ( !is_saving ) {
++          last_known_positions[last_position].last_current_file = 0;
++          last_known_positions[last_position].last_top_left_file = 0;
++        }
++      }
++    }
++    break;
++
++  case INPUT_KEY_Shift_L: /* Y */
++    /* Save dialog and we are previosly load something */
++    if ( is_saving && last_filename ) {
++      char *default_name = widget_set_valid_file_extension_for_last_class( utils_last_filename( last_filename, 1 ) );
++      if ( default_name ) {
++        /*
++           Code stolen from Tab case below...
++           there should be better to do a specific function that use both two cases
++           but for now I do not want to do more changes than necesary on Fuse standard code
++         */
++        if( !compat_is_absolute_path( default_name ) ) {
++		  /* relative name */
++          /* Get current dir name and allocate space for the leafname */
++          fn = widget_getcwd();
++          ptr = fn;
++          if( fn )
++    	    fn = realloc( fn, strlen( fn ) + strlen( default_name ) + 2 );
++          if( !fn ) {
++            free( ptr );
++	        widget_end_widget( WIDGET_FINISHED_CANCEL );
++	        return;
++          }
++          /* Append the leafname and return it */
++          strncat( fn, FUSE_DIR_SEP_STR, 1 );
++          strncat( fn, default_name, strlen( default_name ) );
++        /* absolute name */
++        } else {
++	      fn = utils_safe_strdup( default_name );
++        }
++        widget_filesel_name = fn;
++        if( exit_all_widgets ) {
++	      widget_end_all( WIDGET_FINISHED_OK );
++        } else {
++	      widget_end_widget( WIDGET_FINISHED_OK );
++        }
++      }
++    }
++    break;
++
+   case INPUT_KEY_space: /* X */
+ #else
+   case INPUT_KEY_Tab:
+@@ -1115,3 +1415,243 @@ widget_filesel_keyhandler( input_key key )
+   free( dirtitle );
+ #endif /* ifdef AMIGA */
+ }
++
++#ifdef GCWZERO
++static void widget_init_filter_class( widget_filter_class filter_class )
++{
++  if ( !is_saving && !settings_current.od_independent_directory_access &&
++       last_filter != filter_class &&
++       ( ( widget_file_filters[last_filter].filters_read && last_known_positions[last_filter].apply_filters ) ||
++         ( widget_file_filters[filter_class].filters_read && last_known_positions[filter_class].apply_filters ) ) ) {
++    last_known_positions[FILTER_CLASS_GENERAL].last_current_file = 0;
++    last_known_positions[FILTER_CLASS_GENERAL].last_top_left_file = 0;
++  }
++
++  last_filter = filter_class;
++  if ( settings_current.od_independent_directory_access )
++    last_position = filter_class;
++  else
++    last_position = FILTER_CLASS_GENERAL;
++
++  if ( last_known_positions[last_position].last_directory )
++    chdir( last_known_positions[last_position].last_directory );
++  else
++    last_known_positions[last_position].last_directory = widget_getcwd();
++}
++
++static void widget_finish_filter_class( widget_finish_state finished )
++{
++
++  if( finished == WIDGET_FINISHED_OK ) {
++    if ( !is_saving )  {
++      last_known_positions[last_position].last_current_file = current_file;
++      last_known_positions[last_position].last_top_left_file = top_left_file;
++    }
++    if ( last_known_positions[last_position].last_directory )
++      free( last_known_positions[last_position].last_directory );
++    last_known_positions[last_position].last_directory = widget_getcwd();
++  } else if ( last_known_positions[last_position].last_directory ) {
++    char *last_dir = widget_getcwd();
++    if ( !last_dir || strcmp( last_dir, last_known_positions[last_position].last_directory ) )
++      chdir( last_known_positions[last_position].last_directory );
++    if ( last_dir ) free( last_dir );
++  }
++}
++
++/* Push extensions to filter files for filesel widget dialogs */
++void
++widget_filesel_set_filter_for_class( widget_filter_class filter_class, int saving )
++{
++  widget_init_filter_class( filter_class );
++  widget_set_filter_extensions( saving ? widget_file_filters[filter_class].filters_write
++                                       : widget_file_filters[filter_class].filters_read );
++}
++
++/*
++ * This function may change the content of parameter filename
++ */
++char*
++widget_set_valid_file_extension_for_class( char* filename, widget_filter_class class )
++{
++  char* extension;
++  char* new_filename;
++  size_t extension_length, file_length;
++  
++  if ( !filename ) return NULL;
++
++  /* Init supported extensions for filter class to write */
++  widget_set_filter_extensions( widget_file_filters[class].filters_write );
++
++  /* Add the first supported extension if filename do not have an extension supported */
++  if ( widget_filter_extensions( filename, 0 ) ) {
++    /* Extension length */
++    extension_length = strlen( filter_extensions[last_row_extensions][0] );
++    file_length = strlen( filename );
++
++    /* New filename with space to filename + '.' + extension + '\0' */
++    new_filename = libspectrum_new( char, file_length + extension_length + 2 );
++    if ( new_filename ) {
++      /* Copy filename including '\0' */
++      strncpy( new_filename, filename, file_length + 1 );
++
++      /* Create default extension for write */
++      extension = libspectrum_new( char, extension_length + 2 );
++      strncpy( extension, ".\0", 2 );
++      strncat( extension, filter_extensions[last_row_extensions][0], extension_length + 1 );
++
++      /* And append to filename  */
++      strncat( new_filename, extension, extension_length + 2 );
++
++      /* Free memory */
++      libspectrum_free( extension );
++    } else
++      new_filename = filename;
++
++  /* Filename have supported extension */
++  } else
++    new_filename = filename;
++
++  widget_free_filter_extensions();
++  return new_filename;
++}
++
++char*
++widget_set_valid_file_extension_for_last_class( char* filename )
++{
++  return widget_set_valid_file_extension_for_class( filename, last_filter );
++}
++
++/*
++ *   Extensions to filter supplied must be separated by ";".
++ *   Return 0 if all extensiones set
++ */
++static int widget_set_filter_extensions( const char* extensions )
++{
++  char* extension_test;
++  char* next;
++  int   i = 0;
++
++  /* No free extensions */
++  if ( last_row_extensions == MAX_ROW_EXTENSIONS )
++    return 1;
++
++  extension_test = utils_safe_strdup( extensions );
++
++  /* No extensions to push */
++  if ( !extension_test ) {
++    libspectrum_free( extension_test );
++    return 0;
++  }
++  last_row_extensions++;
++
++  /* Search for extensions, separated by ; */
++  next = strtok( extension_test, ";" );
++  while ( next ) {
++    filter_extensions[last_row_extensions][i] = utils_safe_strdup( next );
++    next = strtok( NULL, ";" );
++    i++;
++  }
++
++  libspectrum_free( extension_test );
++  return 0;
++}
++
++/* Free las filter extensions set */
++static void widget_free_filter_extensions( void )
++{
++  int i = 0;
++
++  /* No filters to clean */
++  if ( last_row_extensions == -1 ) return;
++
++  while ( filter_extensions[last_row_extensions][i] ) {
++    libspectrum_free( filter_extensions[last_row_extensions][i] );
++    filter_extensions[last_row_extensions][i] = NULL;
++    i++;
++  }
++  last_row_extensions--;
++}
++
++/*
++ *  To check if a filename has extension
++ *
++ *    0 - Has the extension
++ *    1 - Do not has the extension
++ */
++static int
++widget_check_filename_has_extension( const char *filename, const char * extension )
++{
++  char*  filename_test;
++  char*  file_extension;
++  char*  save_extension = NULL;
++  int    filter = 0;
++
++  if ( ( filename && !extension ) || ( !filename && extension ) )
++    return 1;
++
++  filename_test = utils_safe_strdup( filename );
++
++  if ( filename_test ) {
++    /* Search for extension */
++    file_extension = strtok( filename_test, "." );
++    while ( file_extension ) {
++      /* Free previous saved extension */
++      libspectrum_free( save_extension );
++      save_extension = utils_safe_strdup( file_extension );
++      file_extension = strtok( NULL, "." );
++    }
++
++    /* File have extension, compare with needed */
++    if ( save_extension ) {
++      if ( strcasecmp( save_extension, extension ) != 0 ) {
++        filter = 1; /* No same extension */
++      }
++
++    /* File without extension */
++    } else {
++      filter = 1; /* Filter */
++    }
++  }
++  libspectrum_free( save_extension );
++  libspectrum_free( filename_test );
++
++  return filter;
++}
++
++/*
++ * Check filename for filter extensions
++ * 
++ *   1 filter
++ *   0 don't filter
++ */
++static int widget_filter_extensions( const char *filename, int maybe_dir )
++{
++  int i;
++  struct stat file_info;
++  int error, is_dir;
++
++  /* No filters set */
++  if ( last_row_extensions == -1 ) return 0;
++
++  /* If not filters sets then don't filter*/
++  if ( !filter_extensions[last_row_extensions][0] ) return 0;
++
++  /* Do not filter directories */
++  if ( maybe_dir ) {
++    error = stat( filename, &file_info );
++    if ( !error ) is_dir = S_ISDIR( file_info.st_mode );
++    if( error || is_dir ) return 0;
++  }
++
++  /* If one of the extensions is valid then do not filter */
++  i = 0;
++  while ( ( i < MAX_FILTER_EXTENSIONS ) && filter_extensions[i] ) {
++    if ( !widget_check_filename_has_extension( filename, filter_extensions[last_row_extensions][i] ) )
++      return 0; /* Do not filter */
++    i++;
++  }
++
++  /* Filter */
++  return 1;
++}
++#endif
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index a32d99a6..f586e59a 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -877,6 +877,9 @@ menu_options_load_file_control_mapping( int action )
+ {
+   char *filename;
+ 
++#if USE_WIDGET
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_CONTROL_MAPPING, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Load Control Mapping" );
+   if( !filename ) return;
+ 
+@@ -889,6 +892,9 @@ menu_options_save_file_control_mapping( int action )
+ {
+   char *filename;
+ 
++#if USE_WIDGET
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_CONTROL_MAPPING, 1 );
++#endif
+   filename = ui_get_save_filename( "Fuse - Save Control Mapping" );
+   if( !filename ) return;
+ 
+diff --git a/ui/widget/roms.c b/ui/widget/roms.c
+index f2706f5d..c6b546ac 100644
+--- a/ui/widget/roms.c
++++ b/ui/widget/roms.c
+@@ -266,6 +266,9 @@ widget_roms_keyhandler( input_key key )
+ 
+     data.exit_all_widgets = 0;
+     data.title = buf;
++#if GCWZERO
++    ui_widget_set_file_filter_for_class( FILTER_CLASS_ROM, 0 );
++#endif
+     widget_do_fileselector( &data );
+     if( !widget_filesel_name ) return;
+ 
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index 1a0114c2..129324db 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -555,7 +555,7 @@ static int  info_len = 0;
+ static int  info_sc  = 1;
+ void widget_statusbar_update_info( float speed ) {
+   snprintf(status_info, WIDGET_MAX_INFO_LENGTH,
+-           settings_current.show_fps ? "%s - %3.0ffps (1:%d)" : "%s - %3.0f%% (1:%d)",
++           settings_current.od_show_fps ? "%s - %3.0ffps (1:%d)" : "%s - %3.0f%% (1:%d)",
+            libspectrum_machine_name( machine_current->machine ),
+            speed,
+            settings_current.frame_rate);
+@@ -568,7 +568,7 @@ void widget_statusbar_update_info( float speed ) {
+     snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
+              status_info,
+              joystick_name[settings_current.joystick_2_output] );
+-  if ( settings_current.triple_buffer )
++  if ( settings_current.od_triple_buffer )
+     snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
+              status_info,
+              "B");
+diff --git a/ui/widget/widget.h b/ui/widget/widget.h
+index 1f1f1cc5..e5e3c9fc 100644
+--- a/ui/widget/widget.h
++++ b/ui/widget/widget.h
+@@ -85,6 +85,45 @@ typedef enum widget_type {
+ #endif
+ } widget_type;
+ 
++#ifdef GCWZERO
++/* Filter classes */
++typedef enum widget_filter_class {
++  FILTER_CLASS_SNAPSHOT,
++  FILTER_CLASS_TAPE,
++  FILTER_CLASS_DISK_PLUS3,
++  FILTER_CLASS_DISK_TRDOS,
++  FILTER_CLASS_DISK_OPUS,
++  FILTER_CLASS_DISK_DIDAKTIK,
++  FILTER_CLASS_DISK_PLUSD,
++  FILTER_CLASS_DISK_GENERIC,
++  FILTER_CLASS_MICRODRIVE,
++  FILTER_CLASS_CARTRIDGE_IF2,
++  FILTER_CLASS_CARTRIDGE_TIMEX,
++  FILTER_CLASS_BINARY,
++  FILTER_CLASS_ROM,
++  FILTER_CLASS_COMPRESSED,
++  FILTER_CLASS_RECORDING,
++  FILTER_CLASS_SCREENSHOT,
++  FILTER_CLASS_SCREENSHOT_PNG,
++  FILTER_CLASS_SCREENSHOT_MLT,
++  FILTER_CLASS_SCALABLE_VECTOR_GRAPHICS,
++  FILTER_CLASS_MOVIE_FILE,
++  FILTER_CLASS_AY_LOGGING,
++  FILTER_CLASS_POKE_FILE,
++  FILTER_CLASS_CONTROL_MAPPING,
++  FILTER_CLASS_MEDIA_IF_RS232,
++  FILTER_CLASS_PROFILER,
++  FILTER_CLASS_GENERAL,
++} widget_filter_class;
++
++void
++widget_filesel_set_filter_for_class( widget_filter_class filter_class, int saving );
++char*
++widget_set_valid_file_extension_for_class( char* filename, widget_filter_class class );
++char*
++widget_set_valid_file_extension_for_last_class( char* filename );
++#endif
++
+ /* Activate a widget */
+ int widget_do( widget_type which, void *data );
+ 
+diff --git a/uimedia.c b/uimedia.c
+index a15d487a..7f0e0858 100644
+--- a/uimedia.c
++++ b/uimedia.c
+@@ -240,6 +240,22 @@ drive_save( const ui_media_drive_info_t *drive, int saveas )
+ 
+   snprintf( title, sizeof( title ), "Fuse - Write %s", drive->name );
+   if( saveas ) {
++#if USE_WIDGET && GCWZERO
++    if ( strncmp( drive->name, "+3 Disk", 7 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUS3, 1 );
++    else if ( strncmp( drive->name, "Beta Disk", 9 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_TRDOS, 1 );
++    else if ( strncmp( drive->name, "Opus Disk", 9 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_OPUS, 1 );
++    else if ( strncmp( drive->name, "Didaktik Disk", 13 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_DIDAKTIK, 1 );
++    else if ( strncmp( drive->name, "DISCiPLE Disk", 13 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUSD, 1 );
++    else if ( strncmp( drive->name, "+D Disk", 7 ) == 0 )
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_DISK_PLUSD, 1 );
++    else
++      ui_widget_set_file_filter_for_class( FILTER_CLASS_GENERAL, 1 );
++#endif
+     filename = ui_get_save_filename( title );
+     if( !filename ) {
+       fuse_emulation_unpause();
+diff --git a/utils.c b/utils.c
+index e2cacb67..ec12d9ca 100644
+--- a/utils.c
++++ b/utils.c
+@@ -259,6 +259,9 @@ utils_open_snap( void )
+   char *filename;
+   int error;
+ 
++#if USE_WIDGET && GCWZERO
++  ui_widget_set_file_filter_for_class( FILTER_CLASS_SNAPSHOT, 0 );
++#endif
+   filename = ui_get_open_filename( "Fuse - Load Snapshot" );
+   if( !filename ) return -1;
+ 
+@@ -531,8 +534,15 @@ void utils_set_last_loaded_file( const char *filename, libspectrum_class_t class
+   if ( change_to_path ) {
+     strncpy( buffer, filename, PATH_MAX );
+     path = dirname(buffer);
+-    if (path && path[0] != '\0')
++    if (path && path[0] != '\0') {
+       chdir(path);
++      if ( settings_current.od_save_last_directory &&
++           ( !settings_current.od_last_directory ||
++             strcmp( settings_current.od_last_directory, path ) ) ) {
++        libspectrum_free( settings_current.od_last_directory );
++        settings_current.od_last_directory = utils_safe_strdup( path );
++      }
++    }
+   }
+ }
+ 
