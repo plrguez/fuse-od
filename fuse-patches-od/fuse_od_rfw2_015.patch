@@ -1,25 +1,5 @@
-From 30e1d7dff0930f4a6699742f0a9343fe737ce634 Mon Sep 17 00:00:00 2001
-From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
-Date: 29 ago. 2020 23:58:53
-
-Patch #015 for OpenDingux and RetroFW
-Renaming specific options for OpenDingux/RetroFW implementation to 
-prefix them with 'od_'.
-Not renamed options for control mapping and joystick_gcw0
-Authomatic load of control mapping files for RZX Recordings.
-New option 'Filter known extensions for load and save' (default enabled)
-  Select button for switch on/off filters on file dialogs
-  Print active filters on title.
-  Quick save, assigned to Y button, based on last filename loaded and 
-  extension type for the media being saved. 
-  For names entered manually if no extension supplied the default 
-  extension for the saved media type will be assigned.
-Add option for save last directory
-Fix flash attributes in virtual keyboard
-Add option for enable kempston joystick in control mapping
-
 diff --git a/Platform/readme.txt b/Platform/readme.txt
-index d5d4531..1f76179 100644
+index 2f113d17..d9b24c48 100644
 --- a/Platform/readme.txt
 +++ b/Platform/readme.txt
 @@ -1,12 +1,12 @@
@@ -39,7 +19,7 @@ index d5d4531..1f76179 100644
  
  At the end of this doc is the man page of Fuse 1.5.7 for a complete reference.
  
-@@ -16,25 +16,137 @@
+@@ -16,25 +16,137 @@ At the end of this doc is the man page of Fuse 1.5.7 for a complete reference.
  
  You can open the menu with the `Power` or `Select` button.
  
@@ -183,7 +163,7 @@ index d5d4531..1f76179 100644
  
  ------------------------
  ### Virtual Keyboard ###
-@@ -43,19 +155,24 @@
+@@ -43,19 +155,24 @@ The config path is in '$HOME/.fuse' directory. If it does not exist the emulator
  Press the `Start` button to open a Virtual Keyboard when you are at emulator.
  
  The keys in keyboard correspond to ZX Spectrum 48k keys.
@@ -213,7 +193,7 @@ index d5d4531..1f76179 100644
  
    `Y`         Clean all Lock and Sticky keys.
    `Start`     Close Virtual Keyboard
-@@ -98,8 +215,9 @@
+@@ -98,8 +215,9 @@ The buttons function detailed are when no mapping is assigned.
  
    `Right Stick`
                Nothing.
@@ -225,7 +205,7 @@ index d5d4531..1f76179 100644
                |In RG350 you can enable it with `Power`+`B` hotkey.
  
    `L2`        Nothing.
-@@ -118,11 +236,14 @@
+@@ -118,11 +236,14 @@ These are no dependent of button mapping.
               Move
  
    `A`        Select the option or accept the options at form
@@ -243,7 +223,7 @@ index d5d4531..1f76179 100644
                 - It open 'enter name' dialog for file save dialogs.
  
    `L1`       Go to the first menu option
-@@ -136,7 +257,8 @@
+@@ -136,7 +257,8 @@ These are no dependent of button mapping.
  
  #### Maintain options ####
  --------------------------
@@ -253,7 +233,7 @@ index d5d4531..1f76179 100644
  
    - To check/uncheck options use `X` button.
    - To confirm changes in form use the `A` button.
-@@ -147,73 +269,91 @@
+@@ -147,73 +269,91 @@ Some examples of forms are General, Media and Sound.
  #### Virtual keyboard in menu options ####
  ------------------------------------------
  
@@ -365,7 +345,7 @@ index d5d4531..1f76179 100644
  
  See PITFALLs at the end of this section.
  
-@@ -221,22 +361,28 @@
+@@ -221,22 +361,28 @@ Options:
    - Control mapping per game:
      -------------------------
      Default disabled.
@@ -400,7 +380,7 @@ index d5d4531..1f76179 100644
  
    - Auto-save:
      ----------
-@@ -255,7 +401,8 @@
+@@ -255,7 +401,8 @@ Options:
      If this option is enabled you can't maintain separated default controls.
  
      The default controls are used:
@@ -410,7 +390,7 @@ index d5d4531..1f76179 100644
        - When you insert a media with not yet control mapping configuration
        - When you clear or eject a media
  
-@@ -263,10 +410,13 @@
+@@ -263,10 +410,13 @@ Options:
      ---------------------------
      Default disabled. Only take effect if 'Control mapping per game' is enabled.
  
@@ -427,7 +407,7 @@ index d5d4531..1f76179 100644
  
  Other options in Joystick menu for Control mapping:
  
-@@ -274,56 +424,71 @@
+@@ -274,56 +424,71 @@ Other options in Joystick menu for Control mapping:
      ---------------------
      Enabled if 'Control mapping per game' is enabled.
  
@@ -497,14 +477,15 @@ index d5d4531..1f76179 100644
    Variants of the same program:
 -    If 'No cut/transform filenames' is disabled (default) the emulator try to clean the name of filename to make it equal name for variations.
 -    But if the filenames used are no consistent, including letter case, then a different name for the same program may be determined.
+-
+-  When insert various media the last inserted will be the selected control mapping.
+-    - If you unload it then it will be cleared and you could start a game from other media inserted with no file control mapping.
+-    - If you start from Loader the system can load from media different to the last assigned control mapping file.
 +    If 'No cut/transform filenames' is disabled (default) the emulator try to
 +    clean the name of filename to make it equal name for variations.
 +    But if the filenames used are no consistent, including letter case, then a
 +    different name for the same program may be determined.
- 
--  When insert various media the last inserted will be the selected control mapping.
--    - If you unload it then it will be cleared and you could start a game from other media inserted with no file control mapping.
--    - If you start from Loader the system can load from media different to the last assigned control mapping file.
++
 +  When insert various media the last inserted will be the selected control
 +  mapping.
 +    - If you unload it then it will be cleared and you could start a game from
@@ -514,7 +495,7 @@ index d5d4531..1f76179 100644
  
    Example:
      1.- Select +3 machine
-@@ -331,27 +496,35 @@
+@@ -331,27 +496,35 @@ PITFALLS:
      3.- Open media menu and insert a tape
      4.- The control mapping file will be the last tape inserted
      5.- Open media menu and clear tape
@@ -558,7 +539,7 @@ index d5d4531..1f76179 100644
  	hint:SDL_GAMECONTROLLER_USE_BUTTON_LABELS:=1,"
  
  -------------------------
-@@ -359,44 +532,56 @@
+@@ -359,44 +532,56 @@ For controllers the number of each button in mapping depends on the controller l
  -------------------------
  
  I don't have tested a Keyboard on USB OTG but in theory it should "work".
@@ -628,7 +609,7 @@ index d5d4531..1f76179 100644
  
      L1 + R1 + B      Toggle triple buffer
      L1 + R1 + X      Joystick
-@@ -414,34 +599,45 @@
+@@ -414,34 +599,45 @@ The implemented hotkeys correspond to Fx key functions in Fuse's SDL implementat
  ### Media options ###
  ---------------------
  
@@ -668,14 +649,15 @@ index d5d4531..1f76179 100644
 -  The emulator detect your rom as custom if they not have the name expected, including the path.
 -  This affect to auto-load media (tapes, disks). In standard Fuse compilation cutoms roms don't autoload.
 -  The option "Auto-load media with custom rom" in General options (default False) auto-load also with custom roms.
+-
+-Also roms con be added to the 'rom' directory in config path ("$HOME/.fuse/roms").
 +  The emulator detect your rom as custom if they not have the name expected,
 +  including the path.
 +  This affect to auto-load media (tapes, disks). In standard Fuse compilation
 +  cutoms roms don't autoload.
 +  The option "Auto-load media with custom rom" in General options
 +  (default False) auto-load also with custom roms.
- 
--Also roms con be added to the 'rom' directory in config path ("$HOME/.fuse/roms").
++
 +Also roms con be added to the 'rom' directory in Fuse config path.
  Fuse search in this path for rom files with the default names.
  
@@ -684,10 +666,10 @@ index d5d4531..1f76179 100644
      For RetroFW      "/home/retrofw/.fuse/roms"
  
 diff --git a/compat.h b/compat.h
-index 9847fa0..ac487c0 100644
+index bfe76c20..5cc95009 100644
 --- a/compat.h
 +++ b/compat.h
-@@ -170,6 +170,7 @@
+@@ -166,6 +166,7 @@ int compat_closedir( compat_dir directory );
  #ifdef GCWZERO
  int compat_createdir( const char *path );
  int compat_create_config_paths( const char *config_path );
@@ -696,7 +678,7 @@ index 9847fa0..ac487c0 100644
  #endif
  
 diff --git a/compat/linux/paths.c b/compat/linux/paths.c
-index c78d91c..eff542a 100644
+index d4281ad3..110fc31e 100644
 --- a/compat/linux/paths.c
 +++ b/compat/linux/paths.c
 @@ -27,13 +27,24 @@
@@ -715,8 +697,9 @@ index c78d91c..eff542a 100644
  
  #ifdef GCWZERO
 -static int create_config_path( const char *config_path );
+-
 +static int   create_config_path( const char *config_path );
- 
++
 +/*
 + * Create config path if it not exists
 + *
@@ -726,7 +709,7 @@ index c78d91c..eff542a 100644
  int create_config_path( const char *config_path )
  {
    struct stat stat_info;
-@@ -42,33 +53,39 @@
+@@ -42,33 +53,39 @@ int create_config_path( const char *config_path )
      if ( errno == ENOENT ) {
        if ( compat_createdir( config_path ) == -1 ) {
          ui_error( UI_ERROR_ERROR, "error creating config directory '%s'", config_path );
@@ -777,7 +760,7 @@ index c78d91c..eff542a 100644
  #endif /* GCWZERO */
  
 diff --git a/compat/unix/file.c b/compat/unix/file.c
-index f7e9ff2..377d3d9 100644
+index f7e9ff23..377d3d97 100644
 --- a/compat/unix/file.c
 +++ b/compat/unix/file.c
 @@ -33,6 +33,9 @@
@@ -791,10 +774,10 @@ index f7e9ff2..377d3d9 100644
  const compat_fd COMPAT_FILE_OPEN_FAILED = NULL;
  
 diff --git a/configure.ac b/configure.ac
-index 22707f7..519a5b4 100644
+index 99dccaf3..1d1a4c65 100644
 --- a/configure.ac
 +++ b/configure.ac
-@@ -332,7 +332,7 @@
+@@ -332,7 +332,7 @@ if test -z "$UI"; then
    AC_MSG_RESULT($retrofw)
    if test "$retrofw" = yes; then
      if test "$sdl_available" = yes; then
@@ -803,7 +786,7 @@ index 22707f7..519a5b4 100644
        UI=sdl
        WIDGET=widget
        use_sdl=yes
-@@ -347,7 +347,7 @@
+@@ -347,7 +347,7 @@ if test "$gcw0" = "yes" -o "$retrofw" = "yes"; then
    AC_DEFINE([VKEYBOARD], 1, [Virtual Keyboard defined for OpenDingux/RetroFW])
    AC_DEFINE([UI_SDL], 1, [Defined if the SDL UI in use])
    AC_DEFINE([USE_WIDGET], 1, [Defined if we're using a widget-based UI])
@@ -813,7 +796,7 @@ index 22707f7..519a5b4 100644
  
  dnl Look for null UI (default=no)
 diff --git a/controlmapping/controlmapping.c b/controlmapping/controlmapping.c
-index 464c166..5af525e 100644
+index b32507d3..1dbc91bc 100644
 --- a/controlmapping/controlmapping.c
 +++ b/controlmapping/controlmapping.c
 @@ -33,6 +33,7 @@
@@ -824,7 +807,7 @@ index 464c166..5af525e 100644
  
  #ifdef GCWZERO
  char *mapfile = NULL;              /* Path of a .fcm file to load */
-@@ -40,6 +41,24 @@
+@@ -40,6 +41,24 @@ libspectrum_class_t mapfile_class;
  settings_info settings_old;
  static control_mapping_info control_mapping_tmp;
  
@@ -849,7 +832,7 @@ index 464c166..5af525e 100644
  /* Stablish current settings and control mapping defaults */
  void
  controlmapping_set_defaults( settings_info *settings ) {
-@@ -92,6 +111,7 @@
+@@ -92,6 +111,7 @@ int
  controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, int is_autoload )
  {
    char *old_mapfile;
@@ -857,7 +840,7 @@ index 464c166..5af525e 100644
  
    /* Mapping per game don't active o unset mapfile */
    if ( !settings_current.control_mapping_per_game ) {
-@@ -107,8 +127,11 @@
+@@ -107,8 +127,11 @@ controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, in
  
    /* Different loads but same mapfile? (F.example SIDE B of tape
       Maintain current mapfilen */
@@ -870,7 +853,7 @@ index 464c166..5af525e 100644
  
    /* Autosave current mapfile preiovusly to load new mapfile */
    if ( old_mapfile ) {
-@@ -128,7 +151,11 @@
+@@ -128,7 +151,11 @@ controlmapping_load_mapfile( const char *filename, libspectrum_class_t class, in
    if ( !settings_current.control_mapping_not_detached_defaults )
      control_mapping_copy_to_settings( &settings_current, &control_mapping_default );
  
@@ -883,7 +866,7 @@ index 464c166..5af525e 100644
  }
  
  int
-@@ -146,6 +173,7 @@
+@@ -146,6 +173,7 @@ controlmapping_load_mapfile_with_class( const char *filename, libspectrum_class_
    case LIBSPECTRUM_CLASS_CARTRIDGE_IF2:
    case LIBSPECTRUM_CLASS_MICRODRIVE:
    case LIBSPECTRUM_CLASS_CARTRIDGE_TIMEX:
@@ -891,7 +874,7 @@ index 464c166..5af525e 100644
      if ( filename )
        return controlmapping_load_mapfile( filename, class, 1 );
      else
-@@ -168,6 +196,7 @@
+@@ -168,6 +196,7 @@ controlmapping_load_from_file( const char *filename, int current )
    control_mapping_copy_to_settings( &settings_current, &control_mapping_tmp );
    if ( settings_current.control_mapping_not_detached_defaults )
      control_mapping_copy( &control_mapping_default, &control_mapping_tmp );
@@ -900,10 +883,10 @@ index 464c166..5af525e 100644
  }
  
 diff --git a/display.c b/display.c
-index 6ff68d0..6d3457a 100644
+index 6ff68d05..6d3457af 100644
 --- a/display.c
 +++ b/display.c
-@@ -1070,7 +1070,7 @@
+@@ -1070,7 +1070,7 @@ void display_refresh_rect( int x, int y, int w, int h )
      display_is_dirty[i] |= dirty;
      for ( j = column; j < column + bytes; j++) {
        index = j + i * DISPLAY_SCREEN_WIDTH_COLS;
@@ -913,10 +896,10 @@ index 6ff68d0..6d3457a 100644
    }
  }
 diff --git a/fuse.c b/fuse.c
-index 4e8f035..7626f33 100644
+index f2fb11d6..fa424726 100644
 --- a/fuse.c
 +++ b/fuse.c
-@@ -780,6 +780,12 @@
+@@ -782,6 +782,12 @@ parse_nonoption_args( int argc, char **argv, int first_arg,
  #endif
    }
  
@@ -930,10 +913,10 @@ index 4e8f035..7626f33 100644
  }
  
 diff --git a/menu.c b/menu.c
-index e441432..d225d60 100644
+index 75c83fb2..abaea223 100644
 --- a/menu.c
 +++ b/menu.c
-@@ -80,6 +80,9 @@
+@@ -79,6 +79,9 @@ MENU_CALLBACK( menu_file_open )
  
    fuse_emulation_pause();
  
@@ -943,7 +926,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Open Spectrum File" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -153,6 +156,9 @@
+@@ -152,6 +155,9 @@ MENU_CALLBACK( menu_file_recording_play )
  
    fuse_emulation_pause();
  
@@ -953,7 +936,7 @@ index e441432..d225d60 100644
    recording = ui_get_open_filename( "Fuse - Start Replay" );
    if( !recording ) { fuse_emulation_unpause(); return; }
  
-@@ -186,6 +192,9 @@
+@@ -185,6 +191,9 @@ MENU_CALLBACK( menu_file_recording_finalise )
  
    fuse_emulation_pause();
  
@@ -963,7 +946,7 @@ index e441432..d225d60 100644
    rzx_filename = ui_get_open_filename( "Fuse - Finalise Recording" );
    if( !rzx_filename ) { fuse_emulation_unpause(); return; }
  
-@@ -199,6 +208,9 @@
+@@ -198,6 +207,9 @@ MENU_CALLBACK( menu_file_recording_finalise )
  
    libspectrum_free( rzx_filename );
  
@@ -973,7 +956,7 @@ index e441432..d225d60 100644
    fuse_emulation_unpause();
  }  
  
-@@ -218,6 +230,9 @@
+@@ -217,6 +229,9 @@ MENU_CALLBACK( menu_file_screenshot_openscrscreenshot )
  
    fuse_emulation_pause();
  
@@ -983,7 +966,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Open SCR Screenshot" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -234,6 +249,9 @@
+@@ -233,6 +248,9 @@ MENU_CALLBACK( menu_file_screenshot_openmltscreenshot )
  
    fuse_emulation_pause();
  
@@ -993,7 +976,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Open MLT Screenshot" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -349,6 +367,9 @@
+@@ -349,6 +367,9 @@ MENU_CALLBACK( menu_machine_profiler_stop )
  
    fuse_emulation_pause();
  
@@ -1003,7 +986,7 @@ index e441432..d225d60 100644
    filename = ui_get_save_filename( "Fuse - Save Profile Data" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -377,6 +398,9 @@
+@@ -377,6 +398,9 @@ MENU_CALLBACK( menu_media_tape_open )
  
    fuse_emulation_pause();
  
@@ -1013,7 +996,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Open Tape" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -441,6 +465,9 @@
+@@ -441,6 +465,9 @@ MENU_CALLBACK_WITH_ACTION( menu_media_if1_rs232 )
      ui_widget_finish();
      if1_unplug( action & 0x0f );
    } else {
@@ -1023,7 +1006,7 @@ index e441432..d225d60 100644
      filename = ui_get_open_filename( "Fuse - Select File for Communication" );
      if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -491,12 +518,31 @@
+@@ -491,12 +518,31 @@ MENU_CALLBACK_WITH_ACTION( menu_media_insert )
  
    switch( type ) {
    case 3:
@@ -1055,7 +1038,7 @@ index e441432..d225d60 100644
      snprintf( title, sizeof(title), "Fuse - Insert %s", drive->name );
      break;
    }
-@@ -613,6 +659,9 @@
+@@ -613,6 +659,9 @@ MENU_CALLBACK( menu_media_cartridge_timexdock_insert )
  
    fuse_emulation_pause();
  
@@ -1065,7 +1048,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Insert Timex Dock Cartridge" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -643,6 +692,9 @@
+@@ -643,6 +692,9 @@ MENU_CALLBACK( menu_media_cartridge_interface2_insert )
  
    fuse_emulation_pause();
  
@@ -1075,7 +1058,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Insert Interface 2 Cartridge" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -673,6 +725,9 @@
+@@ -673,6 +725,9 @@ MENU_CALLBACK_WITH_ACTION( menu_media_ide_insert )
  
    fuse_emulation_pause();
  
@@ -1085,7 +1068,7 @@ index e441432..d225d60 100644
    filename = ui_get_open_filename( "Fuse - Insert Hard Disk File" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -742,6 +797,9 @@
+@@ -742,6 +797,9 @@ MENU_CALLBACK( menu_file_savesnapshot )
  
    fuse_emulation_pause();
  
@@ -1095,7 +1078,7 @@ index e441432..d225d60 100644
    filename = ui_get_save_filename( "Fuse - Save Snapshot" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -760,6 +818,9 @@
+@@ -760,6 +818,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenasscr )
  
    fuse_emulation_pause();
  
@@ -1105,7 +1088,7 @@ index e441432..d225d60 100644
    filename = ui_get_save_filename( "Fuse - Save Screenshot as SCR" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -785,6 +846,9 @@
+@@ -785,6 +846,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenasmlt )
      return;
    }
  
@@ -1115,7 +1098,7 @@ index e441432..d225d60 100644
    filename = ui_get_save_filename( "Fuse - Save Screenshot as MLT" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -812,6 +876,9 @@
+@@ -812,6 +876,9 @@ MENU_CALLBACK( menu_file_screenshot_savescreenaspng )
      return;
    }
  
@@ -1125,7 +1108,7 @@ index e441432..d225d60 100644
    filename =
      ui_get_save_filename( "Fuse - Save Screenshot as PNG" );
    if( !filename ) { fuse_emulation_unpause(); return; }
-@@ -836,6 +903,9 @@
+@@ -836,6 +903,9 @@ MENU_CALLBACK( menu_file_scalablevectorgraphics_startcaptureinlinemode )
  
      fuse_emulation_pause();
  
@@ -1135,7 +1118,7 @@ index e441432..d225d60 100644
      filename = ui_get_save_filename( "Fuse - Capture to SVG File" );
      if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -855,6 +925,9 @@
+@@ -855,6 +925,9 @@ MENU_CALLBACK( menu_file_scalablevectorgraphics_startcaptureindotmode )
  
      fuse_emulation_pause();
  
@@ -1145,7 +1128,7 @@ index e441432..d225d60 100644
      filename = ui_get_save_filename( "Fuse - Capture to SVG File" );
      if( !filename ) { fuse_emulation_unpause(); return; }
      ui_menu_activate( UI_MENU_ITEM_FILE_SVG_CAPTURE, 1 );
-@@ -890,6 +963,9 @@
+@@ -890,6 +963,9 @@ MENU_CALLBACK( menu_file_movie_record )
  
    fuse_emulation_pause();
  
@@ -1155,7 +1138,7 @@ index e441432..d225d60 100644
    filename = ui_get_save_filename( "Fuse - Record Movie File" );
    if( !filename ) { fuse_emulation_unpause(); return; }
  
-@@ -909,6 +985,9 @@
+@@ -909,6 +985,9 @@ MENU_CALLBACK( menu_file_movie_record_recordfromrzx )
  
    fuse_emulation_pause();
  
@@ -1165,7 +1148,7 @@ index e441432..d225d60 100644
    rzx_file = ui_get_open_filename( "Fuse - Load RZX" );
    if( !rzx_file ) { fuse_emulation_unpause(); return; }
  
-@@ -917,6 +996,9 @@
+@@ -917,6 +996,9 @@ MENU_CALLBACK( menu_file_movie_record_recordfromrzx )
    display_refresh_all();
  
    if( rzx_playback ) {
@@ -1175,7 +1158,7 @@ index e441432..d225d60 100644
      fmf_file = ui_get_save_filename( "Fuse - Record Movie File" );
      if( !fmf_file ) { 
        rzx_stop_playback( 1 );
-@@ -940,6 +1022,9 @@
+@@ -940,6 +1022,9 @@ MENU_CALLBACK( menu_file_recording_record )
  
    fuse_emulation_pause();
  
@@ -1185,7 +1168,7 @@ index e441432..d225d60 100644
    recording = ui_get_save_filename( "Fuse - Start Recording" );
    if( !recording ) { fuse_emulation_unpause(); return; }
  
-@@ -958,12 +1043,22 @@
+@@ -958,12 +1043,22 @@ MENU_CALLBACK( menu_file_recording_recordfromsnapshot )
  
    fuse_emulation_pause();
  
@@ -1208,7 +1191,7 @@ index e441432..d225d60 100644
      fuse_emulation_unpause();
      return;
    }
-@@ -971,10 +1066,17 @@
+@@ -971,10 +1066,17 @@ MENU_CALLBACK( menu_file_recording_recordfromsnapshot )
    if( snapshot_read( snap ) ) {
      libspectrum_free( snap );
      libspectrum_free( recording );
@@ -1226,7 +1209,7 @@ index e441432..d225d60 100644
    rzx_start_recording( recording, settings_current.embed_snapshot );
  
    libspectrum_free( recording );
-@@ -993,9 +1095,16 @@
+@@ -993,9 +1095,16 @@ MENU_CALLBACK( menu_file_recording_continuerecording )
  
    fuse_emulation_pause();
  
@@ -1243,7 +1226,7 @@ index e441432..d225d60 100644
    error = rzx_continue_recording( rzx_filename );
  
    if( error != LIBSPECTRUM_ERROR_NONE ) {
-@@ -1015,6 +1124,9 @@
+@@ -1015,6 +1124,9 @@ MENU_CALLBACK( menu_file_aylogging_record )
  
    fuse_emulation_pause();
  
@@ -1254,10 +1237,10 @@ index e441432..d225d60 100644
    if( !psgfile ) { fuse_emulation_unpause(); return; }
  
 diff --git a/settings.dat b/settings.dat
-index be3630b..7af5d8e 100644
+index 748c2019..a2ce33b4 100644
 --- a/settings.dat
 +++ b/settings.dat
-@@ -39,12 +39,10 @@
+@@ -39,12 +39,10 @@ mouse_swap_buttons, boolean, 0
  tape_traps, boolean, 1,, traps, tapetraps
  fastload, boolean, 1
  auto_load, boolean, 1
@@ -1270,7 +1253,7 @@ index be3630b..7af5d8e 100644
  full_screen, boolean, 0
  writable_roms, boolean, 0
  autosave_settings, boolean, 0
-@@ -57,10 +55,6 @@
+@@ -57,10 +55,6 @@ raw_rs232, null, 0
  raw_s_net, boolean, 0
  snet, string, NULL
  confirm_actions, boolean, 1
@@ -1281,7 +1264,7 @@ index be3630b..7af5d8e 100644
  printer, boolean, 0
  statusbar, boolean, 1
  interface1, boolean, 0
-@@ -168,12 +162,6 @@
+@@ -169,12 +163,6 @@ joystick_gcw0_r3, numeric, 0
  
  keyboard_arrows_shifted, boolean, 1
  
@@ -1294,10 +1277,10 @@ index be3630b..7af5d8e 100644
  rzx_compression, boolean, 1,, compress-rzx
  competition_mode, boolean, 0
  competition_code, numeric, 0
-@@ -311,3 +299,22 @@
- disk_ask_merge, boolean, 1
- 
- debugger_command, string, NULL
+@@ -322,3 +310,22 @@ teletext_port_1, numeric, 19761
+ teletext_port_2, numeric, 19762
+ teletext_port_3, numeric, 19763
+ teletext_port_4, numeric, 19764
 +
 +od_confirm_overwrite_files, boolean, 0
 +od_hidden_files, boolean, 0
@@ -1317,12 +1300,11 @@ index be3630b..7af5d8e 100644
 +control_mapping_not_detached_defaults, boolean, 0
 +control_mapping_no_transform_filename, boolean, 0
 +control_mapping_enable_kempston_joy, boolean, 1
-\ No newline at end of file
 diff --git a/settings.pl b/settings.pl
-index 0770a2e..2357496 100644
+index 32a8c287..b5a398d6 100644
 --- a/settings.pl
 +++ b/settings.pl
-@@ -176,7 +176,7 @@
+@@ -175,7 +175,7 @@ read_config_file( settings_info *settings )
  
    cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
  #ifdef GCWZERO
@@ -1331,7 +1313,7 @@ index 0770a2e..2357496 100644
  #endif
  
    snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
-@@ -342,7 +342,7 @@
+@@ -341,7 +341,7 @@ read_config_file( settings_info *settings )
  
    cfgdir = compat_get_config_path(); if( !cfgdir ) return 1;
  #ifdef GCWZERO
@@ -1341,10 +1323,10 @@ index 0770a2e..2357496 100644
  
    snprintf( path, PATH_MAX, "%s/%s", cfgdir, CONFIG_FILE_NAME );
 diff --git a/tape.c b/tape.c
-index fb54382..3cae18b 100644
+index fb543824..3cae18b7 100644
 --- a/tape.c
 +++ b/tape.c
-@@ -374,7 +374,7 @@
+@@ -374,7 +374,7 @@ int tape_can_autoload( void )
  {
  #ifdef GCWZERO
    /* Allow to autoload with custom roms */
@@ -1354,10 +1336,10 @@ index fb54382..3cae18b 100644
    return( settings_current.auto_load && !memory_custom_rom() );
  #endif
 diff --git a/timer/timer.c b/timer/timer.c
-index 96b7ec5..9591fca 100644
+index 96b7ec5f..9591fcaa 100644
 --- a/timer/timer.c
 +++ b/timer/timer.c
-@@ -97,7 +97,7 @@
+@@ -97,7 +97,7 @@ timer_estimate_speed( void )
    }
  
  #ifdef GCWZERO
@@ -1367,7 +1349,7 @@ index 96b7ec5..9591fca 100644
      frame_count = 0;
    } else
 diff --git a/ui.c b/ui.c
-index 17ae22f..2dac36c 100644
+index 17ae22f7..2dac36ce 100644
 --- a/ui.c
 +++ b/ui.c
 @@ -39,6 +39,9 @@
@@ -1380,7 +1362,7 @@ index 17ae22f..2dac36c 100644
  
  #define MESSAGE_MAX_LENGTH 256
  
-@@ -750,16 +753,12 @@
+@@ -750,16 +753,12 @@ ui_tape_write( void )
  
    fuse_emulation_pause();
  
@@ -1400,7 +1382,7 @@ index 17ae22f..2dac36c 100644
    tape_write( filename );
  
    libspectrum_free( filename );
-@@ -780,15 +779,11 @@
+@@ -780,15 +779,11 @@ ui_mdr_write( int which, int saveas )
    snprintf( title, 80, "Fuse - Write Microdrive Cartridge %i", which + 1 );
  
    if( saveas ) {
@@ -1419,7 +1401,7 @@ index 17ae22f..2dac36c 100644
    }
  
    err = if1_mdr_write( which, filename );
-@@ -814,6 +809,7 @@
+@@ -814,6 +809,7 @@ ui_widget_end( void )
  }
  
  #ifdef GCWZERO
@@ -1427,7 +1409,7 @@ index 17ae22f..2dac36c 100644
  void ui_widget_statusbar_update_info( float speed ) {
    widget_statusbar_update_info( speed );
  }
-@@ -821,6 +817,12 @@
+@@ -821,6 +817,12 @@ void ui_widget_statusbar_update_info( float speed ) {
  void ui_widget_statusbar_print_info( void ) {
    widget_statusbar_print_info();
  }
@@ -1441,10 +1423,10 @@ index 17ae22f..2dac36c 100644
  
  #if VKEYBOARD
 diff --git a/ui/options.dat b/ui/options.dat
-index 9c255c1..d906cca 100644
+index 1556b984..6f876e8f 100644
 --- a/ui/options.dat
 +++ b/ui/options.dat
-@@ -27,18 +27,21 @@
+@@ -27,18 +27,21 @@ Checkbox, A(u)to-save settings, autosave_settings, INPUT_KEY_u
  #ifdef GCWZERO
  general_gcw0
  General GCW0 Options
@@ -1472,7 +1454,7 @@ index 9c255c1..d906cca 100644
  #endif
  Combo, (P)hantom typist mode, phantom_typist_mode, INPUT_KEY_p, *Auto|Keyword|Keystroke|Menu|Plus 2A|Plus 3
  Checkbox, (D)etect loaders, detect_loader, INPUT_KEY_d
-@@ -156,4 +159,5 @@
+@@ -159,4 +162,5 @@ Checkbox, Auto-(l)oad, control_mapping_autoload, INPUT_KEY_L
  Checkbox, Auto-(s)ave, control_mapping_autosave, INPUT_KEY_S
  Checkbox, No(t) detached defaults, control_mapping_not_detached_defaults, INPUT_KEY_T
  Checkbox, No cut/transfor(m) filenames, control_mapping_no_transform_filename, INPUT_KEY_M
@@ -1480,10 +1462,10 @@ index 9c255c1..d906cca 100644
  #endif
 \ No newline at end of file
 diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
-index 8397d50..6ba36ef 100644
+index 8397d50c..6ba36efb 100644
 --- a/ui/sdl/sdldisplay.c
 +++ b/ui/sdl/sdldisplay.c
-@@ -271,7 +271,7 @@
+@@ -271,7 +271,7 @@ uidisplay_od_init( SDL_Rect **modes )
  
  /* On OpenDingux/RetroFW fix Full Screen */
    settings_current.full_screen = 1;
@@ -1492,7 +1474,7 @@ index 8397d50..6ba36ef 100644
    settings_current.sdl_fullscreen_mode = utils_safe_strdup( '\0' );
  
  /*
-@@ -1114,7 +1114,7 @@
+@@ -1114,7 +1114,7 @@ uidisplay_frame_end( void )
       windowed-only UI a chance to free menu etc. resources before
       the switch to fullscreen (e.g. Mac OS X) */
  #ifdef GCWZERO
@@ -1501,7 +1483,7 @@ index 8397d50..6ba36ef 100644
    if ( ( sdldisplay_is_full_screen != settings_current.full_screen  ||
        sdldisplay_is_triple_buffer != sdldisplay_change_triple_buffer ) &&
  #else
-@@ -1126,7 +1126,7 @@
+@@ -1126,7 +1126,7 @@ uidisplay_frame_end( void )
    }
  
  #ifdef GCWZERO
@@ -1511,10 +1493,10 @@ index 8397d50..6ba36ef 100644
  
  #if VKEYBOARD
 diff --git a/ui/sdl/sdlhotkeys.c b/ui/sdl/sdlhotkeys.c
-index 92b4b3c..0f9b5db 100644
+index 29c54ddf..8ceeb6c3 100644
 --- a/ui/sdl/sdlhotkeys.c
 +++ b/ui/sdl/sdlhotkeys.c
-@@ -90,9 +90,9 @@
+@@ -90,9 +90,9 @@ int is_combo_possible( const SDL_Event *event )
  {
    /* There are not combos in widgets or keyboard */
  #ifdef VKEYBOARD
@@ -1526,7 +1508,7 @@ index 92b4b3c..0f9b5db 100644
  #endif
  
   /* Mot filter if R1 and R1 are mapped to joysticks */
-@@ -204,7 +204,7 @@
+@@ -204,7 +204,7 @@ push_combo_event( Uint8* flags )
  
    /* Switch triple buffer */
    } else if ( toggle_triple_buffer ) {
@@ -1536,10 +1518,10 @@ index 92b4b3c..0f9b5db 100644
      /* Clean flags and mark combo as done */
      *flags = 0x00;
 diff --git a/ui/ui.h b/ui/ui.h
-index 7b2547c..eeca90a 100644
+index 7b2547c8..eeca90a1 100644
 --- a/ui/ui.h
 +++ b/ui/ui.h
-@@ -306,8 +306,11 @@
+@@ -306,8 +306,11 @@ int ui_query( const char *message );
  int ui_widget_init( void );
  int ui_widget_end( void );
  #ifdef GCWZERO
@@ -1552,10 +1534,10 @@ index 7b2547c..eeca90a 100644
  #if VKEYBOARD
  extern int vkeyboard_enabled;
 diff --git a/ui/widget/binary.c b/ui/widget/binary.c
-index e5de175..97df894 100644
+index e5de1753..97df8946 100644
 --- a/ui/widget/binary.c
 +++ b/ui/widget/binary.c
-@@ -140,9 +140,15 @@
+@@ -140,9 +140,15 @@ ask_filename()
  
    if( widget_binary.load ) {
      filesel.title = "Fuse - Load Binary Data";
@@ -1571,7 +1553,7 @@ index e5de175..97df894 100644
      widget_do_fileselector_save( &filesel );
    }
    if( !widget_filesel_name ) return;
-@@ -386,6 +392,9 @@
+@@ -386,6 +392,9 @@ menu_file_loadbinarydata( int action )
  
    fuse_emulation_pause();
  
@@ -1581,7 +1563,7 @@ index e5de175..97df894 100644
    widget_binary.filename = ui_get_open_filename( "Fuse - Load Binary Data" );
    if( !widget_binary.filename ) { fuse_emulation_unpause(); return 1; }
  
-@@ -409,6 +418,9 @@
+@@ -409,6 +418,9 @@ menu_file_savebinarydata( int action )
  {
    fuse_emulation_pause();
  
@@ -1592,10 +1574,10 @@ index e5de175..97df894 100644
    if( !widget_binary.filename ) { fuse_emulation_unpause(); return 1; }
  
 diff --git a/ui/widget/filesel.c b/ui/widget/filesel.c
-index 5a58eed..2919340 100644
+index 5a58eed3..29193408 100644
 --- a/ui/widget/filesel.c
 +++ b/ui/widget/filesel.c
-@@ -84,15 +84,159 @@
+@@ -84,15 +84,159 @@ static int is_drivesel = 0;
  static int is_rootdir;
  #endif				/* #ifdef WIN32 */
  
@@ -1757,7 +1739,7 @@ index 5a58eed..2919340 100644
  #endif
  
  static char *widget_get_filename( const char *title, int saving );
-@@ -162,8 +306,12 @@
+@@ -162,8 +306,12 @@ ui_get_save_filename( const char *title )
  {
  #if !defined AMIGA && !defined __MORPHOS__
  #ifdef GCWZERO
@@ -1772,7 +1754,7 @@ index 5a58eed..2919340 100644
      if (filename && compat_file_exists( filename ) ) {
          const char *filename1 = strrchr( filename, FUSE_DIR_SEP_CHR );
          filename1 = filename1 ? filename1 + 1 : filename;
-@@ -185,8 +333,10 @@
+@@ -185,8 +333,10 @@ ui_get_save_filename( const char *title )
          }
      } else return filename;
    } else
@@ -1784,7 +1766,7 @@ index 5a58eed..2919340 100644
  #else
    return amiga_asl( title, TRUE );
  #endif
-@@ -387,6 +537,15 @@
+@@ -387,6 +537,15 @@ static int widget_scandir( const char *dir, struct widget_dirent ***namelist,
    }
  #endif				/* #ifdef WIN32 */
  
@@ -1800,7 +1782,7 @@ index 5a58eed..2919340 100644
    return number;
  }
  
-@@ -474,12 +633,20 @@
+@@ -474,12 +633,20 @@ widget_select_file( const char *name )
  
  #ifndef WIN32
  #ifdef GCWZERO
@@ -1822,7 +1804,7 @@ index 5a58eed..2919340 100644
    return 1;
  }
  
-@@ -527,9 +694,12 @@
+@@ -527,9 +694,12 @@ widget_filesel_draw( void *data )
  
    widget_scan( directory );
  #ifdef GCWZERO
@@ -1838,7 +1820,7 @@ index 5a58eed..2919340 100644
    } else {
  #endif
    new_current_file = current_file = 0;
-@@ -570,11 +740,11 @@
+@@ -570,11 +740,11 @@ int widget_filesel_finish( widget_finish_state finished ) {
      widget_filesel_name = NULL;
    }
  #ifdef GCWZERO
@@ -1855,7 +1837,7 @@ index 5a58eed..2919340 100644
  #endif
    return 0;
  }
-@@ -632,6 +802,69 @@
+@@ -632,6 +802,69 @@ static char* widget_getcwd( void )
    return directory;
  }
  
@@ -1925,7 +1907,7 @@ index 5a58eed..2919340 100644
  static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
  				       int top_left, int current,
  				       const char *dir )
-@@ -643,7 +876,13 @@
+@@ -643,7 +876,13 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
    error = widget_dialog_with_border( 1, 2, 30, 22 );
    if( error ) return error;
  
@@ -1939,7 +1921,7 @@ index 5a58eed..2919340 100644
    if( widget_stringwidth( dir ) > 223 ) {
      char buffer[128];
      int prefix = widget_stringwidth( "..." ) + 1;
-@@ -672,6 +911,9 @@
+@@ -672,6 +911,9 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
  
    if( is_saving )
    {
@@ -1949,7 +1931,7 @@ index 5a58eed..2919340 100644
      widget_printstring( 12, 22 * 8, WIDGET_COLOUR_FOREGROUND,
  #ifdef GCWZERO
  				     "\012A\001 = select" );
-@@ -687,7 +929,11 @@
+@@ -687,7 +929,11 @@ static int widget_print_all_filenames( struct widget_dirent **filenames, int n,
    }
  
    if( i < n )
@@ -1961,7 +1943,7 @@ index 5a58eed..2919340 100644
  
    /* Display that lot */
    widget_display_lines( 2, 22 );
-@@ -863,10 +1109,6 @@
+@@ -863,10 +1109,6 @@ http://thread.gmane.org/gmane.comp.gnu.mingw.user/9197
      new_current_file = 0;
      /* Force a redisplay of all filenames */
      current_file = 1; top_left_file = 1;
@@ -1972,7 +1954,7 @@ index 5a58eed..2919340 100644
    }
  
    free( fn );
-@@ -989,6 +1231,64 @@
+@@ -989,6 +1231,64 @@ widget_filesel_keyhandler( input_key key )
      break;
  
  #ifdef GCWZERO
@@ -2037,7 +2019,7 @@ index 5a58eed..2919340 100644
    case INPUT_KEY_space: /* X */
  #else
    case INPUT_KEY_Tab:
-@@ -1115,3 +1415,243 @@
+@@ -1115,3 +1415,243 @@ widget_filesel_keyhandler( input_key key )
    free( dirtitle );
  #endif /* ifdef AMIGA */
  }
@@ -2282,10 +2264,10 @@ index 5a58eed..2919340 100644
 +}
 +#endif
 diff --git a/ui/widget/menu.c b/ui/widget/menu.c
-index a32d99a..f586e59 100644
+index a32d99a6..f586e59a 100644
 --- a/ui/widget/menu.c
 +++ b/ui/widget/menu.c
-@@ -877,6 +877,9 @@
+@@ -877,6 +877,9 @@ menu_options_load_file_control_mapping( int action )
  {
    char *filename;
  
@@ -2295,7 +2277,7 @@ index a32d99a..f586e59 100644
    filename = ui_get_open_filename( "Fuse - Load Control Mapping" );
    if( !filename ) return;
  
-@@ -889,6 +892,9 @@
+@@ -889,6 +892,9 @@ menu_options_save_file_control_mapping( int action )
  {
    char *filename;
  
@@ -2306,10 +2288,10 @@ index a32d99a..f586e59 100644
    if( !filename ) return;
  
 diff --git a/ui/widget/roms.c b/ui/widget/roms.c
-index f2706f5..c6b546a 100644
+index f2706f5d..c6b546ac 100644
 --- a/ui/widget/roms.c
 +++ b/ui/widget/roms.c
-@@ -266,6 +266,9 @@
+@@ -266,6 +266,9 @@ widget_roms_keyhandler( input_key key )
  
      data.exit_all_widgets = 0;
      data.title = buf;
@@ -2320,10 +2302,10 @@ index f2706f5..c6b546a 100644
      if( !widget_filesel_name ) return;
  
 diff --git a/ui/widget/widget.c b/ui/widget/widget.c
-index d2d8db2..91ec577 100644
+index 1a0114c2..129324db 100644
 --- a/ui/widget/widget.c
 +++ b/ui/widget/widget.c
-@@ -556,7 +556,7 @@
+@@ -555,7 +555,7 @@ static int  info_len = 0;
  static int  info_sc  = 1;
  void widget_statusbar_update_info( float speed ) {
    snprintf(status_info, WIDGET_MAX_INFO_LENGTH,
@@ -2332,7 +2314,7 @@ index d2d8db2..91ec577 100644
             libspectrum_machine_name( machine_current->machine ),
             speed,
             settings_current.frame_rate);
-@@ -569,7 +569,7 @@
+@@ -568,7 +568,7 @@ void widget_statusbar_update_info( float speed ) {
      snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
               status_info,
               joystick_name[settings_current.joystick_2_output] );
@@ -2342,10 +2324,10 @@ index d2d8db2..91ec577 100644
               status_info,
               "B");
 diff --git a/ui/widget/widget.h b/ui/widget/widget.h
-index 1f1f1cc..e5e3c9f 100644
+index 1f1f1cc5..e5e3c9fc 100644
 --- a/ui/widget/widget.h
 +++ b/ui/widget/widget.h
-@@ -85,6 +85,45 @@
+@@ -85,6 +85,45 @@ typedef enum widget_type {
  #endif
  } widget_type;
  
@@ -2392,10 +2374,10 @@ index 1f1f1cc..e5e3c9f 100644
  int widget_do( widget_type which, void *data );
  
 diff --git a/uimedia.c b/uimedia.c
-index 82c58db..a699a0d 100644
+index a15d487a..7f0e0858 100644
 --- a/uimedia.c
 +++ b/uimedia.c
-@@ -240,6 +240,22 @@
+@@ -240,6 +240,22 @@ drive_save( const ui_media_drive_info_t *drive, int saveas )
  
    snprintf( title, sizeof( title ), "Fuse - Write %s", drive->name );
    if( saveas ) {
@@ -2419,10 +2401,10 @@ index 82c58db..a699a0d 100644
      if( !filename ) {
        fuse_emulation_unpause();
 diff --git a/utils.c b/utils.c
-index e2cacb6..ec12d9c 100644
+index e2cacb67..ec12d9ca 100644
 --- a/utils.c
 +++ b/utils.c
-@@ -259,6 +259,9 @@
+@@ -259,6 +259,9 @@ utils_open_snap( void )
    char *filename;
    int error;
  
@@ -2432,7 +2414,7 @@ index e2cacb6..ec12d9c 100644
    filename = ui_get_open_filename( "Fuse - Load Snapshot" );
    if( !filename ) return -1;
  
-@@ -531,8 +534,15 @@
+@@ -531,8 +534,15 @@ void utils_set_last_loaded_file( const char *filename, libspectrum_class_t class
    if ( change_to_path ) {
      strncpy( buffer, filename, PATH_MAX );
      path = dirname(buffer);

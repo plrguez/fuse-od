@@ -4295,9 +4295,7 @@ index 2db9913..b4c5d08 100644
  fi
  
  AC_SUBST(PNG_CFLAGS)
-@@ -1046,6 +1104,8 @@
- echo "Spectranet support: ${build_spectranet}"
- echo "SpeccyBoot support: ${linux_tap:-no}"
+@@ -1056,4 +1114,6 @@
  echo "Desktop integration: ${desktopintegration}"
 +echo "GCW ZERO: ${gcw0}"
 +echo "RetroFW 2: ${retrofw}"
