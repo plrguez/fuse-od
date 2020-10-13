@@ -1,3 +1,41 @@
+2020-10-13 Fuse 1.5.4 OpenDingux/RetroFW v0.0.3
+
+    * Rebase the source to the latest officcial commits for Fuse and libspectrum
+
+    * New options:
+      * Sound:
+        · 'Sound frequency' (default 44100)
+
+      * General GCW0:
+        · 'GCW0 keyboard: Map LStick to DPad' (default enabled).
+        · 'Border' (default Full)).
+        · 'Panel type' (default 320x240).
+        · 'Show status bar with border' (default enabled).
+        · 'GCW0 keyboard: Map LStick to DPad' (default enabled)
+
+    * Sound frequency option is now visible in Options/Sound menu.
+
+    * Border option is for scale the main screen reducing the border size.
+      · The scale is hardware (IPU scaling).
+      · Full, Large, Medium, Small and None options available.
+      · Scaling do not work for RetroFW 1.
+      · For RG350M(640x480) and RG280M(480x320) the corresponding panel must be
+        selected to make all border options scaling properly with 1x filters.
+      · For RG280M(480x320) integer scaling is automatically deactivated with 1x
+        filters.
+      · Hotkey combo L1+R1+A assigned to switch between Full and None border.
+      · Added an option to enable status bar with other border than Full.
+
+    * Added a new option to make posible left stick use as directional pad when
+      mapping is active for GCW0 keyboard. Until now left stick can only be used
+      with GCW0 keyboard 1.
+
+    * Increased buffer sound frames with triple buffer or border scaling.
+
+    * For Timex models the 2x filters has been removed becouse never will work.
+
+    * Some minor changes to fix vkeyboard display with some filters and models.
+
 2020-09-19 Fuse 1.5.4 OpenDingux/RetroFW v0.0.2
 
     * Renamed OpenDingux/RetroFW options to prefix them with 'od_'.

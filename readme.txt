@@ -69,14 +69,64 @@ Options - General GCW0
     If Hotkey combos are enabled you can enable/disable it with the
     `L1` + `R1` + `B` combo.
 
+  - Border
+    ------
+    Default Full.
+
+    Use IPU scaling by reducing screen resolution by removing border pixels.
+    See next opyion to choose your panel type.
+
+    The options are:
+      - Full   320x240. Actual Fuse's full border emulation.
+      - Large  304x228. Reduce pixels: 16 width, 12 height.
+      - Medium 228x216. Reduce pixels: 32 width, 24 heigth.
+      - Small  272x204. Reduce pixels: 48 width, 36 heigth.
+      - None   256x192. No border. Reduce pixels: 64 width, 48 heigth.
+
+    Filters can affect the display depending on panel resolution.
+
+    If Hotkey combos are enabled you can switch between Full and None with
+    `L1` + `R1` + `A` combo.
+
+    Operating Systems and scaling with Border option
+       - RetroFW 1
+         Scaling do not work.
+
+       - RetroFW 2
+         Scaling works with all filters and spectrum models.
+
+       - OpenDingux
+         * 320x240 panel (GCW0, RG350, RG350P).
+           Scaling works with all filters and spectrum models.
+
+         * 640x480 panel (RG350M)
+           Scaling works with all filters and spectrum models.
+           For 1x filters. Large is using 300x225 resolution and Small 272x208.
+
+         * 480x320 panel (RG280M)
+           Scaling works with all filters and spectrum models.
+           For 1x filters. Large is using 304x224 resolution and Small 272x208.
+
+  - Panel type
+    ----------
+    Default 320x240.
+
+    Choose your panel type for correct border display with some filters.
+
+  - Show status bar with border
+    ---------------------------
+    Default enabled.
+
+    Show status bar also when border is not Full.
+
   - Show FSP instead of speed percentaje
     ------------------------------------
     Default disbled.
 
     If you want to view FPS instead emulation speed %.
 
-  - Filter Known extensions for load and save
-    -----------------------------------------
+  - Filter Known extensions
+    -----------------------
     Default enabled.
 
     Only the supported file extensions will be presented in file
@@ -131,8 +181,8 @@ Options - General GCW0
     the first extension of each media known type will be added to the
     name.
 
-  - Independent directory access for each media type:
-    -------------------------------------------------
+  - Independent dir access for media type
+    -------------------------------------
     Default disabled.
 
     Each media type dialog will use their own navigation path from the
@@ -146,8 +196,8 @@ Options - General GCW0
           enabled and there is a last directory saved.
         - The Fuse's executable path.
 
-  - Confirm overwrite files:
-    ------------------------
+  - Confirm overwrite files
+    -----------------------
     Default disabled.
 
     Fuse asks for confirmation to overwrite for some media, but not
@@ -156,26 +206,34 @@ Options - General GCW0
 
     It must be convenient to enable it.
 
-  - Show hidden files:
-    ------------------
+  - Show hidden files
+    -----------------
     Default disabled.
 
     Show all files and directorys including hidden.
     Hidden files begin with .
 
-  - Hotkey combos:
-    --------------
+  - Hotkey combos
+    -------------
     Default disabled.
 
     If you want to quick access some functions. See section Hotkey
     combinations for details.
 
-  - Save last directory visited:
-    ----------------------------
+  - Save last directory visited
+    ---------------------------
     Default disabled.
 
     The last visited directory will be saved to use as initial path.
     This will be used if Fuse is loaded without file selector.
+
+  - GCW0 keyboard: Map LStick to DPad
+    ---------------------------------
+    Default enabled.
+
+    With this option enabled and if GCW0 keyboard mapping is enabled and no
+    Joystick is mapped then left stick moves are mapped as directional pad
+    buttons, so they will be use the mapped dpad for GCW0 keyboard.
 
 Options - Media
 ---------------
