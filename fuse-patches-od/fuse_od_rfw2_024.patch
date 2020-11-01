@@ -1,0 +1,170 @@
+From 9ec1ac67a4df6a5a9d9730c2858863e12aea0d91 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 1 nov. 2020 16:22:45
+
+Patch #024 for OpenDingux and RetroFW
+Fix screenshots. In version v0.0.3 status line info was changed to
+transparent overlay. With this change the ZX Spectrum screen under the
+overlay is marked as dirty and set to 0xff. If a border is used to
+scale the screen and a screenshot is taked then the overlay block appear
+as white block in the screenshot.
+With this the block is saved before mark it as dirty and is restored 
+previously to save screenshot.
+
+
+diff --git a/display.c b/display.c
+index 6d3457a..9169e33 100644
+--- a/display.c
++++ b/display.c
+@@ -1027,7 +1027,16 @@
+           * sizeof(libspectrum_dword) );
+ }
+ 
+-#if VKEYBOARD
++#if defined(VKEYBOARD) || defined(GCWZERO)
++typedef struct od_t_last_screen {
++  int index;
++  libspectrum_dword value;
++} od_t_last_screen;
++
++static od_t_last_screen od_save_last_screen[ DISPLAY_SCREEN_WIDTH_COLS * DISPLAY_SCREEN_HEIGHT ] = {
++  { -1, 0 }
++};
++
+ void display_refresh_main_screen_rect( int x, int y, int w, int h )
+ {
+   size_t i;
+@@ -1050,9 +1059,9 @@
+     display_maybe_dirty[i] |= dirty;
+ }
+ 
+-void display_refresh_rect( int x, int y, int w, int h )
++void display_refresh_rect( int x, int y, int w, int h, int save )
+ {
+-  size_t i, j;
++  size_t i, j, k = 0;
+   int index;
+   int column = machine_current->timex ? x >> 4 : x >> 3;
+   int bytes  = machine_current->timex ? w >> 4 : w >> 3 ;
+@@ -1070,9 +1079,23 @@
+     display_is_dirty[i] |= dirty;
+     for ( j = column; j < column + bytes; j++) {
+       index = j + i * DISPLAY_SCREEN_WIDTH_COLS;
++      if ( save ) {
++        od_save_last_screen[k].index = index;
++        od_save_last_screen[k].value = display_last_screen[index];
++        k++;
++      }
+       display_last_screen[index] = 0xffffffff;
+     }
+   }
++  if ( save )
++    od_save_last_screen[k].index = -1;
++}
++
++void od_restore_last_saved_display_rect( void ) {
++  int i;
++  for ( i = 0; od_save_last_screen[i].index != -1; i++ )
++    display_last_screen[od_save_last_screen[i].index] = od_save_last_screen[i].value;
++  od_save_last_screen[0].index = -1;
+ }
+ #endif
+ 
+diff --git a/display.h b/display.h
+index cc7d55e..71bb637 100644
+--- a/display.h
++++ b/display.h
+@@ -115,9 +115,10 @@
+ int display_frame(void);
+ void display_refresh_main_screen(void);
+ void display_refresh_all(void);
+-#if VKEYBOARD
++#if defined(VKEYBOARD) || defined(GCWZERO)
+ void display_refresh_main_screen_rect( int x, int y, int w, int h );
+-void display_refresh_rect( int x, int y, int w, int h );
++void display_refresh_rect( int x, int y, int w, int h, int save );
++void od_restore_last_saved_display_rect( void );
+ #endif
+ 
+ #define display_get_offset( x, y ) display_line_start[(y)]+(x)
+diff --git a/menu.c b/menu.c
+index 2d2a5f9..74f1126 100644
+--- a/menu.c
++++ b/menu.c
+@@ -824,6 +824,10 @@
+   filename = ui_get_save_filename( "Fuse - Save Screenshot as SCR" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
++#if USE_WIDGET && GCWZERO
++  if ( settings_current.statusbar )
++    od_restore_last_saved_display_rect();
++#endif
+   screenshot_scr_write( filename );
+ 
+   libspectrum_free( filename );
+@@ -852,6 +856,10 @@
+   filename = ui_get_save_filename( "Fuse - Save Screenshot as MLT" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
++#if USE_WIDGET && GCWZERO
++  if ( settings_current.statusbar )
++    od_restore_last_saved_display_rect();
++#endif
+   screenshot_mlt_write( filename );
+ 
+   libspectrum_free( filename );
+@@ -883,6 +891,10 @@
+     ui_get_save_filename( "Fuse - Save Screenshot as PNG" );
+   if( !filename ) { fuse_emulation_unpause(); return; }
+ 
++#if USE_WIDGET && GCWZERO
++  if ( settings_current.statusbar )
++    od_restore_last_saved_display_rect();
++#endif
+   screenshot_write( filename, scaler );
+ 
+   libspectrum_free( filename );
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index 2898bad..280315a 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -1288,7 +1288,7 @@
+   updated_rects[num_rects].h = r1.h;
+   num_rects++;
+ 
+-  display_refresh_rect( r1.x - 1 * scale, r1.y - 1 * scale, r1.w + 8 * scale, r1.h );
++  display_refresh_rect( r1.x - 1 * scale, r1.y - 1 * scale, r1.w + 8 * scale, r1.h + 1 * scale, 1 );
+ }
+ #endif
+ 
+@@ -1365,7 +1365,7 @@
+     if (old_position != position)
+       display_refresh_all();
+     else
+-      display_refresh_rect( r1.x -1, r1.y - 1, r1.w + 8 * scale, r1.h + 1 * scale );
++      display_refresh_rect( r1.x -1, r1.y - 1, r1.w + 8 * scale, r1.h + 1 * scale, 0 );
+     old_position = position;
+   }
+ }
+@@ -1389,7 +1389,7 @@
+   }
+   /*
+      Don't refresh display from the use of keyboard in other Widgets
+-     The function widget_do already do a display_refresh_call at his end
++     The function widget_do already do a display_refresh_all at his end
+      And the call here will affect to some operations like save screens
+    */
+   if (ui_widget_level == -1)
+@@ -1535,9 +1535,9 @@
+ #endif
+ 
+ #ifdef GCWZERO
+-  if ( settings_current.statusbar && ui_widget_level == -1 )
+-    if ( !sdldisplay_current_od_border || settings_current.od_statusbar_with_border )
+-      uidisplay_status_overlay();
++  if ( settings_current.statusbar && ui_widget_level == -1 &&
++       ( !sdldisplay_current_od_border || settings_current.od_statusbar_with_border ) )
++    uidisplay_status_overlay();
+ #endif
+ 
+   /* Force a full redraw if requested */

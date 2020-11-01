@@ -1,0 +1,93 @@
+From 9847ee7c71acdb207e45fe992c283c4c5a63911e Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 1 nov. 2020 10:07:00
+
+Patch #023 for OpenDingux and RetroFW
+Screen scaling. Use dirty blocks and do not refresh all screen.
+Control mapping. Do not display file extension in Joysticks menu
+
+
+diff --git a/Platform/VERSION b/Platform/VERSION
+index bcab45a..74841cc 100644
+--- a/Platform/VERSION
++++ b/Platform/VERSION
+@@ -1 +1 @@
+-0.0.3
++0.0.4-wip
+diff --git a/menu.c b/menu.c
+index abaea22..2d2a5f9 100644
+--- a/menu.c
++++ b/menu.c
+@@ -1281,7 +1281,7 @@
+   ui_menu_item_set_active( path,
+                            controlmapping_something_changed( &settings_current ) ? 1 : 0 );
+ 
+-  filename = utils_last_filename( controlmapping_get_filename(), 0 );
++  filename = utils_last_filename( controlmapping_get_filename(), 1 );
+   buffer   = strndup( filename, 20 );
+   if ( strlen(filename) > 20 )
+     memcpy( &(buffer[19]), ">", 1 );
+@@ -1303,7 +1303,7 @@
+     return NULL;
+ 
+   mapfile = controlmapping_get_filename();
+-  filename = utils_last_filename( mapfile,0 );
++  filename = utils_last_filename( mapfile, 1 );
+   if (filename) {
+     buffer = strndup( filename, 20 );
+     if ( strlen(filename) > 20 )
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index f2b4991..2898bad 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -1542,8 +1542,7 @@
+ 
+   /* Force a full redraw if requested */
+ #ifdef GCWZERO
+-  if ( sdldisplay_force_full_refresh || sdldisplay_is_triple_buffer ||
+-       sdldisplay_current_od_border ) {
++  if ( sdldisplay_force_full_refresh || sdldisplay_is_triple_buffer ) {
+ #else
+   if ( sdldisplay_force_full_refresh ) {
+ #endif
+@@ -1568,28 +1567,23 @@
+ 
+   for( r = updated_rects; r != last_rect; r++ ) {
+ #ifdef GCWZERO
+-    int dst_y;
+-    int dst_h;
+-    int dst_x;
+     if ( sdldisplay_current_od_border ) {
+-      r->x = clip_area.x;
+-      r->y = clip_area.y;
+-      r->w = clip_area.w;
+-      r->h = clip_area.h;
+-
+-      dst_y = 0;
+-      dst_h = r->h;
+-      dst_x = 0;
+-    } else {
+-      dst_y = r->y * sdldisplay_current_size + fullscreen_y_off;
+-      dst_h = r->h;
+-      dst_x = r->x * sdldisplay_current_size + fullscreen_x_off;
++      if ( ( r->x > clip_area.x + clip_area.w ) ||
++           ( r->y > clip_area.y + clip_area.h ) )
++        continue;
++      if ( r->x < clip_area.x )
++        r->x = clip_area.x;
++      if ( r->y < clip_area.y )
++        r->y = clip_area.y;
++      if ( r->x + r->w > clip_area.x + clip_area.w )
++        r->w = clip_area.w - ( r->x - clip_area.x );
++      if ( r->y + r->h > clip_area.y + clip_area.h )
++        r->h = clip_area.h - ( r->y - clip_area.y );
+     }
+-#else
++#endif
+     int dst_y = r->y * sdldisplay_current_size + fullscreen_y_off;
+     int dst_h = r->h;
+     int dst_x = r->x * sdldisplay_current_size + fullscreen_x_off;
+-#endif
+ 
+     scaler_proc16(
+       (libspectrum_byte*)tmp_screen->pixels +

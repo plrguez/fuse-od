@@ -1,0 +1,813 @@
+From f2c86938511b2873ac5146373078d78755a5685a Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 1 nov. 2020 19:38:43
+
+Patch #025 for OpenDingux and RetroFW
+Build for latest mainline OpenDingux (Linux 5.10.0).
+Fix compiling warnings for toolchain (GCC 10.2).
+Link with libpng 1.6 library
+Added 320x240 or 640x480 modes to allow the use of 1x filters on 640x480
+handhelds (RG350M) and 2x filters on 320x240 handhelds (GCW0, RG350,
+RG280M).
+Power button is sending various events with only one press. Changed to
+use Select button to exit completely from menu.
+On new kmsdrm driver video there ino need to sdl flip before switch of
+triple buffer.
+
+diff --git a/.gitignore b/.gitignore
+index 1bc3fdd..2b72123 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -110,8 +110,8 @@
+ /Platform/GCW0/build/
+ /Platform/RETROFW2.0/build/
+ /Platform/RETROFW1.0/build/
+-/Platform/GCW0/gdbinit
+-/Platform/RETROFW1.0/gdbinit
+-/Platform/RETROFW2.0/gdbinit
++/Platform/GCW0/gdbinit*
++/Platform/RETROFW1.0/gdbinit*
++/Platform/RETROFW2.0/gdbinit*
+ /controlmapping/controlmappingsettings.c
+ /controlmapping/controlmappingsettings.h
+diff --git a/Platform/ChangeLog b/Platform/ChangeLog
+index 2094eb9..2f2a7f6 100644
+--- a/Platform/ChangeLog
++++ b/Platform/ChangeLog
+@@ -1,3 +1,44 @@
++2020-11-01 Fuse 1.5.4 OpenDingux/RetroFW v0.0.4
++
++    * This release is mainly to build for the beta OpenDingux firmware based on
++      kernel 5.10 and a few small bugfixes.
++      No new features have been added.
++
++    * Build for mainline OpenDingux beta firmware. Previous buils do not work
++      in beta firmware becouse they are linked to libpng14 and new firmware
++      provide only libpng16.
++
++    * Fixed some warnings for GCC 10
++      There are still some warnings for the upstream Fuse.
++
++    * In beta firmware the driver do not list video modes other than native
++      resolutions. Becouse of this the 320x240 and 640x480 resolutions are
++      added when needed to allow change resolution to 320x240 on RG350M and
++      to 640x480 on GCW0, RG350(P), RG280M. Those are needed for filters.
++
++    * Change from Power button to Select button to close menu.
++      In beta firmware Power button is sending various push events. The effect
++      is that when menu is opened with Power button then it closes inmediately.
++      In file dialogs Select is used to change from file filter to show all and
++      Select will not close menu.
++
++    * In beta firmware disabling triple buffer does not freeze the screen so
++      the logic to flip pages is not applied in beta firmware.
++
++    * Border scaling no longer updates the full screen and uses dirty blocks,
++      just like Fuse is designed.
++
++    * In the Joysticks options, the extension of the mapping files is not
++      displayed to save space.
++
++    * Screenshot fixes.  In version v0.0.3 status line info was changed to use a
++      transparent overlay. With this change the ZX Spectrum screen under the
++      overlay is marked as dirty and set to 0xff. If a border is used to
++      scale the screen and a screenshot is taken, the overlay block appear as
++      white block in the screenshot.
++      Now the block of overlay screen is saved before mark it as dirty and is
++      restored previous to screenshot saving.
++
+ 2020-10-13 Fuse 1.5.4 OpenDingux/RetroFW v0.0.3
+ 
+     * Rebase the source to the latest officcial commits for Fuse and libspectrum
+diff --git a/Platform/INSTALL.txt b/Platform/INSTALL.txt
+index 2a84ccb..5a79d74 100644
+--- a/Platform/INSTALL.txt
++++ b/Platform/INSTALL.txt
+@@ -8,7 +8,7 @@
+ squashfs-tools package is needed for creating opk files.
+ 
+ Toolchains tested:
+-- For OpenDingux the GCW0 and RG350 toolchains
++- For OpenDingux the GCW0, RG350 and latest beta OpenDingux toolchains
+ - For RetroFW this was tested with RetroFW 2.
+ 
+ In the steps source code for Fuse and libspectrum was extracted in:
+@@ -35,7 +35,7 @@
+ 
+ $ cd $HOME/src/libspectrum-1.4.4
+ 
+-Configure for OpenDingux:
++Configure for 2014 OpenDingux and latest beta:
+ 
+ $ ./configure CC=mipsel-gcw0-linux-uclibc-gcc \
+ CXX=mipsel-gcw0-linux-uclibc-g++ --host=mipsel-gcw0-linux-uclibc \
+@@ -57,7 +57,7 @@
+ 
+ $ cd $HOME/src/fuse-1.5.7
+ 
+-Configure for OpenDingux:
++Configure for 2014 OpenDingux:
+ 
+ $ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
+ LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
+@@ -67,6 +67,16 @@
+ --with-sdl-prefix=/opt/toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr \
+ CFLAGS='-mips32r2 -O3'
+ 
++Configure for latest beta OpenDingux:
++
++$ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
++LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
++LIBSPECTRUM_LIBS="-L$HOME/src/libspectrum-install/lib -l:libspectrum.a" \
++CC=mipsel-gcw0-linux-uclibc-gcc CXX=mipsel-gcw0-linux-uclibc-g++ \
++--host=mipsel-gcw0-linux-uclibc --with-gcw0 \
++--with-sdl-prefix=/opt/toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr \
++CFLAGS='-mips32r2 -O3'
++
+ Configure for RetroFW:
+ 
+ $ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
+@@ -79,13 +89,20 @@
+ 
+ 4.- Build Fuse
+ 
+-For OpenDingux:
++For 2014 OpenDingux:
+ 
+ $ cd $HOME/src/fuse-1.5.7/Platform/GCW0
+ $ make
+ 
+ fuse-1.5.7-od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
+ 
++For latest beta OpenDingux:
++
++$ cd $HOME/src/fuse-1.5.7/Platform/GCW0
++$ make
++
++fuse-1.5.7-latest_od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
++
+ For RetroFW 2:
+ 
+ $ cd $HOME/src/fuse-1.5.7/Platform/RETROFW2.0
+diff --git a/Platform/VERSION b/Platform/VERSION
+index 74841cc..81340c7 100644
+--- a/Platform/VERSION
++++ b/Platform/VERSION
+@@ -1 +1 @@
+-0.0.4-wip
++0.0.4
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index 7ad9f35..f596099 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -103,6 +103,10 @@
+            Scaling works with all filters and spectrum models.
+            For 1x filters. Large is using 300x225 resolution and Small 272x208.
+ 
++           In mainline beta firmware with 1x filters Small and Large border
++           don't work and both use Medium border size. With 2x filters they
++           both border options work work well.
++
+          * 480x320 panel (RG280M)
+            Scaling works with all filters and spectrum models.
+            For 1x filters. Large is using 304x224 resolution and Small 272x208.
+@@ -290,7 +294,7 @@
+               There are 4 positions, one for earch corner of screen.
+ 
+ -------------------------------------
+-### Buttons at different contexts ###
++### Buttons in different contexts ###
+ -------------------------------------
+ 
+ =>Some machines don't have Sticks or `L2`, `R2` buttons.
+@@ -361,8 +365,11 @@
+              media to save.
+ 
+   `Select`   Enable/Disable filters in file dialogs if option
+-             `Filter known extensions`
+-             option is enabled.
++             `Filter known extensions` option is enabled.
++
++            Cancel and exit completely from any level of menu to the
++            emulator
++
+ 
+   `L1`       Go to the first menu option
+   `R1`       Go to the last menu option
+@@ -370,8 +377,6 @@
+              directory
+   `R2`       In file selector go to the last entry in the current
+              directory
+-  `Power`    Cancel and exit completely from any level of menu to the
+-             emulator
+ 
+   `Start`, `L2`, `R3`, `Right Stick`
+              Nothing
+@@ -746,8 +751,9 @@
+ The implemented hotkeys correspond to Fx key functions in Fuse's SDL
+ implementation:
+ 
++    L1 + R1 + A      Switch between Full and None border
+     L1 + R1 + B      Toggle triple buffer
+-    L1 + R1 + X      Joystick
++    L1 + R1 + X      JoystickS
+     L1 + Select + Y  Tape play (F8)
+     L1 + A           Tape open (F7)
+     L1 + B           Save file (F2)
+diff --git a/compat/linux/regex.c b/compat/linux/regex.c
+index 0e88432..ac778d3 100644
+--- a/compat/linux/regex.c
++++ b/compat/linux/regex.c
+@@ -43,11 +43,11 @@
+   char *new_search;
+ 
+   new_search = libspectrum_new( char, MAX_LENGTH );
+-  strncpy( new_search, text, MAX_LENGTH );
++  strlcpy( new_search, text, MAX_LENGTH );
+ 
+   i = 0;
+   while ( re_expressions[i] ) {
+-    strncpy( new_search, cut_patterns( re_expressions[i], new_search ), MAX_LENGTH );
++    strlcpy( new_search, cut_patterns( re_expressions[i], new_search ), MAX_LENGTH );
+     i++;
+   }
+ 
+@@ -62,15 +62,15 @@
+   regex_t reg_expr;
+ 
+   new_search = libspectrum_new( char, MAX_LENGTH );
+-  strncpy( new_search, text, MAX_LENGTH-1 );
++  strlcpy( new_search, text, MAX_LENGTH );
+ 
+   if ( regcomp( &reg_expr, re_expression, REG_ICASE|REG_EXTENDED|REG_NEWLINE ) )
+     return new_search;
+ 
+   while ( !cut_pattern( &reg_expr, new_search, &remain[0] ) )
+-    strncpy( new_search, &remain[0], 100 );
++    strlcpy( new_search, &remain[0], MAX_LENGTH );
+ 
+-  strncpy( new_search, &remain[0], 100 );
++  strlcpy( new_search, &remain[0], MAX_LENGTH );
+   regfree( &reg_expr );
+ 
+   return new_search;
+@@ -84,13 +84,12 @@
+   if ( !text ) return 1;
+ 
+   if ( regexec( reg_expr, text, MAX_MATCHES, matches, 0 ) ) {
+-    strncpy( remain, text, MAX_LENGTH );
++    strlcpy( remain, text, MAX_LENGTH );
+     return 1;
+   }
+ 
+-  strncpy( remain, text, matches[0].rm_so );
+-  remain[matches[0].rm_so] = '\0';
+-  if ( text[matches[0].rm_eo] ) strncat( remain, &text[matches[0].rm_eo], MAX_LENGTH-1 );
++  strlcpy( remain, text, matches[0].rm_so + 1 );
++  if ( text[matches[0].rm_eo] ) strlcat( remain, &text[matches[0].rm_eo], MAX_LENGTH );
+ 
+   return 0;
+ }
+\ No newline at end of file
+diff --git a/configure.ac b/configure.ac
+index e8b99d5..7717d60 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -561,8 +561,12 @@
+     [PNG],
+     [libpng14],
+     [AC_DEFINE([USE_LIBPNG], 1, [Defined if we're going to be using the installed libpng])],
+-    [AC_MSG_WARN([libpng not found - saving screenshots disabled])
+-     libpng=no]
++    [PKG_CHECK_MODULES(
++      [PNG],
++      [libpng],
++      [AC_DEFINE([USE_LIBPNG], 1, [Defined if we're going to be using the installed libpng])],
++      [AC_MSG_WARN([libpng not found - saving screenshots disabled])
++       libpng=no])]
+   )
+   else
+   PKG_CHECK_MODULES(
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index 280315a..0f0621f 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -102,7 +102,6 @@
+ #ifdef GCWZERO
+ size_t od_info_length;
+ static SDL_Surface *od_status_line_ovelay;
+-static SDL_Rect od_status_line_position = { 5, 225, 242, 10 };
+ static SDL_Surface *red_cassette[4], *green_cassette[4];
+ static SDL_Surface *red_mdr[4], *green_mdr[4];
+ static SDL_Surface *red_disk[4], *green_disk[4];
+@@ -192,11 +191,18 @@
+ #ifndef RETROFW
+ static od_t_screen_scaling od_screen_scalings_1x_640[] = {
+   { Full,    320, 240, &vkeyboard_position[0] },
+-  { Large,   300, 225, &vkeyboard_position_large_border[0] }, /* No 4:3 AR */
++  { Large,   300, 225, &vkeyboard_position_large_border[0] },
+   { Medium,  288, 216, &vkeyboard_position_medium_border[0] },
+   { Small,   272, 208, &vkeyboard_position_small_border[0] }, /* No 4:3 AR */
+   { None,    256, 192, &vkeyboard_position_no_border[0] },
+ };
++static od_t_screen_scaling od_screen_scalings_1x_640_new[] = {
++  { Full,    320, 240, &vkeyboard_position[0] },
++  { Large,   288, 224, &vkeyboard_position_large_border[0] }, /* No 4:3 AR */
++  { Medium,  288, 216, &vkeyboard_position_medium_border[0] },
++  { Small,   280, 210, &vkeyboard_position_small_border[0] },
++  { None,    256, 192, &vkeyboard_position_no_border[0] },
++};
+ static od_t_screen_scaling od_screen_scalings_1x_480[] = {
+   { Full,    320, 240, &vkeyboard_position[0] },
+   { Large,   304, 224, &vkeyboard_position_large_border[0] }, /* No 4:3 AR */
+@@ -211,11 +217,17 @@
+ static libspectrum_byte sdldisplay_is_triple_buffer = 0;
+ static libspectrum_byte sdldisplay_flips_triple_buffer = 0;
+ typedef enum sdldisplay_od_system_types {
++      OPENDINGUX_2014,
+       OPENDINGUX,
+       RETROFW_1,
+       RETROFW_2
+ } sdldisplay_t_od_system;
+-static sdldisplay_t_od_system sdldisplay_od_system_type = OPENDINGUX;
++static sdldisplay_t_od_system sdldisplay_od_system_type =
++#ifdef RETROFW
++RETROFW_2;
++#else
++OPENDINGUX_2014;
++#endif
+ #ifndef RETROFW
+ typedef enum sdldisplay_od_panel_types {
+       P320240,
+@@ -224,6 +236,34 @@
+ } sdldisplay_t_od_panel_type;
+ static sdldisplay_t_od_panel_type sdl_od_panel_type = P320240;
+ #endif
++
++typedef struct od_s_icon_positions {
++  sdldisplay_t_od_border border_type;
++  SDL_Rect     icon_disk;
++  SDL_Rect     icon_mdr;
++  SDL_Rect     icon_cassette;
++  SDL_Rect     status_line;
++} od_t_icon_positions;
++
++static od_t_icon_positions od_icon_positions[] = {
++  { Full,   { 243, 218, 0, 0 }, { 264, 218, 0, 0 }, { 285, 220, 0, 0 }, { 5,  225, 242, 10 } },
++  { Large,  { 274, 222, 0, 0 }, { 284, 222, 0, 0 }, { 294, 224, 0, 0 }, { 11, 223, 242, 10 } },
++  { Medium, { 268, 216, 0, 0 }, { 278, 216, 0, 0 }, { 288, 218, 0, 0 }, { 19, 218, 242, 10 } },
++  { Small,  { 260, 210, 0, 0 }, { 270, 210, 0, 0 }, { 280, 212, 0, 0 }, { 27, 212, 242, 10 } },
++  { None,   { 252, 204, 0, 0 }, { 262, 204, 0, 0 }, { 272, 206, 0, 0 }, { 35, 206, 242, 10 } },
++};
++
++#ifndef RETROFW
++static od_t_icon_positions od_icon_positions_new[] = {
++  { Full,   { 243, 218, 0, 0 }, { 264, 218, 0, 0 }, { 285, 220, 0, 0 }, { 5,  225, 242, 10 } },
++  { Large,  { 266, 220, 0, 0 }, { 276, 220, 0, 0 }, { 286, 222, 0, 0 }, { 19, 221, 242, 10 } },
++  { Medium, { 268, 216, 0, 0 }, { 278, 216, 0, 0 }, { 288, 218, 0, 0 }, { 19, 218, 242, 10 } },
++  { Small,  { 264, 212, 0, 0 }, { 274, 212, 0, 0 }, { 284, 214, 0, 0 }, { 24, 214, 242, 10 } },
++  { None,   { 252, 204, 0, 0 }, { 262, 204, 0, 0 }, { 272, 206, 0, 0 }, { 35, 206, 242, 10 } },
++};
++#endif
++
++static od_t_icon_positions od_icon_position;
+ #endif
+ 
+ static int image_width;
+@@ -395,6 +435,58 @@
+ }
+ 
+ #ifdef GCWZERO
++#ifndef RETROFW
++#define OD_MODE320240 0x01
++#define OD_MODE640480 0x02
++
++#define OD_ADD_MODE( mode, width, height ) \
++  if ( add_mode & mode ) { \
++    modes[i] = malloc( sizeof (SDL_Rect) ); \
++    if ( modes[i] ) { \
++      modes[i]->x = modes[i]->y = 0; \
++      modes[i]->w = width; \
++      modes[i]->h = height; \
++    } \
++    i++; \
++  }
++
++static int
++od_compare_rects( const void *r1, const void *r2 ) {
++  SDL_Rect *cr1 = *((SDL_Rect**) r1);
++  SDL_Rect *cr2 = *((SDL_Rect**) r2);
++
++  /* Sort descending by height */
++  return cr2->h - cr1->h;
++}
++
++static void
++od_complete_modes( SDL_Rect **modes ) {
++  /* SDL in main OD firmware do not inform for other modes than native */
++  /* Complete with 320x240 and 640x480 */
++  int i;
++  int add_mode = OD_MODE320240 | OD_MODE640480;
++  for ( i = 0; modes[i]; i++ ) {
++    switch ( modes[i]->h ) {
++    case 240:
++      add_mode &= ~OD_MODE320240;
++      break;
++    case 480:
++      add_mode &= ~OD_MODE640480;
++      break;
++    default:
++      break;
++    }
++  }
++
++  OD_ADD_MODE( OD_MODE640480, 640, 480 );
++  OD_ADD_MODE( OD_MODE320240, 320, 240 );
++
++  /* Sort if something was added */
++  if ( add_mode )
++    qsort( modes, i, sizeof modes[0], od_compare_rects);
++}
++#endif /* #ifndef RETROFW */
++
+ /* Initializations for OpenDingux/RetroFW */
+ void
+ uidisplay_od_init( SDL_Rect **modes )
+@@ -440,15 +532,22 @@
+  *    ID=buildroot
+  *    VERSION_ID=2018.02.11
+  *    PRETTY_NAME="Buildroot 2018.02.11"
+-*
+- * For OpenDingux:
++ *
++ * For classic OpenDingux:
+  *    NAME=Buildroot
+  *    VERSION=2014.08-g156cb719e
+  *    ID=buildroot
+  *    VERSION_ID=2014.08
+  *    PRETTY_NAME="Buildroot 2014.08"
++ *
++ * For mainline OpenDingux:
++ *    NAME=Buildroot
++ *    VERSION=od-rs90-2020.10.04-9-gb1f24b975e
++ *    ID=buildroot
++ *    VERSION_ID=2020.08
++ *    PRETTY_NAME="Buildroot 2020.08"
++ *
+  */
+-
+ #ifdef RETROFW
+   /* We are on RetroFW */
+   char line[100];
+@@ -471,11 +570,17 @@
+     fclose( os_release );
+   }
+ #else
+-/* We are on OpenDingux */
+-  sdldisplay_od_system_type = OPENDINGUX;
+-#endif
++  char driver[10];
++
++  SDL_VideoDriverName( &driver[0], 10 );
++  if ( strncmp( &driver[0], "kmsdrm", 6 ) == 0 ) {
++    sdldisplay_od_system_type = OPENDINGUX;
++    od_complete_modes( modes );
++  } else
++    sdldisplay_od_system_type = OPENDINGUX_2014;
++#endif /* #ifdef RETROFW */
+ }
+-#endif
++#endif /* #ifdef GCWZERO */
+ 
+ int
+ uidisplay_init( int width, int height )
+@@ -751,8 +856,10 @@
+     flags = settings_current.full_screen ? (SDL_FULLSCREEN | SDL_HWSURFACE | SDL_TRIPLEBUF)
+     : (SDL_HWSURFACE | SDL_TRIPLEBUF);
+   } else {
+-    while ( sdldisplay_is_triple_buffer && ++sdldisplay_flips_triple_buffer < 3 )
+-      SDL_Flip( sdldisplay_gc );
++    /* On new kmsdrm driver no need to Flip page to deactivate triple buffer */
++    if ( sdldisplay_od_system_type != OPENDINGUX )
++      while ( sdldisplay_is_triple_buffer && ++sdldisplay_flips_triple_buffer < 3 )
++        SDL_Flip( sdldisplay_gc );
+     flags = settings_current.full_screen ? (SDL_FULLSCREEN | SDL_HWSURFACE)
+     : SDL_HWSURFACE;
+   }
+@@ -762,6 +869,8 @@
+   sdl_od_panel_type = option_enumerate_general_gcw0_od_panel_type();
+ #endif
+   sdldisplay_current_od_border = option_enumerate_general_gcw0_od_border();
++  od_icon_position = od_icon_positions[sdldisplay_current_od_border];  
++
+   if ( ( sdldisplay_current_od_border && !sdldisplay_last_od_border ) ||
+        ( !sdldisplay_current_od_border && sdldisplay_last_od_border ) ) {
+     SDL_Surface *swap;
+@@ -780,7 +889,12 @@
+     if ( sdldisplay_current_size <= 1 )
+       switch (sdl_od_panel_type) {
+       case P640480:
+-        ssc = &od_screen_scalings_1x_640[0];
++        if ( sdldisplay_od_system_type == OPENDINGUX ) {
++          ssc = &od_screen_scalings_1x_640_new[0];
++          od_icon_position = od_icon_positions_new[sdldisplay_current_od_border];
++        } else {
++          ssc = &od_screen_scalings_1x_640[0];
++        }
+         break;
+       case P480320:
+         ssc = &od_screen_scalings_1x_480[0];
+@@ -888,8 +1002,8 @@
+   /* Create the surface that contains status in scaling */
+   SDL_Surface *od_tmp_screen;
+   od_tmp_screen = SDL_CreateRGBSurface(SDL_HWSURFACE,
+-                                       machine_current->timex ? od_status_line_position.w * 2 : od_status_line_position.w,
+-                                       machine_current->timex ? od_status_line_position.h * 2 : od_status_line_position.h,
++                                       machine_current->timex ? od_icon_position.status_line.w * 2 : od_icon_position.status_line.w,
++                                       machine_current->timex ? od_icon_position.status_line.h * 2 : od_icon_position.status_line.h,
+                                        16,
+                                        sdldisplay_gc->format->Rmask,
+                                        sdldisplay_gc->format->Gmask,
+@@ -1049,26 +1163,9 @@
+ {
+   SDL_Rect r = { 243, 218, red_disk[0]->w, red_disk[0]->h };
+ #ifdef GCWZERO
+-  switch (sdldisplay_current_od_border) {
+-  case None:
+-    r.x = 252;
+-    r.y = 204;
+-    break;
+-  case Small:
+-    r.x = 260;
+-    r.y = 210;
+-    break;
+-  case Medium:
+-    r.x = 268;
+-    r.y = 216;
+-    break;
+-  case Large:
+-    r.x = 274;
+-    r.y = 222;
+-    break;
+-  case Full:
+-  default:
+-    break;
++  if ( sdldisplay_current_od_border != Full ) {
++    r.x = od_icon_position.icon_disk.x;
++    r.y = od_icon_position.icon_disk.y;
+   }
+ #endif
+ 
+@@ -1086,26 +1183,9 @@
+   r.x = 264;
+   r.y = 218;
+ #ifdef GCWZERO
+-  switch (sdldisplay_current_od_border) {
+-  case None:
+-    r.x = 262;
+-    r.y = 204;
+-    break;
+-  case Small:
+-    r.x = 270;
+-    r.y = 210;
+-    break;
+-  case Medium:
+-    r.x = 278;
+-    r.y = 216;
+-    break;
+-  case Large:
+-    r.x = 284;
+-    r.y = 222;
+-    break;
+-  case Full:
+-  default:
+-    break;
++  if ( sdldisplay_current_od_border != Full ) {
++    r.x = od_icon_position.icon_mdr.x;
++    r.y = od_icon_position.icon_mdr.y;
+   }
+ #endif
+   r.w = red_mdr[0]->w;
+@@ -1125,26 +1205,9 @@
+   r.x = 285;
+   r.y = 220;
+ #ifdef GCWZERO
+-  switch (sdldisplay_current_od_border) {
+-  case None:
+-    r.x = 272;
+-    r.y = 206;
+-    break;
+-  case Small:
+-    r.x = 280;
+-    r.y = 212;
+-    break;
+-  case Medium:
+-    r.x = 288;
+-    r.y = 218;
+-    break;
+-  case Large:
+-    r.x = 294;
+-    r.y = 224;
+-    break;
+-  case Full:
+-  default:
+-    break;
++  if ( sdldisplay_current_od_border != Full ) {
++    r.x = od_icon_position.icon_cassette.x;
++    r.y = od_icon_position.icon_cassette.y;
+   }
+ #endif
+   r.w = red_cassette[0]->w;
+@@ -1239,39 +1302,12 @@
+ 
+ static void
+ uidisplay_status_overlay( void ) {
+-  SDL_Rect current_positions = od_status_line_position;
+-
+-  switch (sdldisplay_current_od_border) {
+-  case Large:
+-    current_positions.x += 6;
+-    current_positions.y -= 2;
+-    break;
+-
+-  case Medium:
+-    current_positions.x += 14;
+-    current_positions.y -= 7;
+-    break;
+-
+-  case Small:
+-    current_positions.x += 22;
+-    current_positions.y -= 13;
+-    break;
+-
+-  case None:
+-    current_positions.x += 30;
+-    current_positions.y -= 19;
+-    break;
+-
+-  default:
+-    break;
+-  }
+-
+   int scale = ( libspectrum_machine_capabilities( machine_current->machine ) & LIBSPECTRUM_MACHINE_CAPABILITY_TIMEX_VIDEO ) ? 2 : 1;
+ 
+-  SDL_Rect r1 = { current_positions.x * scale, current_positions.y * scale,
+-                  current_positions.w * scale, current_positions.h * scale };
++  SDL_Rect r1 = { od_icon_position.status_line.x * scale, od_icon_position.status_line.y * scale,
++                  od_icon_position.status_line.w * scale, od_icon_position.status_line.h * scale };
+ 
+-  SDL_Rect r2 = { 0, 0, ( od_info_length + 3 ) * scale, current_positions.h * scale };
++  SDL_Rect r2 = { 0, 0, ( od_info_length + 3 ) * scale, od_icon_position.status_line.h * scale };
+ 
+   SDL_FillRect(od_status_line_ovelay, NULL, settings_current.bw_tv ? bw_values_a[18] : colour_values_a[18]);
+   SDL_FillRect(od_status_line_ovelay, &r2, settings_current.bw_tv ? bw_values_a[17] : colour_values_a[17]);
+@@ -1305,7 +1341,10 @@
+   if ( sdldisplay_current_size <= 1 )
+     switch (sdl_od_panel_type) {
+     case P640480:
+-      ssc = &od_screen_scalings_1x_640[0];
++      if ( sdldisplay_od_system_type == OPENDINGUX )
++        ssc = &od_screen_scalings_1x_640_new[0];
++      else
++        ssc = &od_screen_scalings_1x_640[0];
+       break;
+     case P480320:
+       ssc = &od_screen_scalings_1x_480[0];
+@@ -1616,7 +1655,9 @@
+ #ifdef GCWZERO
+   if ( sdldisplay_is_triple_buffer ) {
+     SDL_Flip( sdldisplay_gc );
+-    if ( ++sdldisplay_flips_triple_buffer >= 3 ) sdldisplay_flips_triple_buffer = 0;
++    /* On new kmsdrm driver no need to Flip page to deactivate triple buffer */
++    if ( sdldisplay_od_system_type != OPENDINGUX )
++      if ( ++sdldisplay_flips_triple_buffer >= 3 ) sdldisplay_flips_triple_buffer = 0;
+   } else
+ #endif
+   SDL_UpdateRects( sdldisplay_gc, num_rects, updated_rects );
+diff --git a/ui/widget/filesel.c b/ui/widget/filesel.c
+index 2919340..cb9bff0 100644
+--- a/ui/widget/filesel.c
++++ b/ui/widget/filesel.c
+@@ -141,11 +141,11 @@
+ #else
+   { FILTER_CLASS_COMPRESSED,
+                           NULL, "gz;zip" },
+-#elseif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++#endif
++#elif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
+   { FILTER_CLASS_COMPRESSED,
+                           NULL, "bz2" },
+ #endif
+-#endif
+   { FILTER_CLASS_RECORDING,
+                           "rzx", "rzx" },
+   { FILTER_CLASS_SCREENSHOT,
+@@ -206,9 +206,9 @@
+   { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
+ #else
+   { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
+-#elseif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
+-  { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
+ #endif
++#elif LIBSPECTRUM_SUPPORTS_BZ2_COMPRESSION
++  { FILTER_CLASS_COMPRESSED,      0, 0, 1, NULL },
+ #endif
+   { FILTER_CLASS_RECORDING,       0, 0, 1, NULL },
+   { FILTER_CLASS_SCREENSHOT,      0, 0, 1, NULL },
+@@ -1273,8 +1273,8 @@
+ 	        return;
+           }
+           /* Append the leafname and return it */
+-          strncat( fn, FUSE_DIR_SEP_STR, 1 );
+-          strncat( fn, default_name, strlen( default_name ) );
++          strlcat( fn, FUSE_DIR_SEP_STR, strlen( fn ) + 1 + strlen( FUSE_DIR_SEP_STR ) + 1 );
++          strlcat( fn, default_name, strlen( fn ) + 1 + strlen( default_name ) + 1 );
+         /* absolute name */
+         } else {
+ 	      fn = utils_safe_strdup( default_name );
+diff --git a/ui/widget/menu.c b/ui/widget/menu.c
+index f586e59..269bf2d 100644
+--- a/ui/widget/menu.c
++++ b/ui/widget/menu.c
+@@ -446,16 +446,13 @@
+ #endif
+ 
+ #ifdef GCWZERO
+-  case INPUT_KEY_Home: /* Power */
+-  case INPUT_KEY_End:  /* RetroFW */
+-#ifdef GCWZERO
++  case INPUT_KEY_Escape: /* Select */
+     widgets_to_end = 0;
+     last_mapping_button_line = 0;
+     if ( in_control_mapping_defaults ) {
+       controlmapping_menu_exit_from_defaults();
+     }
+     in_control_mapping_defaults = 0;
+-#endif
+     widget_end_all( WIDGET_FINISHED_CANCEL );
+     return;
+ #endif
+diff --git a/ui/widget/widget.c b/ui/widget/widget.c
+index 5dcf838..eb9dcce 100644
+--- a/ui/widget/widget.c
++++ b/ui/widget/widget.c
+@@ -545,7 +545,7 @@
+ }
+ 
+ #ifdef GCWZERO
+-#define WIDGET_MAX_INFO_LENGTH 45
++#define WIDGET_MAX_INFO_LENGTH 48
+ static char status_info[WIDGET_MAX_INFO_LENGTH];
+ 
+ static char* od_machine_name( libspectrum_machine type ) {
+@@ -560,24 +560,27 @@
+ }
+ 
+ size_t widget_statusbar_update_info( float speed ) {
++  char suffix[14];
+   snprintf(status_info, WIDGET_MAX_INFO_LENGTH,
+            settings_current.od_show_fps ? "%s - %3.0ffps (1:%d)" : "%s - %3.0f%% (1:%d)",
+            od_machine_name( machine_current->machine ),
+            speed,
+            settings_current.frame_rate);
+-  if ( settings_current.joystick_1_output || settings_current.joystick_gcw0_output )
+-    snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
+-             status_info,
++  if ( settings_current.joystick_1_output || settings_current.joystick_gcw0_output ) {
++    snprintf(suffix, 14, " [%s]",
+              settings_current.joystick_1_output ? joystick_name[settings_current.joystick_1_output]
+                                                 : "Keyboard" );
+-  if ( settings_current.joystick_2_output )
+-    snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
+-             status_info,
++    strlcat(&status_info[0], &suffix[0], WIDGET_MAX_INFO_LENGTH);
++  }
++  if ( settings_current.joystick_2_output ) {
++    snprintf(suffix, 14, " [%s]",
+              joystick_name[settings_current.joystick_2_output] );
+-  if ( settings_current.od_triple_buffer )
+-    snprintf(status_info, WIDGET_MAX_INFO_LENGTH, "%s [%s]",
+-             status_info,
+-             "B");
++    strlcat(&status_info[0], &suffix[0], WIDGET_MAX_INFO_LENGTH);
++  }
++  if ( settings_current.od_triple_buffer ) {
++    snprintf(suffix, 5, " [%s]", "B");
++    strlcat(&status_info[0], &suffix[0], WIDGET_MAX_INFO_LENGTH);
++  }
+ 
+   return widget_stringwidth( status_info );
+ }
+diff --git a/utils.c b/utils.c
+index ec12d9c..1c7606c 100644
+--- a/utils.c
++++ b/utils.c
+@@ -532,7 +532,7 @@
+ 
+   /* Change current working directory to the path of last loaded file */
+   if ( change_to_path ) {
+-    strncpy( buffer, filename, PATH_MAX );
++    strncpy( buffer, filename, PATH_MAX - 1);
+     path = dirname(buffer);
+     if (path && path[0] != '\0') {
+       chdir(path);
