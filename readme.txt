@@ -103,6 +103,10 @@ Options - General GCW0
            Scaling works with all filters and spectrum models.
            For 1x filters. Large is using 300x225 resolution and Small 272x208.
 
+           In mainline beta firmware with 1x filters Small and Large border
+           don't work and both use Medium border size. With 2x filters they
+           both border options work work well.
+
          * 480x320 panel (RG280M)
            Scaling works with all filters and spectrum models.
            For 1x filters. Large is using 304x224 resolution and Small 272x208.
@@ -290,7 +294,7 @@ ZX Spectrum keyboard.
               There are 4 positions, one for earch corner of screen.
 
 -------------------------------------
-### Buttons at different contexts ###
+### Buttons in different contexts ###
 -------------------------------------
 
 =>Some machines don't have Sticks or `L2`, `R2` buttons.
@@ -361,8 +365,11 @@ These are no dependent of button mapping.
              media to save.
 
   `Select`   Enable/Disable filters in file dialogs if option
-             `Filter known extensions`
-             option is enabled.
+             `Filter known extensions` option is enabled.
+
+            Cancel and exit completely from any level of menu to the
+            emulator
+
 
   `L1`       Go to the first menu option
   `R1`       Go to the last menu option
@@ -370,8 +377,6 @@ These are no dependent of button mapping.
              directory
   `R2`       In file selector go to the last entry in the current
              directory
-  `Power`    Cancel and exit completely from any level of menu to the
-             emulator
 
   `Start`, `L2`, `R3`, `Right Stick`
              Nothing
@@ -746,8 +751,9 @@ will be used to start the hotkey combinations.
 The implemented hotkeys correspond to Fx key functions in Fuse's SDL
 implementation:
 
+    L1 + R1 + A      Switch between Full and None border
     L1 + R1 + B      Toggle triple buffer
-    L1 + R1 + X      Joystick
+    L1 + R1 + X      JoystickS
     L1 + Select + Y  Tape play (F8)
     L1 + A           Tape open (F7)
     L1 + B           Save file (F2)

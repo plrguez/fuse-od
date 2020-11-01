@@ -8,7 +8,7 @@ autoconf, make, git, squashfs-tools, flex, bison, perl, libtool, etc...).
 squashfs-tools package is needed for creating opk files.
 
 Toolchains tested:
-- For OpenDingux the GCW0 and RG350 toolchains
+- For OpenDingux the GCW0, RG350 and latest beta OpenDingux toolchains
 - For RetroFW this was tested with RetroFW 2.
 
 In the steps source code for Fuse and libspectrum was extracted in:
@@ -35,7 +35,7 @@ $ export PATH=/opt/toolchain/usr/bin:$PATH
 
 $ cd $HOME/src/libspectrum-1.4.4
 
-Configure for OpenDingux:
+Configure for 2014 OpenDingux and latest beta:
 
 $ ./configure CC=mipsel-gcw0-linux-uclibc-gcc \
 CXX=mipsel-gcw0-linux-uclibc-g++ --host=mipsel-gcw0-linux-uclibc \
@@ -57,11 +57,21 @@ In $HOME/src/libspectrum-install must be installed libspectrum
 
 $ cd $HOME/src/fuse-1.5.7
 
-Configure for OpenDingux:
+Configure for 2014 OpenDingux:
 
 $ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
 LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
 LIBSPECTRUM_LIBS="-L$HOME/src/libspectrum-install/lib -l:libspectrum.a -lbz2" \
+CC=mipsel-gcw0-linux-uclibc-gcc CXX=mipsel-gcw0-linux-uclibc-g++ \
+--host=mipsel-gcw0-linux-uclibc --with-gcw0 \
+--with-sdl-prefix=/opt/toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr \
+CFLAGS='-mips32r2 -O3'
+
+Configure for latest beta OpenDingux:
+
+$ ./configure PKG_CONFIG_PATH="$HOME/src/libspectrum-install/lib/pkgconfig" \
+LIBSPECTRUM_CFLAGS="-I$HOME/src/libspectrum-install/include" \
+LIBSPECTRUM_LIBS="-L$HOME/src/libspectrum-install/lib -l:libspectrum.a" \
 CC=mipsel-gcw0-linux-uclibc-gcc CXX=mipsel-gcw0-linux-uclibc-g++ \
 --host=mipsel-gcw0-linux-uclibc --with-gcw0 \
 --with-sdl-prefix=/opt/toolchain/usr/mipsel-gcw0-linux-uclibc/sysroot/usr \
@@ -79,12 +89,19 @@ CFLAGS='-mips32 -O3'
 
 4.- Build Fuse
 
-For OpenDingux:
+For 2014 OpenDingux:
 
 $ cd $HOME/src/fuse-1.5.7/Platform/GCW0
 $ make
 
 fuse-1.5.7-od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
+
+For latest beta OpenDingux:
+
+$ cd $HOME/src/fuse-1.5.7/Platform/GCW0
+$ make
+
+fuse-1.5.7-latest_od-v{version}.opk should be created in $HOME/src/fuse-1.5.7/Platform/GCW0/build
 
 For RetroFW 2:
 

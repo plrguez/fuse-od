@@ -1,3 +1,44 @@
+2020-11-01 Fuse 1.5.4 OpenDingux/RetroFW v0.0.4
+
+    * This release is mainly to build for the beta OpenDingux firmware based on
+      kernel 5.10 and a few small bugfixes.
+      No new features have been added.
+
+    * Build for mainline OpenDingux beta firmware. Previous buils do not work
+      in beta firmware becouse they are linked to libpng14 and new firmware
+      provide only libpng16.
+
+    * Fixed some warnings for GCC 10
+      There are still some warnings for the upstream Fuse.
+
+    * In beta firmware the driver do not list video modes other than native
+      resolutions. Becouse of this the 320x240 and 640x480 resolutions are
+      added when needed to allow change resolution to 320x240 on RG350M and
+      to 640x480 on GCW0, RG350(P), RG280M. Those are needed for filters.
+
+    * Change from Power button to Select button to close menu.
+      In beta firmware Power button is sending various push events. The effect
+      is that when menu is opened with Power button then it closes inmediately.
+      In file dialogs Select is used to change from file filter to show all and
+      Select will not close menu.
+
+    * In beta firmware disabling triple buffer does not freeze the screen so
+      the logic to flip pages is not applied in beta firmware.
+
+    * Border scaling no longer updates the full screen and uses dirty blocks,
+      just like Fuse is designed.
+
+    * In the Joysticks options, the extension of the mapping files is not
+      displayed to save space.
+
+    * Screenshot fixes.  In version v0.0.3 status line info was changed to use a
+      transparent overlay. With this change the ZX Spectrum screen under the
+      overlay is marked as dirty and set to 0xff. If a border is used to
+      scale the screen and a screenshot is taken, the overlay block appear as
+      white block in the screenshot.
+      Now the block of overlay screen is saved before mark it as dirty and is
+      restored previous to screenshot saving.
+
 2020-10-13 Fuse 1.5.4 OpenDingux/RetroFW v0.0.3
 
     * Rebase the source to the latest officcial commits for Fuse and libspectrum
