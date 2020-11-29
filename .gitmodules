@@ -1,0 +1,6 @@
+[submodule "fuse-od-source"]
+	path = fuse-od-source
+	url = https://github.com/plrguez/fuse-od-source.git
+[submodule "libspectrum-od-source"]
+	path = libspectrum-od-source
+	url = https://github.com/plrguez/libspectrum-od-source.git
