@@ -61,13 +61,57 @@ Options - General GCW0
 
   - Triple Buffer
     -------------
-    Default disabled. Experimental!
+    Default disabled.
 
     Enable/Disable triple buffer.
     BUG: Disabling triple buffer sometimes freeze the screen but
     emulator will be still running.
     If Hotkey combos are enabled you can enable/disable it with the
     `L1` + `R1` + `B` combo.
+
+  - Adjust screen refresh rate
+    --------------------------
+    Default disabled.
+    Only for OpenDingux firmware based on kernel 5.10 with DRM/KMS
+    video driver.
+
+    If it is enabled the screen refresh rate is changed to the nearest
+    refresh rate based in the timings and CPU speed for the chosen
+    machine model.
+
+    Use this option with 'Triple Buffer' enabled to synchronize video and
+    get smooth animations.
+    See also 'Dynamic sound rate' option.
+
+    If Hotkey combos are enabled you can enable/disable it with the
+    `L1` + `R1` + `A` combo.
+
+    Refresh rates:
+     - 60Hz for Spectrum 48K NTSC and Timex TS2068 models
+     - 50Hz for all other models
+
+    Some visible examples of smooth animatiosns are the scrolling texts
+    in the main screen of Dan Dare, Commando, Cannibals from Outer Space
+    or the Savage's intro load.
+
+    CPU clock speed for emulated systems are not exactly 50 or 60 Hz.
+    The sound samples buffer is linked to the emulated CPU clock model
+    and this cause audio glitches, see 'Dynamic sound rate' option.
+
+  - Dynamic sound rate
+    ------------------
+    Default disabled.
+    Only for OpenDingux firmware based on kernel 5.10.
+    Only take efffect with 'Adjust screen refresh rate' enabled.
+
+    Every 10 sound frames the rate used in the Blip buffer is adjusted
+    based on fill level of the sound sfifo buffer. Blip buffer provides
+    waveform synthesis and sample buffering, the samples it generates are
+    pushed to sfifo buffer, where soundcard pull them.
+
+    This is based on byuu/Near's article "Dynamic Rate Control". This
+    implementation control sfifo buffer fill level.
+    See byuu/Near's article on https://byuu.net/audio/dynamic-rate-control/
 
   - Border
     ------

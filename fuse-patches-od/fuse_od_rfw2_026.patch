@@ -1,0 +1,513 @@
+From 5eac237a8e68b7fdfba4a5a982747404f63d1640 Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 2 dic. 2020 15:39:50
+
+OD #26 New options to adjust screen refresh rate & sound rate
+
+Only for mainline OpenDingux:
+ - Adjust screen refresh rate: Set refresh screen to 50Hz or 60Hz based
+   on macine model selected.
+ - Dynamic sound rate: Adjust the blip buffer sound rate based on the
+   fill level of sfifo level. For use with previous option to avoid
+   sound clicks/pops.
+   This is based on byuu/Near's article "Dynamic Rate Control".
+   See article in https://byuu.net/audio/dynamic-rate-control/
+
+Fix wrong calculations for dirty blocks when using border scalings
+
+Fix Pal TV filter segfaults when border scaling is in use.
+
+diff --git a/Platform/ChangeLog b/Platform/ChangeLog
+index 2f2a7f6..7ea776a 100644
+--- a/Platform/ChangeLog
++++ b/Platform/ChangeLog
+@@ -1,3 +1,22 @@
++2020-11-xx Fuse 1.5.4 OpenDingux/RetroFW v0.0.5
++
++    * Fixed wrong calculations of dirty blocks for the border scalings.
++
++    * Beta OpenDingux new options:
++      * General GCW0:
++        Â· 'Adjust screen refresh rate' (default disabled).
++        Â· 'Dynamic sound rate' (default disabled).
++
++      'Adjust screen refresh rate'. Set the screen refresh rate depending
++      on selected machine:
++        Â· 60Hz for Spectrum 48K NTSC and Timex TS2068 models
++        Â· 50Hz for all other models
++
++      'Dynamic sound rate' adjust the rate used in the blip buffer to
++      create sound samples to avoid sound pops.
++      This is based on byuu/Near's article "Dynamic Rate Control".
++      See byuu/Near's article in https://byuu.net/audio/dynamic-rate-control/
++
+ 2020-11-01 Fuse 1.5.4 OpenDingux/RetroFW v0.0.4
+ 
+     * This release is mainly to build for the beta OpenDingux firmware based on
+diff --git a/Platform/VERSION b/Platform/VERSION
+index 81340c7..aea359b 100644
+--- a/Platform/VERSION
++++ b/Platform/VERSION
+@@ -1 +1 @@
+-0.0.4
++0.0.5-wip
+diff --git a/Platform/readme.txt b/Platform/readme.txt
+index c0d3c42..07f3113 100644
+--- a/Platform/readme.txt
++++ b/Platform/readme.txt
+@@ -61,7 +61,7 @@
+ 
+   - Triple Buffer
+     -------------
+-    Default disabled. Experimental!
++    Default disabled.
+ 
+     Enable/Disable triple buffer.
+     BUG: Disabling triple buffer sometimes freeze the screen but
+@@ -69,6 +69,50 @@
+     If Hotkey combos are enabled you can enable/disable it with the
+     `L1` + `R1` + `B` combo.
+ 
++  - Adjust screen refresh rate
++    --------------------------
++    Default disabled.
++    Only for OpenDingux firmware based on kernel 5.10 with DRM/KMS
++    video driver.
++
++    If it is enabled the screen refresh rate is changed to the nearest
++    refresh rate based in the timings and CPU speed for the chosen
++    machine model.
++
++    Use this option with 'Triple Buffer' enabled to synchronize video and
++    get smooth animations.
++    See also 'Dynamic sound rate' option.
++
++    If Hotkey combos are enabled you can enable/disable it with the
++    `L1` + `R1` + `A` combo.
++
++    Refresh rates:
++     - 60Hz for Spectrum 48K NTSC and Timex TS2068 models
++     - 50Hz for all other models
++
++    Some visible examples of smooth animatiosns are the scrolling texts
++    in the main screen of Dan Dare, Commando, Cannibals from Outer Space
++    or the Savage's intro load.
++
++    CPU clock speed for emulated systems are not exactly 50 or 60 Hz.
++    The sound samples buffer is linked to the emulated CPU clock model
++    and this cause audio glitches, see 'Dynamic sound rate' option.
++
++  - Dynamic sound rate
++    ------------------
++    Default disabled.
++    Only for OpenDingux firmware based on kernel 5.10.
++    Only take efffect with 'Adjust screen refresh rate' enabled.
++
++    Every 10 sound frames the rate used in the Blip buffer is adjusted
++    based on fill level of the sound sfifo buffer. Blip buffer provides
++    waveform synthesis and sample buffering, the samples it generates are
++    pushed to sfifo buffer, where soundcard pull them.
++
++    This is based on byuu/Near's article "Dynamic Rate Control". This
++    implementation control sfifo buffer fill level.
++    See byuu/Near's article on https://byuu.net/audio/dynamic-rate-control/
++
+   - Border
+     ------
+     Default Full.
+@@ -4369,4 +4413,4 @@
+ 
+ 
+ 
+-Version 1.5.7                 9th December, 2018                       fuse(1)
+\ No newline at end of file
++Version 1.5.7                 9th December, 2018                       fuse(1)
+diff --git a/machine.h b/machine.h
+index 002b938..66db884 100644
+--- a/machine.h
++++ b/machine.h
+@@ -53,6 +53,12 @@
+   /* Frame timing */
+   libspectrum_dword tstates_per_frame;
+ 
++#ifdef GCWZERO
++  /* Processor speed adjusted to vsync */
++  libspectrum_dword processor_speed_vsync;
++  libspectrum_dword processor_speed_real;
++#endif
++
+ } machine_timings;
+ 
+ typedef struct fuse_machine_info {
+diff --git a/settings.dat b/settings.dat
+index 5050907..965d4d6 100644
+--- a/settings.dat
++++ b/settings.dat
+@@ -324,6 +324,8 @@
+ od_border, string, "Full"
+ od_panel_type, string, "320x240"
+ od_statusbar_with_border, boolean, 1
++od_adjust_refresh_rate, boolean, 0
++od_dynamic_sound_rate, boolean, 0
+ 
+ od_auto_load_with_custom_roms, boolean, 0
+ 
+diff --git a/sound.c b/sound.c
+index 5c9c8da..76695b0 100644
+--- a/sound.c
++++ b/sound.c
+@@ -39,6 +39,9 @@
+ #include "timer/timer.h"
+ #include "ui/ui.h"
+ #include "sound/blipbuffer.h"
++#ifdef GCWZERO
++#include <math.h>
++#endif
+ 
+ /* Do we have any of our sound devices available? */
+ 
+@@ -108,6 +111,15 @@
+ static struct speaker_type_tag speaker_type[] =
+   { { 200, -37.0 }, { 1000, -67.0 }, { 0, 0.0 } };
+ 
++#ifdef GCWZERO
++static libspectrum_dword
++od_get_processor_speed_for_vsync( void ) {
++  return ( machine_current->timings.tstates_per_frame *
++           floor( machine_current->timings.processor_speed / machine_current->timings.tstates_per_frame ) ) / 100 *
++           settings_current.emulation_speed;
++}
++#endif
++
+ static double
+ sound_get_volume( int volume )
+ {
+@@ -129,7 +141,18 @@
+ sound_init_blip( Blip_Buffer **buf, Blip_Synth **synth )
+ {
+   *buf = new_Blip_Buffer();
++#ifdef GCWZERO
++  libspectrum_dword cpu_speed;
++  if ( sdldisplay_od_system_type == OPENDINGUX && 
++       settings_current.od_adjust_refresh_rate &&
++       settings_current.od_dynamic_sound_rate )
++    cpu_speed = od_get_processor_speed_for_vsync();
++  else
++    cpu_speed = sound_get_effective_processor_speed();
++  blip_buffer_set_clock_rate( *buf, cpu_speed );
++#else
+   blip_buffer_set_clock_rate( *buf, sound_get_effective_processor_speed() );
++#endif
+   /* Allow up to 1s of playback buffer - this allows us to cope with slowing
+      down to 2% of speed where a single Speccy frame generates just under 1s
+      of sound */
+@@ -318,8 +341,19 @@
+   /* Adjust relative processor speed to deal with adjusting sound generation
+      frequency against emulation speed (more flexible than adjusting generated
+      sample rate) */
++#ifdef GCWZERO
++  libspectrum_dword cpu_speed;
++  if ( sdldisplay_od_system_type == OPENDINGUX &&
++       settings_current.od_adjust_refresh_rate &&
++       settings_current.od_dynamic_sound_rate )
++    cpu_speed = od_get_processor_speed_for_vsync();
++  else
++    cpu_speed = sound_get_effective_processor_speed();
++  hz = ( float )cpu_speed / machine_current->timings.tstates_per_frame;
++#else
+   hz = ( float )sound_get_effective_processor_speed() /
+                 machine_current->timings.tstates_per_frame;
++#endif
+ 
+   /* Size of audio data we will get from running a single Spectrum frame */
+   sound_framesiz = ( float )settings_current.sound_freq / hz;
+@@ -696,6 +730,28 @@
+   if( !sound_enabled )
+     return;
+ 
++#ifdef GCWZERO
++  const double max_delta = 0.005;
++  long dynamic_frequency = left_buf->clock_rate_;
++  static int frames_to_adjust = 10;
++
++  int dynamic_sound_adjust = ( sdldisplay_od_system_type == OPENDINGUX &&
++                               settings_current.od_adjust_refresh_rate &&
++                               settings_current.od_dynamic_sound_rate ) ? 1 : 0;
++  if ( dynamic_sound_adjust ) {
++    frames_to_adjust--;
++    if (!frames_to_adjust) {
++      double fill_level = sound_fill_level();
++      dynamic_frequency = ( ( 1.0 - max_delta ) + 2.0 * fill_level * max_delta ) * od_get_processor_speed_for_vsync();
++
++/*
++      double current_speed = (double) dynamic_frequency / machine_current->timings.tstates_per_frame;
++      printf("Fill level: %.5f Frequency: %ld (%.5f)", fill_level, dynamic_frequency, current_speed );
++*/
++    }
++  }
++#endif
++
+   /* overlay AY sound */
+   sound_ay_overlay();
+ 
+@@ -719,6 +775,19 @@
+   if( movie_recording )
+       movie_add_sound( samples, count );
+   ay_change_count = 0;
++
++#ifdef GCWZERO
++  if ( dynamic_sound_adjust && !frames_to_adjust ) {
++    frames_to_adjust = 10;
++    blip_buffer_set_clock_rate( left_buf, dynamic_frequency );
++    if( sound_stereo_ay != SOUND_STEREO_AY_NONE )
++      blip_buffer_set_clock_rate( right_buf, dynamic_frequency );
++
++/*
++    printf(" samples: %lu/%d\n", left_buf->factor_, sound_framesiz);
++*/
++  }
++#endif
+ }
+ 
+ void
+diff --git a/sound.h b/sound.h
+index aacf3a5..fc362f4 100644
+--- a/sound.h
++++ b/sound.h
+@@ -64,4 +64,8 @@
+ void sound_lowlevel_end( void );
+ void sound_lowlevel_frame( libspectrum_signed_word *data, int len );
+ 
++#ifdef GCWZERO
++double sound_fill_level( void );
++#endif
++
+ #endif				/* #ifndef FUSE_SOUND_H */
+diff --git a/sound/sdlsound.c b/sound/sdlsound.c
+index 7fd0405..fc7f24f 100644
+--- a/sound/sdlsound.c
++++ b/sound/sdlsound.c
+@@ -96,15 +96,15 @@
+ #ifdef __FreeBSD__
+   requested.samples = pow( 2.0, floor( log2( sound_framesiz ) ) );
+ #else			/* #ifdef __FreeBSD__ */
+-#ifdef GCWZERO
+-  /* Increase frame buffer with triple buffer or screen scaling (Border option)
+-     With this options the screen is fully refreshed anf this can produce some
++#if defined RETROFW || defined GCWZERO
++  /* Increase frame buffer with triple buffer.
++     With this option the screen is fully refreshed and this can produce some
+      audible pops */
+-  if ( settings_current.od_triple_buffer || strncmp(settings_current.od_border,"Full", 4 ) )
++  if ( settings_current.od_triple_buffer )
+     requested.samples = pow( 2.0, ceil( log2( sound_framesiz ) ) );
+   else
+     requested.samples = pow( 2.0, floor( log2( sound_framesiz ) ) );
+-#else			/* #ifdef GCWZER0 */
++#else			/* #if defined RETROFW || defined GCWZERO */
+   requested.samples = sound_framesiz;
+ #endif			/* #ifdef __FreeBSD__ */
+ #endif
+@@ -218,3 +218,11 @@
+   /* If we ran out of sound, do nothing else as SDL has prefilled
+      the output buffer with silence :( */
+ }
++
++#ifdef GCWZERO
++double
++sound_fill_level( void )
++{
++  return (double) ( sound_fifo.size - sfifo_space( &sound_fifo ) ) / sound_fifo.size;
++}
++#endif
+diff --git a/ui/options.dat b/ui/options.dat
+index 97eee44..0740148 100644
+--- a/ui/options.dat
++++ b/ui/options.dat
+@@ -28,6 +28,10 @@
+ general_gcw0
+ General GCW0 Options
+ Checkbox, Triple Bu(f)fer, od_triple_buffer, INPUT_KEY_f
++#ifndef RETROFW
++Checkbox, Adjust screen (r)efresh rate, od_adjust_refresh_rate, INPUT_KEY_r
++Checkbox, D(y)namic sound rate, od_dynamic_sound_rate, INPUT_KEY_y
++#endif
+ Combo, B(o)rder, od_border, INPUT_KEY_o, *Full|Large|Medium|Small|None
+ #ifndef RETROFW
+ Combo, P(a)nel type, od_panel_type, INPUT_KEY_a, *320x240|640x480|480x320
+diff --git a/ui/scaler/scalers.c b/ui/scaler/scalers.c
+index 563a60c..15cf2e2 100644
+--- a/ui/scaler/scalers.c
++++ b/ui/scaler/scalers.c
+@@ -1554,7 +1554,12 @@
+             RGB_TO_U( r1, g1, b1 ) ) >> 2;
+     v1 = ( RGB_TO_V( r2, g2, b2 ) + 2 * RGB_TO_V( r0, g0, b0 ) +
+             RGB_TO_V( r1, g1, b1 ) ) >> 2;
++#ifdef GCWZERO
++    /* With odd width values i could have negative values and segfault errors will occur */
++    for( i = width; i>0; i -= 2 ) {
++#else
+     for( i = width; i; i -= 2 ) {
++#endif
+ #if SCALER_DATA_SIZE == 2
+       /* 1.a. RGB => RGB */
+       r2 = R_TO_R( *p );
+diff --git a/ui/sdl/sdldisplay.c b/ui/sdl/sdldisplay.c
+index 0f0621f..6267c2a 100644
+--- a/ui/sdl/sdldisplay.c
++++ b/ui/sdl/sdldisplay.c
+@@ -45,10 +45,6 @@
+ #include "ui/vkeyboard.h"
+ #endif
+ #ifdef GCWZERO
+-#include <unistd.h>
+-#include <fcntl.h>
+-#include <sys/ioctl.h>
+-#include <linux/fb.h>
+ #include "options.h"
+ #endif
+ 
+@@ -216,13 +212,7 @@
+ static SDL_Rect clip_area;
+ static libspectrum_byte sdldisplay_is_triple_buffer = 0;
+ static libspectrum_byte sdldisplay_flips_triple_buffer = 0;
+-typedef enum sdldisplay_od_system_types {
+-      OPENDINGUX_2014,
+-      OPENDINGUX,
+-      RETROFW_1,
+-      RETROFW_2
+-} sdldisplay_t_od_system;
+-static sdldisplay_t_od_system sdldisplay_od_system_type =
++sdldisplay_t_od_system sdldisplay_od_system_type =
+ #ifdef RETROFW
+ RETROFW_2;
+ #else
+@@ -852,7 +842,7 @@
+     sdldisplay_flips_triple_buffer = 1;
+ #else
+     sdldisplay_flips_triple_buffer = 0;
+-#endif
++#endif /* #ifdef RETROFW */
+     flags = settings_current.full_screen ? (SDL_FULLSCREEN | SDL_HWSURFACE | SDL_TRIPLEBUF)
+     : (SDL_HWSURFACE | SDL_TRIPLEBUF);
+   } else {
+@@ -867,7 +857,18 @@
+   int display_width, display_height;
+ #ifndef RETROFW
+   sdl_od_panel_type = option_enumerate_general_gcw0_od_panel_type();
+-#endif
++  if ( sdldisplay_od_system_type == OPENDINGUX ) {
++    int refresh_rate = 60;
++    char crefresh_rate[3];
++
++    if ( settings_current.od_adjust_refresh_rate ) {
++      refresh_rate = machine_current->timings.processor_speed /
++                     machine_current->timings.tstates_per_frame;
++    }
++    snprintf(crefresh_rate, 3, "%2d", refresh_rate);
++    setenv("SDL_VIDEO_REFRESHRATE", &crefresh_rate[0], 1);
++  }
++#endif /* #ifndef RETROFW */
+   sdldisplay_current_od_border = option_enumerate_general_gcw0_od_border();
+   od_icon_position = od_icon_positions[sdldisplay_current_od_border];  
+ 
+@@ -1608,12 +1609,18 @@
+ #ifdef GCWZERO
+     if ( sdldisplay_current_od_border ) {
+       if ( ( r->x > clip_area.x + clip_area.w ) ||
+-           ( r->y > clip_area.y + clip_area.h ) )
++           ( r->y > clip_area.y + clip_area.h ) ||
++           ( r->x + r->w < clip_area.x ) ||
++           ( r->y + r->h < clip_area.y ) )
+         continue;
+-      if ( r->x < clip_area.x )
++      if ( r->x < clip_area.x ) {
++        r->w = r->w - ( clip_area.x - r->x );
+         r->x = clip_area.x;
+-      if ( r->y < clip_area.y )
++      }
++      if ( r->y < clip_area.y ) {
++        r->h = r->h - ( clip_area.y - r->y );
+         r->y = clip_area.y;
++      }
+       if ( r->x + r->w > clip_area.x + clip_area.w )
+         r->w = clip_area.w - ( r->x - clip_area.x );
+       if ( r->y + r->h > clip_area.y + clip_area.h )
+diff --git a/ui/sdl/sdlhotkeys.c b/ui/sdl/sdlhotkeys.c
+index 3f8d75a..0869bdf 100644
+--- a/ui/sdl/sdlhotkeys.c
++++ b/ui/sdl/sdlhotkeys.c
+@@ -69,6 +69,7 @@
+   Combos currently are mapped to Fx functions used in Fuse:
+     L1 + R1 + A      Toggle Full/None border size
+     L1 + R1 + B      Toggle triple buffer
++    L1 + R1 + Y      Toggle refresh rate adjust
+     L1 + R1 + X      Joystick
+ 
+     L1 + Select + Y  Tape play (F8)
+@@ -85,6 +86,7 @@
+ */
+ 
+ #define OPEN_JOYSTICK   (FLAG_L1|FLAG_R1|FLAG_X)
++#define REFRESH_RATE    (FLAG_L1|FLAG_R1|FLAG_Y)
+ #define TRIPLE_BUFFER   (FLAG_L1|FLAG_R1|FLAG_B)
+ #define CHANGE_BORDER   (FLAG_L1|FLAG_R1|FLAG_A)
+ 
+@@ -155,6 +157,7 @@
+   SDL_Event combo_event;
+   SDLKey combo_key = 0;
+   int toggle_triple_buffer = 0;
++  int toggle_refresh_rate = 0;
+   int change_border = 0;
+ 
+   /* Nothing to do */
+@@ -172,6 +175,9 @@
+   case TRIPLE_BUFFER:
+     toggle_triple_buffer = 1; break;
+ 
++  case REFRESH_RATE:
++    toggle_refresh_rate = 1; break;
++
+   case TAPE_PLAY:
+     combo_key = SDLK_F8; break;
+ 
+@@ -229,6 +235,17 @@
+     combo_done = 1;
+     return 1;
+ 
++  /* Toggle refresh rate */
++  } else if ( toggle_refresh_rate ) {
++    settings_current.od_adjust_refresh_rate = !settings_current.od_adjust_refresh_rate;
++
++    /* Clean flags and mark combo as done */
++    *flags = 0x00;
++    combo_done = 1;
++    /* make the needed UI changes */
++    uidisplay_hotswap_gfx_mode();
++    return 1;
++
+   /* Change border */
+   } else if ( change_border ) {
+     int current_border = option_enumerate_general_gcw0_od_border();
+diff --git a/ui/ui.h b/ui/ui.h
+index e852a87..e337e2c 100644
+--- a/ui/ui.h
++++ b/ui/ui.h
+@@ -43,6 +43,17 @@
+ #include "svg.h"
+ #include "ui/scaler/scaler.h"
+ 
++
++#ifdef GCWZERO
++typedef enum sdldisplay_od_system_types {
++      OPENDINGUX_2014,
++      OPENDINGUX,
++      RETROFW_1,
++      RETROFW_2
++} sdldisplay_t_od_system;
++extern sdldisplay_t_od_system sdldisplay_od_system_type;
++#endif /* #ifdef GCWZERO */
++
+ /* The various severities of error level, increasing downwards */
+ typedef enum ui_error_level {
+ 

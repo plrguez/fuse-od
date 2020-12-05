@@ -1,0 +1,24 @@
+From 5b0aee8f892a309749c129fb7b6ec5354562929b Mon Sep 17 00:00:00 2001
+From: Pedro Luis Rodríguez González <pl.rguez@gmail.com>
+Date: 5 dic. 2020 18:35:43
+
+Patch #29 v0.0.5 Release
+
+diff --git a/Platform/ChangeLog b/Platform/ChangeLog
+index 7c150db..3683e49 100644
+--- a/Platform/ChangeLog
++++ b/Platform/ChangeLog
+@@ -1,4 +1,4 @@
+-2020-11-xx Fuse 1.5.4 OpenDingux/RetroFW v0.0.5
++2020-12-05 Fuse 1.5.4 OpenDingux/RetroFW v0.0.5
+ 
+     * Fixed wrong calculations of dirty blocks for the border scalings.
+ 
+diff --git a/Platform/VERSION b/Platform/VERSION
+index aea359b..fa3de58 100644
+--- a/Platform/VERSION
++++ b/Platform/VERSION
+@@ -1 +1 @@
+-0.0.5-wip
++0.0.5
+\ No newline at end of file

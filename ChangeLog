@@ -1,3 +1,24 @@
+2020-12-05 Fuse 1.5.4 OpenDingux/RetroFW v0.0.5
+
+    * Fixed wrong calculations of dirty blocks for the border scalings.
+
+    * Fixed Pal TV Filter segfaults when border scaling is in use.
+
+    * Beta OpenDingux new options:
+      * General GCW0:
+        · 'Adjust screen refresh rate' (default disabled).
+        · 'Dynamic sound rate' (default disabled).
+
+      'Adjust screen refresh rate'. Set the screen refresh rate depending
+      on selected machine:
+        · 60Hz for Spectrum 48K NTSC and Timex TS2068 models
+        · 50Hz for all other models
+
+      'Dynamic sound rate' adjust the rate used in the blip buffer to
+      create sound samples to avoid sound pops.
+      This is based on byuu/Near's article "Dynamic Rate Control".
+      See byuu/Near's article in https://byuu.net/audio/dynamic-rate-control/
+
 2020-11-01 Fuse 1.5.4 OpenDingux/RetroFW v0.0.4
 
     * This release is mainly to build for the beta OpenDingux firmware based on
