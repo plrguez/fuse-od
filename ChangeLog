@@ -1,3 +1,81 @@
+2021-01-09 Fuse 1.5.4 OpenDingux/RetroFW v0.0.6
+
+    * OpenDingux beta. Fixed L3 & R3 mappings.
+
+    * Added Exit option to main menu
+
+    * Circular navigation in menus and selection widgets
+
+    * In options entries for numbers (as savestate slot) left and right
+      cursors can be used to increase and decrease values.
+
+    * Savestates:
+       * Main features:
+        · Up to 100 savestates per game
+        · Savestates formats: SZX, Z80. Default and recommended is SZX.
+        · Savestates per machine model. Enabled by default.
+        · Savestate screen preview in savestates widget selectors.
+
+      * Hotkeys assigned for savestates:
+        · L1 + Cursor down    Quicksave state for current slot
+        · R1 + Cursor up      Quickload state for current slot
+        · R1 + Cursor right   Increase slot to use
+        · R1 + Cursor left    Decrease slot to use
+
+       * The Savestates functionality is a layer for quickly saving and loading
+         snapshots organized by machine models and program names.
+         Internally it uses the main functionality of Fuse to read and write
+         snapshots. Becouse the main objective is speed up the operation to read
+         and write snapshots for the use with handelds the options for
+         savestates has been put directly in the main menú and assigned to new
+         kotkey combos.
+
+      * The Z80 format does not support all combinations for storing information
+        about the media and hardware used, this include same machine models.
+        Some examples:
+          · Pentagon 256 and 1024 are saved as Pentagon 128, so when you save
+            a savestate with this models the load change to Pentagon 128. If you
+            are using savestates per machine model then the path to access
+            savestates also change.
+          · If you are using interface 2 with cartridge this information is lost
+            when saved so the load of savestates will fail.
+        For a tipical media as tapes and disks with no extra hardware attached to
+        emulator you can go ahead with Z80 format, but for best cominations of
+        hardware and media it's best to stick with SZX format.
+
+      * The savestates location is:
+          $HOME/.fuse/savestates/<MODEL>/<PROGRAM NAME>
+          $HOME/.fuse/savestates/<PROGRAM NAME> if disabled per machine model
+
+        · <MODEL> is the name for machine model as informed by libspectrum.
+        · <PROGRAM NAME> is the name of the program with an attempt to remove
+          any info about side/disk/part.
+        · The name for the savestate will be the slot number with the extension
+          for the selected format.
+
+      * By default the savestates uses different locations for every machine
+        model. This behaviour can be changed but that can lead to strange
+        situations.
+        For example with savestates per machine model disabled:
+        · load a program for a 48k model
+        · Create a savestate
+        · Change the model to +2A and load the same program
+        · Load the savestate and then the model is changed to 48k model.
+
+      * For mediums with various parts (disk and tape sides) the emulator tries
+        to determine a name for the saves removing this info, so the savestates
+        for different sides/disks belong to the same program.
+        An example of use is when you load a program and then save an state when
+        you are side2/disk2. Later, in another session, you can directly load
+        this state without load side1/tape1. Directly insert the medium for
+        side2/disk2 and load the savestate from menú options or hotkeys combos.
+        If necessary for tapes you can use the tape browser to position in the
+        right phase/position to load.
+
+      * The slot number for savestates is global. If you load another program
+        without exit the emulator, the slot in use for the savestates of the
+        newly loaded program is the one previously used.
+
 2020-12-05 Fuse 1.5.4 OpenDingux/RetroFW v0.0.5
 
     * Fixed wrong calculations of dirty blocks for the border scalings.
