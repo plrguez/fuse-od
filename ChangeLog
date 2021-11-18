@@ -1,3 +1,27 @@
+2021-11-18 Fuse 1.6.0 OpenDingux/RetroFW v0.0.7
+
+    * Update version to upstream 1.6.0
+
+    * Bugfix: Poke memory don't allow to select pokes because X button is
+      assigned to add new pokes. Changed to use Y button to add pokes.
+
+    * Bugfix: Don't try to load control mapping file when loading poke files.
+
+    * RetroFW: ipk install isolated by Fuse version.
+
+    * Added OpenDingux Lepus build
+
+    * OpenDingux beta Lepus: use alsa sound driver (auto). Current SDL
+      sound driver produces heap corruption and it need to be revised.
+
+    * OpenDingux beta: Auto detect panel type. Panel type is used to
+      determine the valid screen resolutions to be used for the different
+      border sizes.
+
+    * OpenDingux: added two new options
+        - Video filter: Bicubic (default), Bilinear, Nearest
+        - Bicubic sharpness level: default value is 2, minimun 2, maximun 32
+
 2021-01-09 Fuse 1.5.4 OpenDingux/RetroFW v0.0.6
 
     * OpenDingux beta. Fixed L3 & R3 mappings.
